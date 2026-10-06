@@ -1,0 +1,22 @@
+# Changelog
+
+All notable changes to this application are documented in this file.
+
+## 2.0.0
+
+- The app is now "Platform", modelled on the reference. It replaces the Spirit app (same universal id).
+- CRM: Lead (`crmLead`, lead and opportunity in one record), Lost reason, and the buttons
+  Convert to opportunity, Mark won, Mark lost and Restore.
+- UTM: Source, Medium and Campaign, with the reference's default rows.
+- A post-install hook makes the staff lists Stage and Tags and the Pipeline board.
+- Removed: Lead and Lead Source of 1.x, Meta intake, and conversion to Twenty's Opportunity.
+  The upgrade deletes their tables.
+
+## 1.0.1
+
+- Convert shows a success or error message and opens the new opportunity. An error no
+  longer leaves the button dead until the page reloads.
+
+## 1.0.0
+
+- Lead and Lead Source objects, Meta intake, Convert to opportunity.

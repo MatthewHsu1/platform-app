@@ -1,0 +1,241 @@
+import {
+  defineObject,
+  FieldType,
+  STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS,
+} from 'twenty-sdk/define';
+
+import {
+  LEAD_TYPE,
+  PRIORITY,
+  WON_STATUS,
+} from 'src/crm/crm-options.constant';
+import {
+  COMPANY_CRM_LEADS_FIELD_UNIVERSAL_IDENTIFIER,
+  CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
+  CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
+  CRM_LOST_REASON_FIELD_UNIVERSAL_IDENTIFIERS,
+  CRM_LOST_REASON_OBJECT_UNIVERSAL_IDENTIFIER,
+  PERSON_CRM_LEADS_FIELD_UNIVERSAL_IDENTIFIER,
+  WORKSPACE_MEMBER_CRM_LEADS_FIELD_UNIVERSAL_IDENTIFIER,
+} from 'src/crm/crm-universal-identifiers.constant';
+import { manyToOneField } from 'src/shared/fields';
+import {
+  UTM_CAMPAIGN_FIELD_UNIVERSAL_IDENTIFIERS,
+  UTM_CAMPAIGN_OBJECT_UNIVERSAL_IDENTIFIER,
+  UTM_MEDIUM_FIELD_UNIVERSAL_IDENTIFIERS,
+  UTM_MEDIUM_OBJECT_UNIVERSAL_IDENTIFIER,
+  UTM_SOURCE_FIELD_UNIVERSAL_IDENTIFIERS,
+  UTM_SOURCE_OBJECT_UNIVERSAL_IDENTIFIER,
+} from 'src/utm/utm-universal-identifiers.constant';
+
+// The reference crm.lead. Field names follow the reference; `salesperson`, `leadType` and
+// `contactAddress` stand in for `user_id`, `type` and the address fields,
+// which Twenty reserves. Stage and Tags are not here: the install hook makes
+// them as staff lists.
+export default defineObject({
+  universalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
+  nameSingular: 'crmLead',
+  namePlural: 'crmLeads',
+  labelSingular: 'Lead',
+  labelPlural: 'Leads',
+  description: 'A lead or opportunity, from first contact until won or lost',
+  icon: 'IconTarget',
+  fields: [
+    {
+      universalIdentifier: FIELD_IDS.leadType,
+      name: 'leadType',
+      label: 'Type',
+      type: FieldType.SELECT,
+      icon: 'IconFilter',
+      defaultValue: `'${LEAD_TYPE.LEAD}'`,
+      options: [
+        { value: LEAD_TYPE.LEAD, label: 'Lead', position: 0, color: 'gray' },
+        { value: LEAD_TYPE.OPPORTUNITY, label: 'Opportunity', position: 1, color: 'blue' },
+      ],
+    },
+    {
+      universalIdentifier: FIELD_IDS.wonStatus,
+      name: 'wonStatus',
+      label: 'Won status',
+      type: FieldType.SELECT,
+      icon: 'IconTrophy',
+      defaultValue: `'${WON_STATUS.PENDING}'`,
+      options: [
+        { value: WON_STATUS.PENDING, label: 'Pending', position: 0, color: 'gray' },
+        { value: WON_STATUS.WON, label: 'Won', position: 1, color: 'green' },
+        { value: WON_STATUS.LOST, label: 'Lost', position: 2, color: 'red' },
+      ],
+    },
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.lostReason,
+      name: 'lostReason',
+      label: 'Lost reason',
+      icon: 'IconMoodSad',
+      targetObjectUniversalIdentifier: CRM_LOST_REASON_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: CRM_LOST_REASON_FIELD_UNIVERSAL_IDENTIFIERS.crmLeads,
+    }),
+    {
+      universalIdentifier: FIELD_IDS.priority,
+      name: 'priority',
+      label: 'Priority',
+      type: FieldType.SELECT,
+      icon: 'IconStar',
+      defaultValue: `'${PRIORITY.LOW}'`,
+      options: [
+        { value: PRIORITY.LOW, label: 'Low', position: 0, color: 'gray' },
+        { value: PRIORITY.MEDIUM, label: 'Medium', position: 1, color: 'yellow' },
+        { value: PRIORITY.HIGH, label: 'High', position: 2, color: 'orange' },
+        { value: PRIORITY.VERY_HIGH, label: 'Very High', position: 3, color: 'red' },
+      ],
+    },
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.salesperson,
+      name: 'salesperson',
+      label: 'Salesperson',
+      icon: 'IconUserCircle',
+      targetObjectUniversalIdentifier:
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.workspaceMember.universalIdentifier,
+      targetFieldUniversalIdentifier: WORKSPACE_MEMBER_CRM_LEADS_FIELD_UNIVERSAL_IDENTIFIER,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.person,
+      name: 'person',
+      label: 'Contact',
+      icon: 'IconUser',
+      targetObjectUniversalIdentifier:
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.person.universalIdentifier,
+      targetFieldUniversalIdentifier: PERSON_CRM_LEADS_FIELD_UNIVERSAL_IDENTIFIER,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.company,
+      name: 'company',
+      label: 'Customer',
+      icon: 'IconBuildingSkyscraper',
+      targetObjectUniversalIdentifier:
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.company.universalIdentifier,
+      targetFieldUniversalIdentifier: COMPANY_CRM_LEADS_FIELD_UNIVERSAL_IDENTIFIER,
+    }),
+    {
+      universalIdentifier: FIELD_IDS.contactName,
+      name: 'contactName',
+      label: 'Contact name',
+      type: FieldType.TEXT,
+      icon: 'IconUser',
+    },
+    {
+      universalIdentifier: FIELD_IDS.partnerName,
+      name: 'partnerName',
+      label: 'Company name',
+      type: FieldType.TEXT,
+      icon: 'IconBuilding',
+    },
+    {
+      universalIdentifier: FIELD_IDS.jobPosition,
+      name: 'jobPosition',
+      label: 'Job position',
+      type: FieldType.TEXT,
+      icon: 'IconBriefcase',
+    },
+    {
+      universalIdentifier: FIELD_IDS.emailFrom,
+      name: 'emailFrom',
+      label: 'Email',
+      type: FieldType.EMAILS,
+      icon: 'IconMail',
+    },
+    {
+      universalIdentifier: FIELD_IDS.phone,
+      name: 'phone',
+      label: 'Phone',
+      type: FieldType.PHONES,
+      icon: 'IconPhone',
+    },
+    {
+      universalIdentifier: FIELD_IDS.website,
+      name: 'website',
+      label: 'Website',
+      type: FieldType.LINKS,
+      icon: 'IconWorld',
+    },
+    {
+      universalIdentifier: FIELD_IDS.contactAddress,
+      name: 'contactAddress',
+      label: 'Address',
+      type: FieldType.ADDRESS,
+      icon: 'IconMap',
+    },
+    {
+      universalIdentifier: FIELD_IDS.expectedRevenue,
+      name: 'expectedRevenue',
+      label: 'Expected revenue',
+      type: FieldType.CURRENCY,
+      icon: 'IconCurrencyDollar',
+    },
+    {
+      universalIdentifier: FIELD_IDS.probability,
+      name: 'probability',
+      label: 'Probability (%)',
+      type: FieldType.NUMBER,
+      icon: 'IconPercentage',
+    },
+    {
+      universalIdentifier: FIELD_IDS.dateDeadline,
+      name: 'dateDeadline',
+      label: 'Expected closing',
+      type: FieldType.DATE,
+      icon: 'IconCalendarDue',
+    },
+    {
+      universalIdentifier: FIELD_IDS.dateClosed,
+      name: 'dateClosed',
+      label: 'Closed date',
+      type: FieldType.DATE_TIME,
+      icon: 'IconCalendarCheck',
+    },
+    {
+      universalIdentifier: FIELD_IDS.dateConversion,
+      name: 'dateConversion',
+      label: 'Conversion date',
+      type: FieldType.DATE_TIME,
+      icon: 'IconTransform',
+    },
+    {
+      universalIdentifier: FIELD_IDS.description,
+      name: 'description',
+      label: 'Notes',
+      type: FieldType.RICH_TEXT,
+      icon: 'IconNotes',
+    },
+    {
+      universalIdentifier: FIELD_IDS.referred,
+      name: 'referred',
+      label: 'Referred by',
+      type: FieldType.TEXT,
+      icon: 'IconUserShare',
+    },
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.source,
+      name: 'source',
+      label: 'Source',
+      icon: 'IconSpeakerphone',
+      targetObjectUniversalIdentifier: UTM_SOURCE_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: UTM_SOURCE_FIELD_UNIVERSAL_IDENTIFIERS.crmLeads,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.medium,
+      name: 'medium',
+      label: 'Medium',
+      icon: 'IconBroadcast',
+      targetObjectUniversalIdentifier: UTM_MEDIUM_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: UTM_MEDIUM_FIELD_UNIVERSAL_IDENTIFIERS.crmLeads,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.campaign,
+      name: 'campaign',
+      label: 'Campaign',
+      icon: 'IconAd',
+      targetObjectUniversalIdentifier: UTM_CAMPAIGN_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: UTM_CAMPAIGN_FIELD_UNIVERSAL_IDENTIFIERS.crmLeads,
+    }),
+  ],
+});
