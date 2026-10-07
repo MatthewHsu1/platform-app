@@ -83,7 +83,16 @@ const RowAccessSettingsForm = ({ data }: { data: RowAccessSettingsData }) => {
         <Section.Root>
           <Section.Header
             title="Rules that need attention"
-            description="Save keeps these rules. An enabled rule whose custom owner field is broken hides every row of every owner object from members until you fix it. A hidden standard owner field, such as Account Owner, keeps working on the server: rows stay filtered by it. Pick a new owner field, or remove the rule if the object should be visible to everyone."
+            description={
+              <span>
+                Save keeps these rules. An enabled rule whose custom owner
+                field is broken hides every row of every owner object from
+                members until you fix it. A hidden standard owner field, such
+                as Account Owner, keeps working on the server: rows stay
+                filtered by it. Pick a new owner field, or remove the rule if
+                the object should be visible to everyone.
+              </span>
+            }
           />
           <Card.Root rounded>
             {ruleWarnings.map((warning, index) => (
@@ -121,7 +130,15 @@ const RowAccessSettingsForm = ({ data }: { data: RowAccessSettingsData }) => {
       <Section.Root>
         <Section.Header
           title="Owner-only objects"
-          description="A member sees a row of a checked object only when the owner field points at them. Rows with no owner are hidden from members."
+          // A string description gets a Base UI tooltip, and its hover and
+          // focus handlers crash in the front component sandbox: the
+          // forwarded events have no nativeEvent. An element skips the tooltip.
+          description={
+            <span>
+              A member sees a row of a checked object only when the owner field
+              points at them. Rows with no owner are hidden from members.
+            </span>
+          }
         />
         <Card.Root rounded>
           {data.candidateObjects.map((object, index) => {

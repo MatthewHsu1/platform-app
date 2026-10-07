@@ -2,6 +2,11 @@
 
 All notable changes to this application are documented in this file.
 
+## 2.1.1
+
+- The row access settings page no longer crashes with "Cannot use 'in' operator to search for
+  'composedPath'" when the pointer or focus reaches a section description.
+
 ## 2.1.0
 
 - Row access is part of Platform: its settings tab chooses the owner-only objects, their owner
