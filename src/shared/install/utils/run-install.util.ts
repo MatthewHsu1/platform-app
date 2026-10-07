@@ -62,8 +62,8 @@ const findFieldId = (object: InstallObject, name: string) => {
 // Safe to run on every install and upgrade: it only adds what is missing and
 // never changes a field, row or view that already exists. A board the server
 // refuses is skipped and returned, not thrown: a thrown error rolls back a
-// fresh install, and Twenty 2.41 refuses createView to every app token (its
-// view guard reads only users and API keys), so staff make the board by hand.
+// fresh install. Twenty before v2.42 refuses createView to every app token;
+// there staff make the board by hand.
 export const runInstall = async ({
   api,
   specs,

@@ -34,14 +34,19 @@ const readOnly = (objectUniversalIdentifier: string) => ({
   canDestroyObjectRecords: false,
 });
 
-// Buttons run as the clicking user intersected with this role, so a user
-// gains nothing through it. Data Model and Views let the install hook make
-// the staff lists and the Pipeline board.
+// Buttons and the row access settings page run as the signed-in user
+// intersected with this role, so a user gains nothing through it. The
+// install hook runs with this role alone: Data Model and Views let it make
+// the staff lists and the Pipeline board. Applications and Roles let the
+// settings page save Platform's row access variable and list roles. With
+// them the role can also list installed apps and edit timeline activity type
+// labels; Twenty refuses role changes, installs and workspace settings to
+// application tokens.
 export default defineApplicationRole({
   universalIdentifier: FUNCTION_ROLE_UNIVERSAL_IDENTIFIER,
   label: `${APP_DISPLAY_NAME} function role`,
   description:
-    'Runs the install hook and the lead buttons: makes staff lists and default rows, converts, wins and loses leads.',
+    'Runs the install hook, the lead buttons and the row access settings page.',
   canReadAllObjectRecords: false,
   canUpdateAllObjectRecords: false,
   canSoftDeleteAllObjectRecords: false,
@@ -67,5 +72,7 @@ export default defineApplicationRole({
   permissionFlagUniversalIdentifiers: [
     SystemPermissionFlag.DATA_MODEL,
     SystemPermissionFlag.VIEWS,
+    SystemPermissionFlag.APPLICATIONS,
+    SystemPermissionFlag.ROLES,
   ],
 });

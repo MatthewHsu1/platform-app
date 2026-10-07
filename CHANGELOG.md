@@ -2,6 +2,12 @@
 
 All notable changes to this application are documented in this file.
 
+## 2.1.0
+
+- Row access is part of Platform: its settings tab chooses the owner-only objects, their owner
+  field and the roles that see every row. The separate row-access app is retired.
+- Platform's role adds the Applications and Roles permissions for that page.
+
 ## 2.0.0
 
 - The app is now "Platform", modelled on the reference. It replaces the Spirit app (same universal id).
