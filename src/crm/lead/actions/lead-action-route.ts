@@ -1,17 +1,6 @@
-import { type RoutePayload } from 'twenty-sdk/define';
-import { Response } from 'twenty-sdk/logic-function';
-
 import { type LeadUpdatePlan } from 'src/crm/lead/actions/utils/plan-won-lost.util';
+import { jsonResponse } from 'src/shared/route-response';
 import { describeGraphqlErrors, twentyGraphql } from 'src/shared/twenty-graphql';
-
-export const jsonResponse = (status: number, body: Record<string, unknown>) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
-
-export const readBody = (payload: RoutePayload) =>
-  (payload.body ?? {}) as Record<string, unknown>;
 
 export const readLeadId = (body: Record<string, unknown>) =>
   typeof body.leadId === 'string' && body.leadId.length > 0 ? body.leadId : null;

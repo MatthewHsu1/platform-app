@@ -1,6 +1,6 @@
 export const APP_DISPLAY_NAME = 'Platform';
 export const APP_DESCRIPTION =
-  'Business modules modelled on the reference: CRM leads and pipeline, with UTM sources, mediums and campaigns, and row access (owner-only records).';
+  'Business modules: CRM leads and pipeline, with UTM sources, mediums and campaigns, and row access (owner-only records).';
 
 // The server finds the row access rules on this app by this identifier
 // (SPIRIT_PLATFORM_APPLICATION_UNIVERSAL_IDENTIFIER) and allows rules on its
@@ -15,3 +15,5 @@ export const ROW_ACCESS_SETTINGS_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER =
   '081e3355-31e8-49d9-a544-47c687218195';
 export const ROW_ACCESS_CONFIG_VARIABLE_UNIVERSAL_IDENTIFIER =
   '5e1d5cf9-e77f-45dc-a60c-afb578d217f6';
+export const PRODUCT_UNIT_DIGITS_VARIABLE_UNIVERSAL_IDENTIFIER =
+  '7451c67d-7ad3-495e-be23-a13584192233';

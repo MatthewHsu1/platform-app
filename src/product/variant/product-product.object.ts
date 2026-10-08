@@ -1,0 +1,135 @@
+import {
+  defineObject,
+  FieldType,
+  OnDeleteAction,
+} from 'twenty-sdk/define';
+
+import {
+  PRODUCT_COMBO_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS,
+  PRODUCT_COMBO_ITEM_FIELD_UNIVERSAL_IDENTIFIERS,
+  PRODUCT_COMBO_ITEM_OBJECT_UNIVERSAL_IDENTIFIER,
+  PRODUCT_PRICELIST_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS as PRICING_INVERSE_IDS,
+  PRODUCT_PRICELIST_ITEM_FIELD_UNIVERSAL_IDENTIFIERS,
+  PRODUCT_PRICELIST_ITEM_OBJECT_UNIVERSAL_IDENTIFIER,
+  PRODUCT_PRODUCT_ATTRIBUTE_FIELD_UNIVERSAL_IDENTIFIERS,
+  PRODUCT_PRODUCT_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
+  PRODUCT_PRODUCT_OBJECT_UNIVERSAL_IDENTIFIER,
+  PRODUCT_SUPPLIERINFO_FIELD_UNIVERSAL_IDENTIFIERS,
+  PRODUCT_SUPPLIERINFO_OBJECT_UNIVERSAL_IDENTIFIER,
+  PRODUCT_TAG_PRODUCT_PRODUCT_REL_FIELD_UNIVERSAL_IDENTIFIERS,
+  PRODUCT_TAG_PRODUCT_PRODUCT_REL_OBJECT_UNIVERSAL_IDENTIFIER,
+  PRODUCT_TEMPLATE_FIELD_UNIVERSAL_IDENTIFIERS,
+  PRODUCT_TEMPLATE_OBJECT_UNIVERSAL_IDENTIFIER,
+  PRODUCT_UOM_FIELD_UNIVERSAL_IDENTIFIERS,
+  PRODUCT_UOM_OBJECT_UNIVERSAL_IDENTIFIER,
+  PRODUCT_VARIANT_COMBINATION_FIELD_UNIVERSAL_IDENTIFIERS,
+  PRODUCT_VARIANT_COMBINATION_OBJECT_UNIVERSAL_IDENTIFIER,
+} from 'src/product/product-universal-identifiers.constant';
+import {
+  appTextField,
+  appWritten,
+  booleanField,
+  currencyField,
+  filesField,
+  manyToOneField,
+  numberField,
+  oneToManyField,
+  textField,
+} from 'src/shared/fields';
+
+// The name is written by code from the product name and
+// the attribute values, so the object carries its own name field.
+export default defineObject({
+  universalIdentifier: PRODUCT_PRODUCT_OBJECT_UNIVERSAL_IDENTIFIER,
+  nameSingular: 'productProduct',
+  namePlural: 'productProducts',
+  labelSingular: 'Product variant',
+  labelPlural: 'Product variants',
+  description: 'One sellable combination of a product\'s attribute values',
+  icon: 'IconBoxMultiple',
+  labelIdentifierFieldMetadataUniversalIdentifier: FIELD_IDS.name,
+  fields: [
+    appWritten({
+      universalIdentifier: FIELD_IDS.name,
+      name: 'name',
+      label: 'Name',
+      icon: 'IconAbc',
+      type: FieldType.TEXT,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.productTmpl,
+      name: 'productTmpl',
+      label: 'Product',
+      icon: 'IconPackage',
+      onDelete: OnDeleteAction.CASCADE,
+      targetObjectUniversalIdentifier: PRODUCT_TEMPLATE_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: PRODUCT_TEMPLATE_FIELD_UNIVERSAL_IDENTIFIERS.productVariants,
+    }),
+    textField(FIELD_IDS.defaultCode, 'defaultCode', 'Internal reference', 'IconHash'),
+    textField(FIELD_IDS.barcode, 'barcode', 'Barcode', 'IconBarcode'),
+    booleanField(FIELD_IDS.active, 'active', 'Active', 'IconCircleCheck', true),
+    currencyField(FIELD_IDS.standardPrice, 'standardPrice', 'Cost', 'IconCoin'),
+    numberField(FIELD_IDS.weight, 'weight', 'Weight', 'IconWeight', { decimals: 2 }),
+    numberField(FIELD_IDS.volume, 'volume', 'Volume', 'IconCube', { decimals: 2 }),
+    appWritten(currencyField(FIELD_IDS.priceExtra, 'priceExtra', 'Extra price', 'IconCoin')),
+    appWritten(currencyField(FIELD_IDS.lstPrice, 'lstPrice', 'Sales price', 'IconCurrencyDollar')),
+    appTextField(FIELD_IDS.combinationIndices, 'combinationIndices', 'Combination', 'IconListNumbers'),
+    appWritten(
+      oneToManyField({
+        universalIdentifier: PRODUCT_PRODUCT_ATTRIBUTE_FIELD_UNIVERSAL_IDENTIFIERS.productTemplateAttributeValues,
+        name: 'productTemplateAttributeValues',
+        label: 'Attribute values',
+        icon: 'IconListDetails',
+        targetObjectUniversalIdentifier: PRODUCT_VARIANT_COMBINATION_OBJECT_UNIVERSAL_IDENTIFIER,
+        targetFieldUniversalIdentifier:
+          PRODUCT_VARIANT_COMBINATION_FIELD_UNIVERSAL_IDENTIFIERS.productProduct,
+        junctionTargetFieldUniversalIdentifier:
+          PRODUCT_VARIANT_COMBINATION_FIELD_UNIVERSAL_IDENTIFIERS.productTemplateAttributeValue,
+      }),
+    ),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.additionalProductTags,
+      name: 'additionalProductTags',
+      label: 'Variant tags',
+      icon: 'IconTags',
+      targetObjectUniversalIdentifier: PRODUCT_TAG_PRODUCT_PRODUCT_REL_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier:
+        PRODUCT_TAG_PRODUCT_PRODUCT_REL_FIELD_UNIVERSAL_IDENTIFIERS.productProduct,
+      junctionTargetFieldUniversalIdentifier:
+        PRODUCT_TAG_PRODUCT_PRODUCT_REL_FIELD_UNIVERSAL_IDENTIFIERS.productTag,
+    }),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.productUoms,
+      name: 'productUoms',
+      label: 'Unit barcodes',
+      icon: 'IconBarcode',
+      targetObjectUniversalIdentifier: PRODUCT_UOM_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: PRODUCT_UOM_FIELD_UNIVERSAL_IDENTIFIERS.product,
+    }),
+    oneToManyField({
+      universalIdentifier: PRICING_INVERSE_IDS.variantPricelistRules,
+      name: 'pricelistRules',
+      label: 'Pricelist rules',
+      icon: 'IconListCheck',
+      targetObjectUniversalIdentifier: PRODUCT_PRICELIST_ITEM_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: PRODUCT_PRICELIST_ITEM_FIELD_UNIVERSAL_IDENTIFIERS.product,
+    }),
+    oneToManyField({
+      universalIdentifier: PRICING_INVERSE_IDS.variantSellers,
+      name: 'sellers',
+      label: 'Vendor prices',
+      icon: 'IconTruckDelivery',
+      targetObjectUniversalIdentifier: PRODUCT_SUPPLIERINFO_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: PRODUCT_SUPPLIERINFO_FIELD_UNIVERSAL_IDENTIFIERS.product,
+    }),
+    oneToManyField({
+      universalIdentifier: PRODUCT_COMBO_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS.variantComboItems,
+      name: 'comboItems',
+      label: 'Combo options',
+      icon: 'IconListCheck',
+      targetObjectUniversalIdentifier: PRODUCT_COMBO_ITEM_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: PRODUCT_COMBO_ITEM_FIELD_UNIVERSAL_IDENTIFIERS.product,
+    }),
+    filesField(FIELD_IDS.imageVariant, 'imageVariant', 'Variant image', 'IconPhoto'),
+  ],
+});

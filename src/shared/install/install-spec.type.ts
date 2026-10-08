@@ -31,10 +31,29 @@ export type BoardSpec = {
   hideWhere?: { fieldName: string; values: string[] };
 };
 
+export type SeedRow = {
+  seedKey: string;
+  values: Record<string, unknown>;
+  parentSeedKey?: string;
+  parentFieldName?: string;
+};
+
+export type SeedRowsSpec = { objectUniversalIdentifier: string; rows: SeedRow[] };
+
+export type ValidationRuleSpec = {
+  objectUniversalIdentifier: string;
+  name: string;
+  expression: string;
+  message: string;
+};
+
 export type ModuleInstallSpec = {
+  firstVersion: string;
   staffLists: StaffListSpec[];
   defaultRows: DefaultRowsSpec[];
+  seedRows: SeedRowsSpec[];
   boards: BoardSpec[];
+  validationRules: ValidationRuleSpec[];
 };
 
 export type InstallObject = {

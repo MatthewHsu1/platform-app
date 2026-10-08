@@ -28,7 +28,7 @@ import {
   UTM_SOURCE_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/utm/utm-universal-identifiers.constant';
 
-// The reference crm.lead. Field names follow the reference; `salesperson`, `leadType` and
+// `salesperson`, `leadType` and
 // `contactAddress` stand in for `user_id`, `type` and the address fields,
 // which Twenty reserves. Stage and Tags are not here: the install hook makes
 // them as staff lists.

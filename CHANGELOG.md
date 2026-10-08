@@ -2,6 +2,22 @@
 
 All notable changes to this application are documented in this file.
 
+## 2.2.0
+
+- Products and units of measure: products and their variants, attributes and
+  values, categories, tags, units of measure (30 default units), packaging barcodes, vendor
+  prices, pricelists and combos.
+- Save rules run after each save. Variants appear a few seconds after a save. A refused
+  change is undone with a note ("Change undone" or "Delete undone"); a refused new row is removed.
+- Deleting a product moves its variants, attributes, vendor prices and pricelist rules to the
+  trash; so does deleting a pricelist (its rules), an attribute (its values), a
+  category (its child categories and rules) or a unit (the units based on it, its packaging
+  barcodes and packaging links). An attribute any attribute line names, and a unit a product or
+  vendor price uses, cannot be deleted.
+- Turn on `IS_VALIDATION_RULES_ENABLED` for the workspace for the field checks: required names and
+  relations, margins, dates, and "a multi-checkbox attribute never makes variants". Without the
+  flag the app still undoes what its triggers can see, but Twenty accepts incomplete rows.
+
 ## 2.1.1
 
 - The row access settings page no longer crashes with "Cannot use 'in' operator to search for
@@ -15,10 +31,10 @@ All notable changes to this application are documented in this file.
 
 ## 2.0.0
 
-- The app is now "Platform", modelled on the reference. It replaces the Spirit app (same universal id).
+- The app is now "Platform", our generic business app. It replaces the Spirit app (same universal id).
 - CRM: Lead (`crmLead`, lead and opportunity in one record), Lost reason, and the buttons
   Convert to opportunity, Mark won, Mark lost and Restore.
-- UTM: Source, Medium and Campaign, with the reference's default rows.
+- UTM: Source, Medium and Campaign, with default rows.
 - A post-install hook makes the staff lists Stage and Tags and the Pipeline board.
 - Removed: Lead and Lead Source of 1.x, Meta intake, and conversion to Twenty's Opportunity.
   The upgrade deletes their tables.

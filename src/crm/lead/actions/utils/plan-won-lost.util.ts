@@ -4,7 +4,7 @@ export type LeadUpdatePlan =
   | { kind: 'refuse'; reason: string }
   | { kind: 'update'; data: Record<string, string | number | null> };
 
-// The reference crm.lead action_set_won: won from any state, probability 100, into the
+// Won from any state, probability 100, into the
 // won stage. Stage is a staff list here, so the move happens only while the
 // Won option exists.
 export const planMarkWon = ({
@@ -32,8 +32,8 @@ export const planMarkWon = ({
   };
 };
 
-// The reference action_set_lost: probability 0 and an optional reason. the reference also
-// archives the lead; Twenty has no archive, so views filter on wonStatus.
+// Probability 0 and an optional reason. The lead is not archived: Twenty has
+// no archive, so views filter on wonStatus.
 export const planMarkLost = ({
   wonStatus,
   lostReasonId,
@@ -53,7 +53,7 @@ export const planMarkLost = ({
   };
 };
 
-// The reference action_restore: back into the pipeline without its lost reason.
+// Back into the pipeline without its lost reason.
 export const planRestore = ({ wonStatus }: { wonStatus: string | null }): LeadUpdatePlan => {
   if (wonStatus !== WON_STATUS.LOST) {
     return { kind: 'refuse', reason: 'Only a lost lead can be restored.' };

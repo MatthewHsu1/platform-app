@@ -51,7 +51,7 @@ const text = (value: string | null | undefined) => {
   return trimmed !== undefined && trimmed.length > 0 ? trimmed : null;
 };
 
-// Twenty keeps first and last name apart; the reference keeps one name. The last word
+// A lead has one name; Twenty keeps first and last name apart. The last word
 // becomes the last name.
 const splitName = (fullName: string) => {
   const lastSpace = fullName.lastIndexOf(' ');
@@ -73,7 +73,7 @@ const personFromLead = (lead: LeadToConvert, name: string): PersonInput => {
   };
 };
 
-// The reference crm.lead convert_opportunity + _create_customer: a company from the
+// A company from the
 // company name, a contact from the contact name inside that company; with
 // neither, a contact named after the lead.
 export const planLeadConversion = ({

@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { type InstallObject, type ModuleInstallSpec } from 'src/shared/install/install-spec.type';
+import {
+  type InstallObject,
+  type ModuleInstallSpec,
+  type SeedRowsSpec,
+} from 'src/shared/install/install-spec.type';
 import { type InstallApi, runInstall } from 'src/shared/install/utils/run-install.util';
 
 const LEAD = 'lead-universal-id';
 const REASON = 'reason-universal-id';
+const UOM_OBJECT = 'uom-universal-id';
 
 const SPEC: ModuleInstallSpec = {
+  firstVersion: '2.0.0',
   staffLists: [
     {
       objectUniversalIdentifier: LEAD,
@@ -32,6 +38,8 @@ const SPEC: ModuleInstallSpec = {
   defaultRows: [
     { objectUniversalIdentifier: REASON, names: ['Too expensive', 'Not enough stock'] },
   ],
+  seedRows: [],
+  validationRules: [],
   boards: [
     {
       objectUniversalIdentifier: LEAD,
@@ -45,15 +53,31 @@ const SPEC: ModuleInstallSpec = {
 
 type CreatedField = Parameters<InstallApi['createField']>[0];
 type CreatedBoard = Parameters<InstallApi['createBoard']>[0];
+type CreatedValidationRule = Parameters<InstallApi['createValidationRule']>[0];
+
+const EMPTY_SPEC: ModuleInstallSpec = {
+  firstVersion: '2.0.0',
+  staffLists: [],
+  defaultRows: [],
+  seedRows: [],
+  boards: [],
+  validationRules: [],
+};
 
 const makeFakeApi = ({
   leadFields = [{ id: 'f-won', name: 'wonStatus' }],
   reasonNames = [],
   viewNames = [],
+  seedKeys = {},
+  validationRuleNames = [],
+  validationRulesEnabled = true,
 }: {
   leadFields?: { id: string; name: string }[];
   reasonNames?: string[];
   viewNames?: string[];
+  seedKeys?: Record<string, Record<string, string>>;
+  validationRuleNames?: string[];
+  validationRulesEnabled?: boolean;
 } = {}) => {
   const state = {
     leadFields: [...leadFields],
@@ -62,6 +86,8 @@ const makeFakeApi = ({
     createdFields: [] as CreatedField[],
     createdRecords: [] as { object: string; names: string[] }[],
     createdBoards: [] as CreatedBoard[],
+    createdSeedRows: [] as { object: string; values: Record<string, unknown> }[],
+    createdValidationRules: [] as CreatedValidationRule[],
   };
 
   const objects = (): InstallObject[] => [
@@ -77,6 +103,13 @@ const makeFakeApi = ({
       universalIdentifier: REASON,
       nameSingular: 'crmLostReason',
       namePlural: 'crmLostReasons',
+      fields: [],
+    },
+    {
+      id: 'o-uom',
+      universalIdentifier: UOM_OBJECT,
+      nameSingular: 'uomUom',
+      namePlural: 'uomUoms',
       fields: [],
     },
   ];
@@ -97,10 +130,22 @@ const makeFakeApi = ({
       state.createdBoards.push(input);
       state.viewNames.push(input.name);
     },
+    listSeedKeys: async (object) => new Map(Object.entries(seedKeys[object.nameSingular] ?? {})),
+    createSeedRow: async (object, values) => {
+      state.createdSeedRows.push({ object: object.nameSingular, values });
+      return `id-${String(values.seedKey)}`;
+    },
+    areValidationRulesEnabled: async () => validationRulesEnabled,
+    listValidationRuleNames: async () => [...validationRuleNames],
+    createValidationRule: async (input) => {
+      state.createdValidationRules.push(input);
+    },
   };
 
-  return { api, state };
+  return { api: Object.assign(api, { createdSeedRows: state.createdSeedRows, createdValidationRules: state.createdValidationRules }), state };
 };
+
+const fakeApi = (options: Parameters<typeof makeFakeApi>[0] = {}) => makeFakeApi(options).api;
 
 describe('runInstall', () => {
   it('makes the staff lists, default rows and board on a first install', async () => {
@@ -224,5 +269,91 @@ describe('runInstall', () => {
         previousVersion: undefined,
       }),
     ).rejects.toThrow('missing');
+  });
+});
+
+describe('seed rows', () => {
+  const units: SeedRowsSpec = {
+    objectUniversalIdentifier: UOM_OBJECT,
+    rows: [
+      { seedKey: 'uom.product_uom_unit', values: { name: 'Units', relativeFactor: 1 } },
+      {
+        seedKey: 'uom.product_uom_pack_6',
+        values: { name: 'Pack of 6', relativeFactor: 6 },
+        parentSeedKey: 'uom.product_uom_unit',
+        parentFieldName: 'relativeUom',
+      },
+    ],
+  };
+  const spec = { ...EMPTY_SPEC, firstVersion: '2.2.0', seedRows: [units] };
+
+  it('makes every seed row on the module install, parents first, linked by id', async () => {
+    const api = fakeApi();
+    await runInstall({ api, specs: [spec], previousVersion: '2.1.1' });
+    expect(api.createdSeedRows).toEqual([
+      { object: 'uomUom', values: { name: 'Units', relativeFactor: 1, seedKey: 'uom.product_uom_unit' } },
+      {
+        object: 'uomUom',
+        values: {
+          name: 'Pack of 6',
+          relativeFactor: 6,
+          seedKey: 'uom.product_uom_pack_6',
+          relativeUomId: 'id-uom.product_uom_unit',
+        },
+      },
+    ]);
+  });
+
+  it('makes none on an upgrade from the module version or later', async () => {
+    const api = fakeApi();
+    await runInstall({ api, specs: [spec], previousVersion: '2.2.0' });
+    expect(api.createdSeedRows).toEqual([]);
+  });
+
+  it('skips a seed key that already exists, even after a rename', async () => {
+    const api = fakeApi({ seedKeys: { uomUom: { 'uom.product_uom_unit': 'unit-id' } } });
+    await runInstall({ api, specs: [spec], previousVersion: undefined });
+    expect(api.createdSeedRows.map((row) => row.values.seedKey)).toEqual(['uom.product_uom_pack_6']);
+    expect(api.createdSeedRows[0].values.relativeUomId).toBe('unit-id');
+  });
+});
+
+describe('validation rules', () => {
+  const spec: ModuleInstallSpec = {
+    ...EMPTY_SPEC,
+    validationRules: [
+      {
+        objectUniversalIdentifier: UOM_OBJECT,
+        name: 'platform-uom-factor-not-zero',
+        expression: 'relativeFactor != 0',
+        message: 'A unit cannot contain 0 of its reference unit.',
+      },
+    ],
+  };
+
+  it('makes a rule that is missing', async () => {
+    const api = fakeApi();
+    await runInstall({ api, specs: [spec], previousVersion: undefined });
+    expect(api.createdValidationRules).toEqual([
+      {
+        objectMetadataId: 'o-uom',
+        name: 'platform-uom-factor-not-zero',
+        expression: 'relativeFactor != 0',
+        message: 'A unit cannot contain 0 of its reference unit.',
+      },
+    ]);
+  });
+
+  it('makes each rule once', async () => {
+    const api = fakeApi({ validationRuleNames: ['platform-uom-factor-not-zero'] });
+    await runInstall({ api, specs: [spec], previousVersion: undefined });
+    expect(api.createdValidationRules).toEqual([]);
+  });
+
+  it('skips all rules and reports it when the workspace flag is off', async () => {
+    const api = fakeApi({ validationRulesEnabled: false });
+    const result = await runInstall({ api, specs: [spec], previousVersion: undefined });
+    expect(api.createdValidationRules).toEqual([]);
+    expect(result.validationRulesSkipped).toBe(true);
   });
 });

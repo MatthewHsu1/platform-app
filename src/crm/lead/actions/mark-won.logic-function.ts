@@ -3,8 +3,6 @@ import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
 import {
   applyLeadUpdate,
   findLead,
-  jsonResponse,
-  readBody,
   readLeadId,
 } from 'src/crm/lead/actions/lead-action-route';
 import {
@@ -14,6 +12,7 @@ import {
 import { STAGE_FIELD_NAME } from 'src/crm/crm-options.constant';
 import { CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/crm/crm-universal-identifiers.constant';
 import { planMarkWon } from 'src/crm/lead/actions/utils/plan-won-lost.util';
+import { jsonResponse, readBody } from 'src/shared/route-response';
 import { twentyMetadata } from 'src/shared/twenty-graphql';
 
 // Stage is a staff list, so its options are read at click time from the

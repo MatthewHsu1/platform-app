@@ -1,17 +1,6 @@
-import { RestApiClient, RestApiClientError } from 'twenty-client-sdk/rest';
+import { RestApiClient } from 'twenty-client-sdk/rest';
 import { Command, enqueueSnackbar, useRecordId } from 'twenty-sdk/front-component';
-
-export const describeRouteError = (error: unknown, fallback: string) => {
-  if (error instanceof RestApiClientError) {
-    const body = error.body as { error?: unknown } | undefined;
-
-    if (typeof body?.error === 'string') {
-      return body.error;
-    }
-  }
-
-  return fallback;
-};
+import { describeRouteError } from 'src/shared/describe-route-error';
 
 export const postLeadAction = (routePath: string, body: Record<string, unknown>) =>
   new RestApiClient().post<{ leadId: string }>(`/s${routePath}`, body);

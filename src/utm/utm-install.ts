@@ -4,9 +4,9 @@ import {
   UTM_SOURCE_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/utm/utm-universal-identifiers.constant';
 
-// Default rows from the reference ERP utm/data/utm_source_data.xml and
-// utm_medium_data.xml. the reference ships no default campaigns.
+// Default sources and mediums. There are no default campaigns.
 export const UTM_INSTALL: ModuleInstallSpec = {
+  firstVersion: '2.0.0',
   staffLists: [],
   defaultRows: [
     {
@@ -40,5 +40,7 @@ export const UTM_INSTALL: ModuleInstallSpec = {
       ],
     },
   ],
+  seedRows: [],
   boards: [],
+  validationRules: [],
 };

@@ -4,6 +4,7 @@ import {
   APP_DESCRIPTION,
   APP_DISPLAY_NAME,
   APPLICATION_UNIVERSAL_IDENTIFIER,
+  PRODUCT_UNIT_DIGITS_VARIABLE_UNIVERSAL_IDENTIFIER,
   ROW_ACCESS_CONFIG_VARIABLE_UNIVERSAL_IDENTIFIER,
 } from 'src/constants/universal-identifiers';
 import { EMPTY_ROW_ACCESS_CONFIG } from 'src/row-access/constants/empty-row-access-config.constant';
@@ -22,6 +23,15 @@ export default defineApplication({
         'Edited on the Settings tab. Object, owner field and role ids are per workspace.',
       type: FieldType.RAW_JSON,
       value: JSON.stringify(EMPTY_ROW_ACCESS_CONFIG),
+      isSecret: false,
+    },
+    PRODUCT_UNIT_DIGITS: {
+      universalIdentifier: PRODUCT_UNIT_DIGITS_VARIABLE_UNIVERSAL_IDENTIFIER,
+      label: 'Unit rounding (decimals)',
+      description:
+        'Decimals kept when quantities change unit.',
+      type: FieldType.NUMBER,
+      value: 2,
       isSecret: false,
     },
   },

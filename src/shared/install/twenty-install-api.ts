@@ -1,6 +1,9 @@
 import { type InstallObject } from 'src/shared/install/install-spec.type';
 import { type InstallApi } from 'src/shared/install/utils/run-install.util';
+import { records } from 'src/shared/triggers/records';
 import { requireData, twentyGraphql, twentyMetadata } from 'src/shared/twenty-graphql';
+
+const FLAG_OFF_MESSAGE = 'Feature flag "IS_VALIDATION_RULES_ENABLED" is not enabled';
 
 const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
 
@@ -122,6 +125,61 @@ export const twentyInstallApi: InstallApi = {
         },
       ),
       `Filter view ${name}`,
+    );
+  },
+
+  listSeedKeys: async (object) => {
+    const found = await records(object.nameSingular, object.namePlural).find<{
+      id: string;
+      seedKey: string;
+    }>({ seedKey: { is: 'NOT_NULL' } }, 'id seedKey');
+
+    return new Map(found.map((row) => [row.seedKey, row.id]));
+  },
+
+  createSeedRow: async (object, values) => {
+    const [id] = await records(object.nameSingular, object.namePlural).createMany([values]);
+
+    return id;
+  },
+
+  areValidationRulesEnabled: async () => {
+    const objects = await twentyInstallApi.listObjects();
+    const response = await twentyMetadata(
+      'application',
+      `query Probe($objectMetadataId: UUID!) { validationRules(objectMetadataId: $objectMetadataId) { id } }`,
+      { objectMetadataId: objects[0]?.id },
+    );
+
+    if (response.errors?.some((error) => error.message.includes(FLAG_OFF_MESSAGE))) {
+      return false;
+    }
+    requireData(response, 'Probe validation rules');
+
+    return true;
+  },
+
+  listValidationRuleNames: async (objectMetadataId) => {
+    const data = requireData(
+      await twentyMetadata<{ validationRules: { name: string }[] }>(
+        'application',
+        `query Rules($objectMetadataId: UUID!) { validationRules(objectMetadataId: $objectMetadataId) { name } }`,
+        { objectMetadataId },
+      ),
+      'List validation rules',
+    );
+
+    return data.validationRules.map((rule) => rule.name);
+  },
+
+  createValidationRule: async (input) => {
+    requireData(
+      await twentyMetadata(
+        'application',
+        `mutation CreateRule($input: CreateValidationRuleInput!) { createValidationRule(input: $input) { id } }`,
+        { input },
+      ),
+      `Create validation rule ${input.name}`,
     );
   },
 };

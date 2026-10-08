@@ -5,10 +5,10 @@ import {
 } from 'src/crm/crm-universal-identifiers.constant';
 import { type ModuleInstallSpec } from 'src/shared/install/install-spec.type';
 
-// Stage defaults from the reference ERP crm/data/crm_stage_data.xml, lost reasons from
-// crm_lost_reason_data.xml. the reference ships no default tags, but Twenty refuses a
+// Default stages and lost reasons. There are no default tags, but Twenty refuses a
 // SELECT or MULTI_SELECT with no options, so Tags starts with one.
 export const CRM_INSTALL: ModuleInstallSpec = {
+  firstVersion: '2.0.0',
   staffLists: [
     {
       objectUniversalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -39,6 +39,7 @@ export const CRM_INSTALL: ModuleInstallSpec = {
       names: ['Too expensive', "We don't have people/skills", 'Not enough stock'],
     },
   ],
+  seedRows: [],
   boards: [
     {
       objectUniversalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -48,4 +49,5 @@ export const CRM_INSTALL: ModuleInstallSpec = {
       hideWhere: { fieldName: 'wonStatus', values: [WON_STATUS.LOST] },
     },
   ],
+  validationRules: [],
 };

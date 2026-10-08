@@ -25,18 +25,41 @@ export type InstallApi = {
     groupByFieldMetadataId: string;
     hideWhere?: { fieldMetadataId: string; values: string[] };
   }) => Promise<void>;
+  listSeedKeys: (object: InstallObject) => Promise<Map<string, string>>;
+  createSeedRow: (object: InstallObject, values: Record<string, unknown>) => Promise<string>;
+  areValidationRulesEnabled: () => Promise<boolean>;
+  listValidationRuleNames: (objectMetadataId: string) => Promise<string[]>;
+  createValidationRule: (input: {
+    objectMetadataId: string;
+    name: string;
+    expression: string;
+    message: string;
+  }) => Promise<void>;
 };
 
-const PLATFORM_MAJOR_VERSION = 2;
+const versionParts = (version: string) =>
+  version.split('.').map((part) => Number.parseInt(part, 10) || 0);
 
-// Default rows go in once, when the platform is first installed (fresh, or
-// over the 1.x app). Later runs skip them so rows staff delete stay deleted.
-const isFirstPlatformInstall = (previousVersion: string | undefined) => {
+// Default and seed rows go in once, when a module is first installed (fresh,
+// or on an upgrade from before the module's first version). Later runs skip
+// them so rows staff delete stay deleted.
+const isNewModule = (previousVersion: string | undefined, firstVersion: string) => {
   if (previousVersion === undefined || previousVersion.length === 0) {
     return true;
   }
 
-  return Number.parseInt(previousVersion.split('.')[0], 10) < PLATFORM_MAJOR_VERSION;
+  const previous = versionParts(previousVersion);
+  const first = versionParts(firstVersion);
+
+  for (let index = 0; index < 3; index += 1) {
+    const difference = (previous[index] ?? 0) - (first[index] ?? 0);
+
+    if (difference !== 0) {
+      return difference < 0;
+    }
+  }
+
+  return false;
 };
 
 const findObject = (objects: InstallObject[], universalIdentifier: string) => {
@@ -99,14 +122,42 @@ export const runInstall = async ({
     objects = await api.listObjects();
   }
 
-  if (isFirstPlatformInstall(previousVersion)) {
-    for (const rows of specs.flatMap((spec) => spec.defaultRows)) {
+  for (const spec of specs) {
+    if (!isNewModule(previousVersion, spec.firstVersion)) {
+      continue;
+    }
+
+    for (const rows of spec.defaultRows) {
       const object = findObject(objects, rows.objectUniversalIdentifier);
       const existing = new Set(await api.listRecordNames(object));
       const missing = rows.names.filter((name) => !existing.has(name));
 
       if (missing.length > 0) {
         await api.createRecords(object, missing);
+      }
+    }
+
+    for (const { objectUniversalIdentifier, rows } of spec.seedRows) {
+      const object = findObject(objects, objectUniversalIdentifier);
+      const idBySeedKey = await api.listSeedKeys(object);
+
+      for (const row of rows) {
+        if (idBySeedKey.has(row.seedKey)) {
+          continue;
+        }
+
+        const values: Record<string, unknown> = { ...row.values, seedKey: row.seedKey };
+
+        if (row.parentSeedKey !== undefined && row.parentFieldName !== undefined) {
+          const parentId = idBySeedKey.get(row.parentSeedKey);
+
+          if (parentId === undefined) {
+            throw new Error(`Install: seed row ${row.seedKey} needs ${row.parentSeedKey} first`);
+          }
+          values[`${row.parentFieldName}Id`] = parentId;
+        }
+
+        idBySeedKey.set(row.seedKey, await api.createSeedRow(object, values));
       }
     }
   }
@@ -146,5 +197,28 @@ export const runInstall = async ({
     }
   }
 
-  return { skippedBoards };
+  let validationRulesSkipped = false;
+  const validationRules = specs.flatMap((spec) => spec.validationRules);
+
+  if (validationRules.length > 0) {
+    if (await api.areValidationRulesEnabled()) {
+      for (const rule of validationRules) {
+        const object = findObject(objects, rule.objectUniversalIdentifier);
+        const existingNames = await api.listValidationRuleNames(object.id);
+
+        if (!existingNames.includes(rule.name)) {
+          await api.createValidationRule({
+            objectMetadataId: object.id,
+            name: rule.name,
+            expression: rule.expression,
+            message: rule.message,
+          });
+        }
+      }
+    } else {
+      validationRulesSkipped = true;
+    }
+  }
+
+  return { skippedBoards, validationRulesSkipped };
 };

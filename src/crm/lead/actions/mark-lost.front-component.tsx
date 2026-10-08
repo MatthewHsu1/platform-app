@@ -7,11 +7,12 @@ import {
   useRecordId,
 } from 'twenty-sdk/front-component';
 
-import { describeRouteError, postLeadAction } from 'src/crm/lead/actions/lead-action-command';
+import { postLeadAction } from 'src/crm/lead/actions/lead-action-command';
 import {
   MARK_LOST_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
   MARK_LOST_ROUTE_PATH,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
+import { describeRouteError } from 'src/shared/describe-route-error';
 
 type LostReason = { id: string; name: string };
 
@@ -56,7 +57,7 @@ const STYLES = {
   },
 };
 
-// The reference asks for a lost reason in a wizard; the reason is optional there too.
+// The lost reason is optional.
 const MarkLost = () => {
   const recordId = useRecordId();
   const [reasons, setReasons] = useState<LostReason[] | null>(null);

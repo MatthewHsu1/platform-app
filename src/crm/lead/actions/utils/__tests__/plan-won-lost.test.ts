@@ -33,7 +33,7 @@ describe('planMarkWon', () => {
     });
   });
 
-  it('wins a lost lead straight away, as the reference does', () => {
+  it('wins a lost lead straight away', () => {
     expect(planMarkWon({ wonStatus: 'LOST', stageOptionValues: [], now: NOW })).toMatchObject({
       kind: 'update',
       data: { wonStatus: 'WON', lostReasonId: null },
@@ -56,7 +56,7 @@ describe('planMarkLost', () => {
     });
   });
 
-  it('allows no reason, as the reference does', () => {
+  it('allows no reason', () => {
     expect(planMarkLost({ wonStatus: 'PENDING', lostReasonId: null, now: NOW })).toMatchObject({
       data: { lostReasonId: null },
     });

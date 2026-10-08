@@ -2,8 +2,6 @@ import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
 
 import {
   findLead,
-  jsonResponse,
-  readBody,
   readLeadId,
 } from 'src/crm/lead/actions/lead-action-route';
 import {
@@ -15,6 +13,7 @@ import {
   planLeadConversion,
 } from 'src/crm/lead/actions/utils/plan-lead-conversion.util';
 import { describeGraphqlErrors, twentyGraphql } from 'src/shared/twenty-graphql';
+import { jsonResponse, readBody } from 'src/shared/route-response';
 
 const findPersonIdByEmail = async (email: string | null | undefined) => {
   if (!email) {

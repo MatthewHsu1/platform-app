@@ -15,22 +15,42 @@ const TOKEN_ENV_NAME_BY_CALLER: Record<GraphqlCaller, string> = {
   application: 'TWENTY_APP_APPLICATION_ACCESS_TOKEN',
 };
 
+// Twenty allows an app 500 requests a minute (APPLICATION_API_RATE_LIMITING_LIMIT).
+// A burst, such as a product import, waits for the window instead of failing.
+const RATE_LIMIT_MESSAGE = 'Rate limit exceeded';
+const RATE_LIMIT_WAIT_MS = 5_000;
+const RATE_LIMIT_ATTEMPTS = 24;
+
+const isRateLimited = (response: GraphqlResponse<unknown>) =>
+  (response.errors ?? []).some((error) => error.message.includes(RATE_LIMIT_MESSAGE));
+
 const post = async <TData>(
   path: '/graphql' | '/metadata',
   caller: GraphqlCaller,
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<GraphqlResponse<TData>> => {
-  const response = await fetch(`${process.env.TWENTY_API_URL}${path}`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${process.env[TOKEN_ENV_NAME_BY_CALLER[caller]]}`,
-    },
-    body: JSON.stringify({ query, variables }),
-  });
+  for (let attempt = 1; ; attempt += 1) {
+    const response = await fetch(`${process.env.TWENTY_API_URL}${path}`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${process.env[TOKEN_ENV_NAME_BY_CALLER[caller]]}`,
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+    const result = (await response.json()) as GraphqlResponse<TData>;
 
-  return (await response.json()) as GraphqlResponse<TData>;
+    if (!isRateLimited(result)) {
+      return result;
+    }
+    if (attempt >= RATE_LIMIT_ATTEMPTS) {
+      throw new Error(
+        `Twenty's rate limit for apps was still exceeded after ${RATE_LIMIT_ATTEMPTS} tries ${RATE_LIMIT_WAIT_MS / 1_000} s apart: ${describeGraphqlErrors(result.errors)}`,
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_WAIT_MS));
+  }
 };
 
 export const twentyGraphql = <TData>(

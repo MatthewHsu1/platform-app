@@ -3,8 +3,6 @@ import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
 import {
   applyLeadUpdate,
   findLead,
-  jsonResponse,
-  readBody,
   readLeadId,
 } from 'src/crm/lead/actions/lead-action-route';
 import {
@@ -12,6 +10,7 @@ import {
   RESTORE_LEAD_ROUTE_PATH,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
 import { planRestore } from 'src/crm/lead/actions/utils/plan-won-lost.util';
+import { jsonResponse, readBody } from 'src/shared/route-response';
 
 const handler = async (payload: RoutePayload) => {
   const leadId = readLeadId(readBody(payload));
