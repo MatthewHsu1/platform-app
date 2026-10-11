@@ -51,6 +51,13 @@ export type SeedRow = {
 
 export type SeedRowsSpec = { objectUniversalIdentifier: string; rows: SeedRow[] };
 
+// Rows made by name in an older version get the key of the default row they
+// are, so code can find them after an upgrade.
+export type SeedKeyBackfillSpec = {
+  objectUniversalIdentifier: string;
+  keys: { seedKey: string; name: string }[];
+};
+
 export type ValidationRuleSpec = {
   objectUniversalIdentifier: string;
   name: string;
@@ -66,6 +73,7 @@ export type ModuleInstallSpec = {
   boards: BoardSpec[];
   validationRules: ValidationRuleSpec[];
   viewSorts?: ViewSortSpec[];
+  seedKeyBackfills?: SeedKeyBackfillSpec[];
 };
 
 export type InstallObject = {

@@ -32,6 +32,8 @@ export type InstallApi = {
   createViewSort: (input: { viewId: string; fieldMetadataId: string; direction: 'ASC' | 'DESC' }) => Promise<void>;
   listSeedKeys: (object: InstallObject) => Promise<Map<string, string>>;
   createSeedRow: (object: InstallObject, values: Record<string, unknown>) => Promise<string>;
+  listUnkeyedRows: (object: InstallObject, names: string[]) => Promise<{ id: string; name: string; createdAt: string }[]>;
+  setSeedKey: (object: InstallObject, id: string, seedKey: string) => Promise<void>;
   areValidationRulesEnabled: () => Promise<boolean>;
   listValidationRuleNames: (objectMetadataId: string) => Promise<string[]>;
   createValidationRule: (input: {
@@ -163,6 +165,32 @@ export const runInstall = async ({
         }
 
         idBySeedKey.set(row.seedKey, await api.createSeedRow(object, values));
+      }
+    }
+
+    for (const backfill of spec.seedKeyBackfills ?? []) {
+      const object = findObject(objects, backfill.objectUniversalIdentifier);
+      const held = await api.listSeedKeys(object);
+      const missing = backfill.keys.filter((key) => !held.has(key.seedKey));
+
+      if (missing.length === 0) {
+        continue;
+      }
+
+      // The oldest row with exactly the default name is the default row; a
+      // key whose row was renamed or deleted stays unused.
+      const candidates = (await api.listUnkeyedRows(object, missing.map((key) => key.name))).sort(
+        (left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id),
+      );
+      const taken = new Set<string>();
+
+      for (const key of missing) {
+        const row = candidates.find((candidate) => candidate.name === key.name && !taken.has(candidate.id));
+
+        if (row !== undefined) {
+          taken.add(row.id);
+          await api.setSeedKey(object, row.id, key.seedKey);
+        }
       }
     }
   }

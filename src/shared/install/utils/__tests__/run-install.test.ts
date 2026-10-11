@@ -139,6 +139,8 @@ const makeFakeApi = ({
       state.createdSeedRows.push({ object: object.nameSingular, values });
       return `id-${String(values.seedKey)}`;
     },
+    listUnkeyedRows: async () => [],
+    setSeedKey: async () => undefined,
     areValidationRulesEnabled: async () => validationRulesEnabled,
     listValidationRuleNames: async () => [...validationRuleNames],
     createValidationRule: async (input) => {
@@ -485,5 +487,67 @@ describe('view sorts', () => {
 
     expect(state.createdBoards.slice(boardsBefore)).toEqual([]);
     expect(state.createdViewSorts.slice(sortsBefore)).toEqual([]);
+  });
+});
+
+describe('runInstall seed key backfill', () => {
+  const SOURCE = 'source-universal-id';
+  const BACKFILL_SPEC: ModuleInstallSpec = {
+    ...EMPTY_SPEC,
+    firstVersion: '2.4.0',
+    seedKeyBackfills: [
+      {
+        objectUniversalIdentifier: SOURCE,
+        keys: [
+          { seedKey: 'utm.utm_source_referral', name: 'Referral' },
+          { seedKey: 'utm.utm_source_newsletter', name: 'Newsletter' },
+          { seedKey: 'utm.utm_source_monster', name: 'Monster' },
+        ],
+      },
+    ],
+  };
+
+  const backfillApi = (rows: { id: string; name: string; createdAt: string; seedKey: string | null }[]) => {
+    const keysSet: { id: string; seedKey: string }[] = [];
+    const api: InstallApi = {
+      ...fakeApi(),
+      listObjects: async () => [{ id: 'o-source', universalIdentifier: SOURCE, nameSingular: 'utmSource', namePlural: 'utmSources', fields: [] }],
+      listSeedKeys: async () => new Map(rows.flatMap((row) => (row.seedKey === null ? [] : [[row.seedKey, row.id] as [string, string]]))),
+      listUnkeyedRows: async (_object, names) =>
+        rows.filter((row) => row.seedKey === null && names.includes(row.name)).map(({ id, name, createdAt }) => ({ id, name, createdAt })),
+      setSeedKey: async (_object, id, seedKey) => {
+        keysSet.push({ id, seedKey });
+        const row = rows.find((candidate) => candidate.id === id);
+
+        if (row !== undefined) {
+          row.seedKey = seedKey;
+        }
+      },
+    };
+
+    return { api, keysSet };
+  };
+
+  it('gives each key to the oldest row with exactly the default name on an upgrade', async () => {
+    const { api, keysSet } = backfillApi([
+      { id: 'referral-copy', name: 'Referral', createdAt: '2026-03-01T00:00:00.000Z', seedKey: null },
+      { id: 'referral', name: 'Referral', createdAt: '2026-01-01T00:00:00.000Z', seedKey: null },
+      { id: 'renamed', name: 'Our newsletter', createdAt: '2026-01-01T00:00:00.000Z', seedKey: null },
+      { id: 'monster', name: 'Monster', createdAt: '2026-01-01T00:00:00.000Z', seedKey: 'utm.utm_source_monster' },
+    ]);
+
+    await runInstall({ api, specs: [BACKFILL_SPEC], previousVersion: '2.3.0' });
+
+    expect(keysSet).toEqual([{ id: 'referral', seedKey: 'utm.utm_source_referral' }]);
+  });
+
+  it('writes nothing when run again', async () => {
+    const { api, keysSet } = backfillApi([{ id: 'referral', name: 'Referral', createdAt: '2026-01-01T00:00:00.000Z', seedKey: null }]);
+
+    await runInstall({ api, specs: [BACKFILL_SPEC], previousVersion: '2.3.0' });
+    keysSet.length = 0;
+    await runInstall({ api, specs: [BACKFILL_SPEC], previousVersion: '2.3.0' });
+
+    expect(keysSet).toEqual([]);
   });
 });

@@ -18,7 +18,7 @@ import { trimIndexViews } from 'src/shared/install/trim-index-views';
 import { twentyInstallApi } from 'src/shared/install/twenty-install-api';
 import { runInstall } from 'src/shared/install/utils/run-install.util';
 import { UOM_INSTALL } from 'src/uom/uom-install';
-import { UTM_INSTALL } from 'src/utm/utm-install';
+import { UTM_INSTALL, UTM_STAGE_INSTALL } from 'src/utm/utm-install';
 
 // The hook may run 300 s and hiding one list column takes about a second, so the column trim
 // stops starting new columns after this and the next install goes on.
@@ -28,7 +28,7 @@ const handler = async ({ previousVersion }: InstallPayload) => {
   const startedAt = Date.now();
   const { skippedBoards, validationRulesSkipped, skippedViewSorts } = await runInstall({
     api: twentyInstallApi,
-    specs: [UTM_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, SALES_TEAM_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL],
+    specs: [UTM_INSTALL, UTM_STAGE_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, SALES_TEAM_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL],
     previousVersion,
   });
   await finishStockInstall(previousVersion);

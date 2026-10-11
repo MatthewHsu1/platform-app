@@ -7,6 +7,7 @@ import { emailState } from 'src/crm/lead/utils/email.util';
 import { findStage } from 'src/crm/lead/utils/find-stage.util';
 import { planMoney } from 'src/crm/lead/utils/money.util';
 import { phoneState } from 'src/crm/lead/utils/phone.util';
+import { planPartnerSync } from 'src/crm/lead/utils/plan-partner-sync.util';
 import { planTeamDefault } from 'src/crm/lead/utils/plan-team-default.util';
 import { sameProbability } from 'src/crm/lead/utils/probability.util';
 import { cleanWebsite } from 'src/crm/lead/utils/website.util';
@@ -83,6 +84,24 @@ export const planLeadComputes = (input: LeadComputesInput): Partial<LeadRow> => 
 
     if (partnerName !== null) {
       set('name', (input.opportunityNameTemplate ?? DEFAULT_OPPORTUNITY_NAME_TEMPLATE).replace('{name}', partnerName));
+    }
+  }
+
+  if (operation !== 'restored') {
+    const person = lead.personId === null ? null : (context.people.get(lead.personId) ?? null);
+    const company = lead.companyId === null ? null : (context.companies.get(lead.companyId) ?? null);
+    const personCompany = person === null || person.companyId === null ? null : (context.companies.get(person.companyId) ?? null);
+    const partnerValues = planPartnerSync({
+      lead,
+      person,
+      company,
+      personCompany,
+      changed: { person: changed('personId'), company: changed('companyId') },
+      protectedFields: written,
+    });
+
+    for (const [field, value] of Object.entries(partnerValues)) {
+      set(field as keyof LeadRow, value as LeadRow[keyof LeadRow]);
     }
   }
 

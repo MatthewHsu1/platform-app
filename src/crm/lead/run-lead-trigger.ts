@@ -2,6 +2,7 @@ import { type ObjectRecordEvent } from 'twenty-sdk/define';
 
 import { readLeadRow } from 'src/crm/lead/lead-selection';
 import { type LeadEvent } from 'src/crm/lead/types/lead-event.type';
+import { type LeadPersonPush } from 'src/crm/lead/types/lead-person-push.type';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { type LeadTriggerApi } from 'src/crm/lead/types/lead-trigger-api.type';
 import { type StatusMoves } from 'src/crm/lead/types/status-moves.type';
@@ -45,6 +46,7 @@ export const makeRunLeadTrigger =
     const now = api.now();
     const errors = errorCollector();
     const moves: { lead: LeadRow; moves: StatusMoves }[] = [];
+    const pushes: LeadPersonPush[] = [];
     const locales = new Map<string | undefined, Promise<string>>();
     const localeOf = (workspaceMemberId: string | undefined) => {
       const known = locales.get(workspaceMemberId) ?? api.memberLocale(workspaceMemberId);
@@ -87,12 +89,15 @@ export const makeRunLeadTrigger =
           await api.updateLead(current.id, plan.data);
         }
         if (plan.personPush !== null) {
-          await api.pushPerson(plan.personPush);
+          pushes.push({ leadId: current.id, push: plan.personPush, locale });
         }
         if (plan.statusMoves.won !== 0 || plan.statusMoves.lost !== 0) {
           moves.push({ lead: { ...current, ...plan.data } as LeadRow, moves: plan.statusMoves });
         }
       });
+    }
+    if (pushes.length > 0) {
+      await errors.run('contacts', () => api.pushPeople(pushes));
     }
     if (moves.length > 0) {
       await errors.run('scoring counts', () => api.applyStatusMoves(moves));

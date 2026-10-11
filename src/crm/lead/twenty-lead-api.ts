@@ -1,3 +1,4 @@
+import { applyPersonPushes } from 'src/crm/lead/apply-person-pushes';
 import { leadSelection, leadSelectionFields, readLeadRow } from 'src/crm/lead/lead-selection';
 import { loadLeadContext } from 'src/crm/lead/load-lead-context';
 import { type AppLeadWriteApi } from 'src/crm/lead/types/app-lead-write-api.type';
@@ -32,7 +33,7 @@ export const TWENTY_LEAD_TRIGGER_API: LeadTriggerApi = {
   destroyLead: async (id) => {
     await leads.destroyMany([id]);
   },
-  pushPerson: async () => undefined,
+  pushPeople: applyPersonPushes,
   applyStatusMoves,
   memberLocale: readMemberLocale,
   translate: (locale, message) => translate(locale, message),
@@ -45,4 +46,5 @@ export const TWENTY_APP_LEAD_WRITE_API: AppLeadWriteApi = {
   updateLeads: (ids, data) => leads.updateMany(ids, data),
   updateLeadWhere: (filter, data) => updateWhere({ ...LEADS, filter, data }),
   applyStatusMoves,
+  pushPeople: applyPersonPushes,
 };

@@ -4,6 +4,7 @@ import { type LeadSaveStep } from 'src/crm/lead/types/lead-save-step.type';
 import { type LeadWritePlan } from 'src/crm/lead/types/lead-write-plan.type';
 import { planLeadComputes } from 'src/crm/lead/utils/plan-lead-computes.util';
 import { planLeadSave } from 'src/crm/lead/utils/plan-lead-save.util';
+import { planPersonPush } from 'src/crm/lead/utils/plan-partner-sync.util';
 import { changedLeadValues, toLeadInput } from 'src/crm/lead/utils/to-lead-input.util';
 import { planWonStageRefusal, WON_STAGE_REFUSAL_MESSAGE } from 'src/crm/lead/utils/won-stage-refusal.util';
 import { statusMovesBetween } from 'src/crm/lead/utils/won-status.util';
@@ -68,6 +69,7 @@ export const composeLeadWrite = ({
   let state: LeadRow = isCreate || steps[0].before === null ? current : { ...current, ...pick(steps[0].before, allWritten) };
   let refusal: string | null = null;
   let touchesStatus = isCreate;
+  const pushed = new Set<string>();
 
   for (const step of steps) {
     const written = new Set(replayed(step.written));
@@ -114,14 +116,25 @@ export const composeLeadWrite = ({
     if (step.staff && [...savedFields].some((field) => STATUS_FIELDS.has(field))) {
       touchesStatus = true;
     }
+    if (step.staff) {
+      written.forEach((field) => pushed.add(field));
+    }
     state = next;
   }
 
   const data = toLeadInput(changedLeadValues(current, state));
   const statusMoves = touchesStatus ? statusMovesBetween(steps[0].before?.wonStatus ?? null, state.wonStatus) : NO_MOVES;
 
+  // The lead's contact takes a value staff wrote on the lead; a value the
+  // lead took from the contact in this same plan is equal and sends nothing.
+  const personPush = planPersonPush({
+    lead: state,
+    person: state.personId === null ? null : (context.people.get(state.personId) ?? null),
+    written: pushed,
+  });
+
   return refusal === null
-    ? { kind: 'write', data, statusMoves, personPush: null }
+    ? { kind: 'write', data, statusMoves, personPush }
     : { kind: 'refuse', reason: refusal, undo: { kind: 'putBack', data, statusMoves } };
 };
 

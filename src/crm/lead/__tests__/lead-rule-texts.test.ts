@@ -1,7 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-import { CRM_DELETE_REFUSAL_TEXTS, LEAD_RULE_TEXTS, MARK_WON_TEXTS, SALES_TEAM_RULE_TEXTS } from 'src/crm/lead/actions/mark-won.front-component';
+import {
+  CONTACT_SYNC_TEXTS,
+  CRM_DELETE_REFUSAL_TEXTS,
+  LEAD_RULE_TEXTS,
+  MARK_WON_TEXTS,
+  SALES_TEAM_RULE_TEXTS,
+  UTM_RULE_TEXTS,
+} from 'src/crm/lead/actions/mark-won.front-component';
+import { PERSON_PUSH_MESSAGES } from 'src/crm/lead/apply-person-pushes';
 import {
   MARK_WON_ALREADY_WON,
   MARK_WON_LOST,
@@ -14,6 +22,7 @@ import { LOST_REASON_IN_USE_MESSAGE } from 'src/crm/lost-reason/run-lost-reason-
 import { STAGE_IN_USE_MESSAGE } from 'src/crm/stage/run-stage-trigger';
 import { TEAM_MESSAGES } from 'src/sales-team/team/team-messages';
 import { NOT_ALLOWED_MESSAGE } from 'src/shared/not-allowed';
+import { UTM_MESSAGES } from 'src/utm/utm-messages';
 
 // The catalog the lead rules translate with: a text missing here reaches the user untranslated.
 const CATALOG = JSON.parse(readFileSync('locales/en.json', 'utf8')) as Record<string, unknown>;
@@ -38,6 +47,20 @@ describe('lead rule texts', () => {
 
     expect(SALES_TEAM_RULE_TEXTS.map((descriptor) => descriptor.message)).toEqual(notes);
     expect(notes.filter((text) => !(text in CATALOG))).toEqual([]);
+  });
+
+  it('lists the note of a contact that cannot take a lead email, and the catalog holds it', () => {
+    const notes = Object.values(PERSON_PUSH_MESSAGES);
+
+    expect(CONTACT_SYNC_TEXTS.map((descriptor) => descriptor.message)).toEqual(notes);
+    expect(notes.filter((text) => !(text in CATALOG))).toEqual([]);
+  });
+
+  it('lists every note and error of the campaign rules, and the catalog holds each', () => {
+    const texts = Object.values(UTM_MESSAGES);
+
+    expect(UTM_RULE_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
+    expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
   });
 
   it('lists every refusal of Mark won, and the catalog holds each answer of its route', () => {

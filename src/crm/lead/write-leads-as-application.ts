@@ -1,6 +1,7 @@
 import { TWENTY_APP_LEAD_WRITE_API } from 'src/crm/lead/twenty-lead-api';
 import { type AppLeadWrite } from 'src/crm/lead/types/app-lead-write.type';
 import { type AppLeadWriteApi } from 'src/crm/lead/types/app-lead-write-api.type';
+import { type LeadPersonPush } from 'src/crm/lead/types/lead-person-push.type';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { type StatusMoves } from 'src/crm/lead/types/status-moves.type';
 import { planLeadWrite } from 'src/crm/lead/utils/plan-lead-write.util';
@@ -20,6 +21,7 @@ export const makeWriteLeadsAsApplication =
     const skipped: string[] = [];
     const unguarded: { id: string; data: Record<string, unknown> }[] = [];
     const movesOf = new Map<string, { lead: LeadRow; moves: StatusMoves }>();
+    const pushOf = new Map<string, LeadPersonPush>();
 
     for (const write of writes) {
       const lead = byId.get(write.leadId);
@@ -51,6 +53,9 @@ export const makeWriteLeadsAsApplication =
         written.push(write.leadId);
         continue;
       }
+      if (plan.personPush !== null) {
+        pushOf.set(write.leadId, { leadId: write.leadId, push: plan.personPush, locale: null });
+      }
       if (plan.statusMoves.won !== 0 || plan.statusMoves.lost !== 0) {
         movesOf.set(write.leadId, { lead: { ...after, ...plan.data } as LeadRow, moves: plan.statusMoves });
       }
@@ -81,6 +86,15 @@ export const makeWriteLeadsAsApplication =
       return move === undefined ? [] : [move];
     });
 
+    const pushes = written.flatMap((id) => {
+      const push = pushOf.get(id);
+
+      return push === undefined ? [] : [push];
+    });
+
+    if (pushes.length > 0) {
+      await errors.run('contacts', () => api.pushPeople(pushes));
+    }
     if (moves.length > 0) {
       await errors.run('scoring counts', () => api.applyStatusMoves(moves));
     }

@@ -30,6 +30,21 @@ export const SALES_TEAM_RULE_TEXTS = [
   msg('{name} is already an active member of this team. The new or changed membership was undone.'),
 ];
 
+// The note a lead gets when its contact cannot take its email
+// (src/crm/lead/apply-person-pushes.ts), listed for the extractor the same way.
+export const CONTACT_SYNC_TEXTS = [msg("The contact's email was not changed: another contact already uses this address.")];
+
+// The notes and errors of the campaign, source, medium and stage rules
+// (src/utm/utm-messages.ts), listed for the extractor the same way.
+export const UTM_RULE_TEXTS = [
+  msg('This source cannot be deleted: referrals use it.'),
+  msg('This medium cannot be deleted: other parts of the system rely on it.'),
+  msg('Some campaigns are in this stage. Move them to another stage first.'),
+  msg('The name "{name}" is already used. The change was undone.'),
+  msg('A campaign needs a name, a responsible and a stage. The change was undone.'),
+  msg('The save was undone and its new records removed: an archived record already has the name "{name}".'),
+];
+
 // The answers of the Mark won route, listed for the extractor the same way.
 export const MARK_WON_TEXTS = [
   msg('leadId is required.'),

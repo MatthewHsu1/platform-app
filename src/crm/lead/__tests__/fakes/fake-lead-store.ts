@@ -3,8 +3,11 @@ import { type ObjectRecordEvent } from 'twenty-sdk/define';
 import { leadSelectionFields } from 'src/crm/lead/lead-selection';
 import { type AppLeadWriteApi } from 'src/crm/lead/types/app-lead-write-api.type';
 import { type LeadContext } from 'src/crm/lead/types/lead-context.type';
+import { type LeadPersonPush } from 'src/crm/lead/types/lead-person-push.type';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { type LeadTriggerApi } from 'src/crm/lead/types/lead-trigger-api.type';
+import { type PartnerCompanyRow } from 'src/crm/lead/types/partner-company-row.type';
+import { type PartnerPersonRow } from 'src/crm/lead/types/partner-person-row.type';
 import { type StageRow } from 'src/crm/lead/types/stage-row.type';
 import { type StatusMoves } from 'src/crm/lead/types/status-moves.type';
 
@@ -31,7 +34,19 @@ export const leadEvent = (event: {
   properties: { before?: unknown; after: unknown; updatedFields?: string[] };
 }) => event as unknown as ObjectRecordEvent<Record<string, unknown>>;
 
-export const makeFakeLeadStore = ({ leads, stages, now }: { leads: LeadRow[]; stages: StageRow[]; now: string }) => {
+export const makeFakeLeadStore = ({
+  leads,
+  stages,
+  now,
+  people = [],
+  companies = [],
+}: {
+  leads: LeadRow[];
+  stages: StageRow[];
+  now: string;
+  people?: PartnerPersonRow[];
+  companies?: PartnerCompanyRow[];
+}) => {
   const rows = new Map(leads.map((row) => [row.id, row]));
   const writes: Write[] = [];
   const updateCalls: string[][] = [];
@@ -39,13 +54,15 @@ export const makeFakeLeadStore = ({ leads, stages, now }: { leads: LeadRow[]; st
   const destroyed: string[] = [];
   const moves: { lead: LeadRow; moves: StatusMoves }[] = [];
   const failOn = new Set<string>();
+  const pushes: LeadPersonPush[] = [];
+  const contacts = new Map(people.map((person) => [person.id, person]));
   const context: LeadContext = {
     stages,
     recurringPlanMonths: new Map(),
     teams: [],
     memberships: [],
-    people: new Map(),
-    companies: new Map(),
+    people: contacts,
+    companies: new Map(companies.map((company) => [company.id, company])),
   };
 
   const apply = (id: string, data: Record<string, unknown>) => {
@@ -79,7 +96,9 @@ export const makeFakeLeadStore = ({ leads, stages, now }: { leads: LeadRow[]; st
       rows.delete(id);
       destroyed.push(id);
     },
-    pushPerson: async () => undefined,
+    pushPeople: async (batch) => {
+      pushes.push(...batch);
+    },
     applyStatusMoves: async (batch) => {
       moves.push(...batch);
     },
@@ -106,6 +125,7 @@ export const makeFakeLeadStore = ({ leads, stages, now }: { leads: LeadRow[]; st
       return [id.eq];
     },
     applyStatusMoves: triggerApi.applyStatusMoves,
+    pushPeople: triggerApi.pushPeople,
   };
 
   // The events the app's own writes raise, as the next trigger batch sees them.
@@ -114,5 +134,5 @@ export const makeFakeLeadStore = ({ leads, stages, now }: { leads: LeadRow[]; st
       leadEvent({ recordId: write.id, properties: { before: write.before, after: write.after, updatedFields: write.fields } }),
     );
 
-  return { rows, writes, updateCalls, notes, destroyed, moves, failOn, triggerApi, writeApi, takeAppWriteEvents };
+  return { rows, writes, updateCalls, notes, destroyed, moves, failOn, pushes, contacts, triggerApi, writeApi, takeAppWriteEvents };
 };

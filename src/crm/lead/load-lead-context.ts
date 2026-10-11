@@ -19,8 +19,14 @@ type StageNode = {
 
 const presentIds = (values: (string | null)[]) => [...new Set(values.filter((value): value is string => value !== null))];
 
+const COMPANY_SELECTION =
+  'id name domainName { primaryLinkUrl primaryLinkLabel secondaryLinks } address { addressStreet1 addressStreet2 addressCity addressPostcode addressState addressCountry }';
+const companyRecords = records('company', 'companies');
+
 // One request for everything the lead rules read besides the leads. Stages,
 // plans and teams are few; contacts and customers only those of these leads.
+// A contact's own company, when the lead has another or none, is read after:
+// the company name comes from there when the lead has no customer company.
 export const loadLeadContext = async (leads: LeadRow[]): Promise<LeadContext> => {
   const { stages, plans, people, companies, ...teamLists } = await findMany<
     {
@@ -44,12 +50,16 @@ export const loadLeadContext = async (leads: LeadRow[]): Promise<LeadContext> =>
         'id name { firstName lastName } emails { primaryEmail additionalEmails } phones { primaryPhoneNumber primaryPhoneCountryCode primaryPhoneCallingCode additionalPhones } jobTitle companyId',
     },
     companies: {
-      of: records('company', 'companies'),
+      of: companyRecords,
       filter: { id: { in: presentIds(leads.map((lead) => lead.companyId)) } },
-      selection:
-        'id name domainName { primaryLinkUrl primaryLinkLabel secondaryLinks } address { addressStreet1 addressStreet2 addressCity addressPostcode addressState addressCountry }',
+      selection: COMPANY_SELECTION,
     },
   });
+  const knownCompanyIds = new Set(companies.map((company) => company.id));
+  const contactCompanies = await companyRecords.find<PartnerCompanyRow>(
+    { id: { in: presentIds(people.map((person) => person.companyId)).filter((id) => !knownCompanyIds.has(id)) } },
+    COMPANY_SELECTION,
+  );
   const { teams, memberships, stageTeamIds } = toTeamContext(teamLists);
 
   return {
@@ -69,6 +79,6 @@ export const loadLeadContext = async (leads: LeadRow[]): Promise<LeadContext> =>
     teams,
     memberships,
     people: new Map(people.map((person) => [person.id, person])),
-    companies: new Map(companies.map((company) => [company.id, company])),
+    companies: new Map([...companies, ...contactCompanies].map((company) => [company.id, company])),
   };
 };

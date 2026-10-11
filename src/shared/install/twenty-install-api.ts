@@ -184,6 +184,14 @@ export const twentyInstallApi: InstallApi = {
     return id;
   },
 
+  listUnkeyedRows: (object, names) =>
+    records(object.nameSingular, object.namePlural).find<{ id: string; name: string; createdAt: string }>(
+      { seedKey: { is: 'NULL' }, name: { in: names } },
+      'id name createdAt',
+    ),
+
+  setSeedKey: (object, id, seedKey) => records(object.nameSingular, object.namePlural).update(id, { seedKey }),
+
   areValidationRulesEnabled: async () => {
     const objects = await twentyInstallApi.listObjects();
     const response = await twentyMetadata(

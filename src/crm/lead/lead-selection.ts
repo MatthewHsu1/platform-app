@@ -1,4 +1,8 @@
+import { type AddressValue } from 'src/crm/lead/types/address-value.type';
+import { type EmailsValue } from 'src/crm/lead/types/emails-value.type';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
+import { type LinksValue } from 'src/crm/lead/types/links-value.type';
+import { type PhonesValue } from 'src/crm/lead/types/phones-value.type';
 import { textOrNull } from 'src/shared/utils/text-or-null.util';
 
 const MONEY = '{ amountMicros currencyCode }';
@@ -66,6 +70,29 @@ const composite = <TValue>(value: unknown, parts: Record<string, 'text' | 'list'
 
   return Object.values(read).every((part) => part === null) ? null : (read as TValue);
 };
+// A lead's composite values in the shape a read gives them, so a value built
+// from a contact or company compares equal to the stored one.
+export const readEmailsValue = (value: unknown) =>
+  composite<EmailsValue>(value, { primaryEmail: 'text', additionalEmails: 'list' });
+export const readPhonesValue = (value: unknown) =>
+  composite<PhonesValue>(value, {
+    primaryPhoneNumber: 'text',
+    primaryPhoneCountryCode: 'text',
+    primaryPhoneCallingCode: 'text',
+    additionalPhones: 'list',
+  });
+export const readLinksValue = (value: unknown) =>
+  composite<LinksValue>(value, { primaryLinkUrl: 'text', primaryLinkLabel: 'text', secondaryLinks: 'list' });
+export const readAddressValue = (value: unknown) =>
+  composite<AddressValue>(value, {
+    addressStreet1: 'text',
+    addressStreet2: 'text',
+    addressCity: 'text',
+    addressPostcode: 'text',
+    addressState: 'text',
+    addressCountry: 'text',
+  });
+
 const money = (value: unknown) => {
   const raw = objectOrNull<{ amountMicros?: unknown; currencyCode?: unknown }>(value);
 
@@ -105,22 +132,10 @@ export const readLeadRow = (node: Record<string, unknown>): LeadRow => ({
   dateDeadline: text(node.dateDeadline),
   dayOpen: numberOrNull(node.dayOpen),
   dayClose: numberOrNull(node.dayClose),
-  emailFrom: composite(node.emailFrom, { primaryEmail: 'text', additionalEmails: 'list' }),
-  phone: composite(node.phone, {
-    primaryPhoneNumber: 'text',
-    primaryPhoneCountryCode: 'text',
-    primaryPhoneCallingCode: 'text',
-    additionalPhones: 'list',
-  }),
-  website: composite(node.website, { primaryLinkUrl: 'text', primaryLinkLabel: 'text', secondaryLinks: 'list' }),
-  contactAddress: composite(node.contactAddress, {
-    addressStreet1: 'text',
-    addressStreet2: 'text',
-    addressCity: 'text',
-    addressPostcode: 'text',
-    addressState: 'text',
-    addressCountry: 'text',
-  }),
+  emailFrom: readEmailsValue(node.emailFrom),
+  phone: readPhonesValue(node.phone),
+  website: readLinksValue(node.website),
+  contactAddress: readAddressValue(node.contactAddress),
   contactName: text(node.contactName),
   partnerName: text(node.partnerName),
   jobPosition: text(node.jobPosition),

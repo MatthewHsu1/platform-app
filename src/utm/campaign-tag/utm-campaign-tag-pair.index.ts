@@ -1,0 +1,19 @@
+import { defineIndex } from 'twenty-sdk/define';
+
+import {
+  UTM_CAMPAIGN_TAG_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
+  UTM_CAMPAIGN_TAG_OBJECT_UNIVERSAL_IDENTIFIER,
+  UTM_CAMPAIGN_TAG_PAIR_INDEX_FIRST_FIELD_UNIVERSAL_IDENTIFIER,
+  UTM_CAMPAIGN_TAG_PAIR_INDEX_SECOND_FIELD_UNIVERSAL_IDENTIFIER,
+  UTM_CAMPAIGN_TAG_PAIR_INDEX_UNIVERSAL_IDENTIFIER,
+} from 'src/utm/utm-universal-identifiers.constant';
+
+export default defineIndex({
+  universalIdentifier: UTM_CAMPAIGN_TAG_PAIR_INDEX_UNIVERSAL_IDENTIFIER,
+  objectUniversalIdentifier: UTM_CAMPAIGN_TAG_OBJECT_UNIVERSAL_IDENTIFIER,
+  isUnique: true,
+  fields: [
+    { universalIdentifier: UTM_CAMPAIGN_TAG_PAIR_INDEX_FIRST_FIELD_UNIVERSAL_IDENTIFIER, fieldUniversalIdentifier: FIELD_IDS.campaign },
+    { universalIdentifier: UTM_CAMPAIGN_TAG_PAIR_INDEX_SECOND_FIELD_UNIVERSAL_IDENTIFIER, fieldUniversalIdentifier: FIELD_IDS.tag },
+  ],
+});

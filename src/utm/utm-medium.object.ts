@@ -4,7 +4,7 @@ import {
   CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS,
   CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/crm/crm-universal-identifiers.constant';
-import { activeField, oneToManyField } from 'src/shared/fields';
+import { activeField, oneToManyField, seedKeyField } from 'src/shared/fields';
 import {
   UTM_MEDIUM_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
   UTM_MEDIUM_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -28,5 +28,6 @@ export default defineObject({
       targetObjectUniversalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
       targetFieldUniversalIdentifier: CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS.medium,
     }),
+    seedKeyField(FIELD_IDS.seedKey),
   ],
 });
