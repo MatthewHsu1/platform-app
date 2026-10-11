@@ -1,4 +1,4 @@
-import { includingDeleted } from 'src/shared/triggers/records';
+import { includingDeleted, pruneEmptyLists } from 'src/shared/triggers/records';
 import { requireData, twentyGraphql } from 'src/shared/twenty-graphql';
 import { chunks } from 'src/shared/utils/chunks.util';
 
@@ -36,6 +36,19 @@ export const findAsPerson = async <TRow>(objectPlural: string, filterType: strin
   } while (after !== null);
 
   return rows;
+};
+
+// The same read, for a filter that may hold an empty `in` list: Twenty refuses
+// one, and such a filter matches nothing.
+export const findReadableAsPerson = async <TRow>(
+  objectPlural: string,
+  filterType: string,
+  filter: Record<string, unknown>,
+  selection: string,
+) => {
+  const sendable = pruneEmptyLists(filter);
+
+  return sendable === null ? [] : findAsPerson<TRow>(objectPlural, filterType, sendable, selection);
 };
 
 export const createAsPerson = async (objectPlural: string, inputType: string, data: Record<string, unknown>[]) => {

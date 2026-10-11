@@ -5,6 +5,7 @@ import { resumeRelocateLotBatch } from 'src/stock/lot/relocate-lot-batch';
 import { resumeRevert } from 'src/stock/move-line/actions/revert-inventory';
 import { releaseStaleClaim, resumeOrderClaim, resumeOrderRun } from 'src/stock/orderpoint/orderpoint-claims';
 import { resumeRelocatePackage } from 'src/stock/package/relocate-package';
+import { resumeAllocation } from 'src/stock/reports/reception/apply-allocation';
 import { resumeUnpack } from 'src/stock/package/unpack-package';
 import { resumeConfirm } from 'src/stock/picking/actions/confirm-pickings';
 import { resumeReturn } from 'src/stock/picking/actions/return-picking';
@@ -65,6 +66,9 @@ export const STALE_CLAIM_RESUMERS: Record<string, (recordId: string) => Promise<
   batchMerge: resumeBatchMerge,
   batchValidate: resumeBatchValidate,
   wave: resumeAddToWave,
+  // A stopped Allocate or Unallocate is finished from its stored plan; a
+  // claim a forecast reservation left, with no plan, is freed.
+  allocate: resumeAllocation,
 };
 
 export const resumeStaleClaims = async () => {
@@ -73,7 +77,11 @@ export const resumeStaleClaims = async () => {
 
   const errors = errorCollector();
 
-  for (const { key, action, recordId } of resume) {
+  // Stopped allocations first: until they finish, Validate, Unreserve and
+  // Check Availability of their transfers answer "try again".
+  const ordered = [...resume.filter((claim) => claim.action === 'allocate'), ...resume.filter((claim) => claim.action !== 'allocate')];
+
+  for (const { key, action, recordId } of ordered) {
     await errors.run(key, () => STALE_CLAIM_RESUMERS[action](recordId));
   }
   // Reported, not removed: the claim keeps its record held until its action resumes it.

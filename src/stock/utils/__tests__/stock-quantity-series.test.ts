@@ -18,11 +18,13 @@ const warehouseOfLocation = new Map<string, string | null>([
   ['customers', null],
   ['adjustment', null],
   ['transit', null],
+  ['wh1-transit', 'wh1'],
 ]);
 const usageOfLocation = new Map([
   ['wh1-stock', 'INTERNAL'],
   ['wh2-stock', 'INTERNAL'],
   ['transit', 'TRANSIT'],
+  ['wh1-transit', 'TRANSIT'],
 ]);
 const move = (overrides: Partial<StockQuantitySeriesMove>): StockQuantitySeriesMove => ({
   state: 'CONFIRMED',
@@ -118,6 +120,27 @@ describe('stockQuantitySeries', () => {
       }).map(({ incoming, outgoing }) => ({ incoming, outgoing }));
     expect(todayOf('wh1')).toEqual([{ incoming: 0, outgoing: -25 }]);
     expect(todayOf('wh2')).toEqual([{ incoming: 25, outgoing: 0 }]);
+  });
+
+  it('counts stock in a transit location inside a warehouse for that warehouse only', () => {
+    const quants = [
+      { locationId: 'wh1-transit', quantity: 5, reservedQuantity: 0, removalDate: null },
+      { locationId: 'transit', quantity: 7, reservedQuantity: 0, removalDate: null },
+    ];
+    const forecastOf = (warehouseId: string) =>
+      stockQuantitySeries({
+        warehouseId,
+        moves: [],
+        quants,
+        warehouseOfLocation,
+        usageOfLocation,
+        today: TODAY,
+        from: day(-1),
+        to: day(1),
+      }).map((row) => row.forecast);
+
+    expect(forecastOf('wh1')).toEqual([5, 5, 5]);
+    expect(forecastOf('wh2')).toEqual([0, 0, 0]);
   });
 
   it('uses the done quantity, not the demand, for a done move', () => {

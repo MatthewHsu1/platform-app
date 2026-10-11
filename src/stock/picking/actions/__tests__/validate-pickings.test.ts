@@ -70,6 +70,7 @@ const runner = (db: FakeStockDb) => {
     withClaim: claims.withClaim,
     openJournal: claims.openJournal,
     heldClaimKeys: claims.heldClaimKeys,
+    settleAllocations: async () => {},
     runStore: db,
     doneMoves: makeDoneMoves(db),
     createBackorder: makeCreateBackorder(db),
@@ -327,6 +328,45 @@ describe('validatePickings', () => {
     expect({ button: button.logged, unticked: unticked.logged }).toEqual({ button: [['out'], ['full']], unticked: [['out']] });
   });
 
+  it('answers "try again" while an allocation holds the transfer, and moves no stock', async () => {
+    const { claimStore, db, validatePickings } = await build();
+
+    await claimStore.store.create({ key: 'allocate:out', runId: 'allocation', startedAt: claimStore.store.now().toISOString() });
+
+    expect(await validatePickings(['out'], {})).toEqual({ kind: 'refused', reason: CLAIM_HELD_MESSAGE });
+    expect(db.pickings.get('out')?.state).not.toBe('DONE');
+    expect(db.quants.get(key('P', 'stock'))?.quantity).toBe(8);
+  });
+
+  it('answers "try again" when an allocation takes the transfer while the click is checked, and frees its claim', async () => {
+    const { claimStore, db } = await build();
+    const claims = makeClaims(claimStore.store);
+    const { validatePickings } = makeValidatePickings({
+      // The allocation starts after the first look and before this run holds the transfer.
+      prepareValidate: async (pickingIds) => {
+        await claimStore.store.create({ key: 'allocate:out', runId: 'allocation', startedAt: claimStore.store.now().toISOString() });
+        return { kind: 'ready', pickingIds, noBackorderIds: [], askedIds: [] };
+      },
+      withClaim: claims.withClaim,
+      openJournal: claims.openJournal,
+      heldClaimKeys: claims.heldClaimKeys,
+      settleAllocations: async () => {},
+      runStore: db,
+      doneMoves: makeDoneMoves(db),
+      createBackorder: makeCreateBackorder(db),
+      retryWaitingMoves: async () => {},
+      logLessQuantities: async () => {},
+      autoprint: async () => [],
+      receptionReportToShow: async () => [],
+      afterValidateBatch: async () => {},
+      sendDeliveryConfirmation: async () => {},
+    });
+
+    expect(await validatePickings(['out'], {})).toEqual({ kind: 'refused', reason: CLAIM_HELD_MESSAGE });
+    expect(db.quants.get(key('P', 'stock'))?.quantity).toBe(8);
+    expect([...claimStore.rows.keys()]).toEqual(['allocate:out']);
+  });
+
   it('returns a question unchanged and takes no claim', async () => {
     const { claimStore, db } = await build();
     const { validatePickings } = makeValidatePickings({
@@ -334,6 +374,7 @@ describe('validatePickings', () => {
       withClaim: makeClaims(claimStore.store).withClaim,
       openJournal: makeClaims(claimStore.store).openJournal,
       heldClaimKeys: makeClaims(claimStore.store).heldClaimKeys,
+      settleAllocations: async () => {},
       runStore: db,
       doneMoves: makeDoneMoves(db),
       createBackorder: makeCreateBackorder(db),

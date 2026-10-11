@@ -145,34 +145,10 @@ export const PRODUCT_TAG_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS = {
 
 
 export const PRODUCT_TEMPLATE_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
-  layout: '31d98942-0bcd-45e7-8077-1f67be7cb384',
-  tabGeneral: '57736b21-c115-460a-b303-8f8027202b71',
-  tabVariants: '4deeb99a-4236-4dd8-afb6-22d7737255fc',
-  tabSales: '4d4a22fe-8cdf-4f18-bf75-c39c96dc60f2',
-  tabPurchase: '9a520c5d-64e3-4299-bd7c-746eb627c4d2',
-  tabTimeline: 'b950ac33-5a07-4d88-9cf4-0d9b79f8deb8',
-  tabTasks: 'b8e4f6ab-15aa-4daa-a8d3-6cb5e9b9f063',
-  tabNotes: '59b3fb36-570a-4bb8-91c7-9f961598eef2',
-  tabFiles: 'cdf92a1d-196c-4df2-9f10-8f99252b5268',
-  widgetProductType: 'b5542d1b-858c-4f4b-bd5d-348067389f7f',
-  widgetCateg: '1a0e2c5c-69cf-4b31-8a3b-3ef9cfd2adc8',
-  widgetListPrice: 'd8ab9166-9935-412e-b82e-ce4434bf1696',
-  widgetStandardPrice: 'd1be0641-bd5e-41c9-9d5c-8a0f6bd5eb75',
-  widgetDefaultCode: '544d070b-b166-4500-88a2-19b0e5c46eed',
-  widgetBarcode: '57314a24-fe43-46eb-8486-4dcf8f73a8c2',
-  widgetUom: 'f3f8ea2f-a81b-46f0-b78a-a44bdc265811',
-  widgetUoms: '0bc55b7e-3a60-4a63-b46a-e958e6a5f91e',
-  widgetTags: '8433e256-caf1-4ee3-b404-c46daa9a95ed',
-  widgetSaleOk: '9663a406-276f-49f0-bf3e-4c81cc93d00c',
-  widgetPurchaseOk: 'a22add7c-5cc3-4834-9a89-f7b45a1f1141',
-  widgetDescription: '6e715017-a424-4fec-abcf-b0e96ce7fecb',
-  widgetProductVariants: 'f93ffccb-7a7c-4faf-a8a3-fe91cf988986',
-  widgetDescriptionSale: 'a82ffaf8-368b-4ec9-b0e5-5f8d6ca9490f',
-  widgetDescriptionPurchase: '6d8e80f8-5b95-411d-866e-9c804cdc0777',
-  widgetTimeline: '239e14c2-d0e3-4817-b616-5910a7bf4ffd',
-  widgetTasks: 'e81035e0-e09a-47a2-9114-3aa43989e6bc',
-  widgetNotes: '73096b35-56a3-42ec-a50d-6579e8a55f35',
-  widgetFiles: '29a0f7d5-d557-491d-8a59-c578fadab533',
+  tabVariants: '6db451b3-42ab-4434-b32a-83eeee8a9b06',
+  tabSales: '179a61d6-bce9-43fc-aa14-5d126cffd6d5',
+  tabPurchase: '3dfda6f6-20e3-43e5-b840-7edddb3e80db',
+  widgetProductVariants: '40e54ed1-e6fb-43f6-8695-e5b46a834b1f',
 } as const;
 
 export const PRODUCT_ATTRIBUTE_OBJECT_UNIVERSAL_IDENTIFIER =
@@ -303,8 +279,8 @@ export const PRODUCT_PRODUCT_ATTRIBUTE_FIELD_UNIVERSAL_IDENTIFIERS = {
   productTemplateAttributeValues: 'bdfb2dfe-e959-416f-b6e0-76e041e36cf7',
 } as const;
 export const PRODUCT_ATTRIBUTE_PAGE_LAYOUT_WIDGET_UNIVERSAL_IDENTIFIERS = {
-  widgetAttributeLines: 'e9f61305-bc71-4f61-9c7e-d1d8fff13822',
-  widgetExclusions: '95ccda44-e953-4c30-8615-92f701a980c6',
+  widgetAttributeLines: '1c6bdc70-027c-4a19-bff3-c4ee20420a31',
+  widgetExclusions: '01726820-89ca-43be-a472-9ab5be6661d7',
 } as const;
 
 export const PRODUCT_VARIANT_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS = {
@@ -402,8 +378,8 @@ export const PRODUCT_PRICING_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS = {
 } as const;
 
 export const PRODUCT_PRICING_PAGE_LAYOUT_WIDGET_UNIVERSAL_IDENTIFIERS = {
-  widgetPricelistRules: 'ca37d6a3-dfed-4dee-b9ae-b460547c8655',
-  widgetSellers: 'c06e6e6c-f1bb-4dd3-b089-28469bf552cb',
+  widgetPricelistRules: 'e3798559-bd9d-47ed-910c-b3eeea8a11b3',
+  widgetSellers: 'b92a0350-fe2f-4d7a-bec5-d6b5e652d9cd',
 } as const;
 
 export const PRODUCT_COMBO_OBJECT_UNIVERSAL_IDENTIFIER =
@@ -450,5 +426,5 @@ export const PRODUCT_COMBO_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS = {
 } as const;
 
 export const PRODUCT_COMBO_PAGE_LAYOUT_WIDGET_UNIVERSAL_IDENTIFIERS = {
-  widgetCombos: '5a334e63-8ded-444a-837f-23099949e069',
+  widgetCombos: '8c301d68-e86b-41d4-b98f-74ddebea4436',
 } as const;

@@ -100,6 +100,16 @@ describe('forecastLines for a delivery and its receipts', () => {
     ]);
     expect(lines[0].reservation).toEqual({ id: 'delivery', name: 'DELIVERY' });
   });
+
+  it('marks stock reserved by a move outside any transfer as reserved, with no transfer to name', () => {
+    const lines = run(
+      [move({ id: 'loose', state: 'ASSIGNED', productQty: 2, quantity: 2, pickingId: null, pickingName: null })],
+      [{ locationId: 'stock', quantity: 2 }],
+    );
+
+    expect(summary(lines)).toEqual([{ quantity: 2, in: null, out: null, filled: true }]);
+    expect(lines[0].reservation).toEqual({ id: null, name: '' });
+  });
 });
 
 describe('forecastLines with a receipt larger than the delivery', () => {

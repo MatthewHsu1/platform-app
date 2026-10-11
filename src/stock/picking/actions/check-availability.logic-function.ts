@@ -2,6 +2,7 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { assignPickings } from 'src/stock/picking/actions/assign-pickings';
 import { readRequestedPickingIds } from 'src/stock/picking/actions/read-requested-picking-ids';
+import { holdTransfers } from 'src/stock/reports/reception/allocation-holds';
 import { StockUserError } from 'src/stock/stock-errors';
 import { PICKING_STATE } from 'src/stock/stock-options.constant';
 import { stockMoves, stockPickings } from 'src/stock/stock-records';
@@ -19,6 +20,8 @@ import { type PickingRow } from 'src/stock/types/picking-row.type';
 const handler = stockRouteHandler(async (body) => {
   const pickingIds = await readRequestedPickingIds(body);
   const { productUnitDigits: digits } = readStockSettings();
+  // Read and reserved while no allocation changes these transfers.
+  return holdTransfers(pickingIds, async () => {
   const pickings = await stockPickings.find<PickingRow>({ id: { in: pickingIds } }, PICKING_ROW);
   const moves = await stockMoves.find<MoveRow>({ pickingId: { in: pickingIds } }, MOVE_ROW);
   const eligible = pickings.filter(
@@ -40,6 +43,7 @@ const handler = stockRouteHandler(async (body) => {
   await assignPickings(eligible.map((picking) => picking.id));
 
   return { pickingIds: eligible.map((picking) => picking.id) };
+  });
 });
 
 export default defineLogicFunction({
