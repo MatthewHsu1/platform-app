@@ -7,6 +7,7 @@ describe('planLessQuantityTasks', () => {
     expect(
       planLessQuantityTasks({
         digits: 2,
+        today: '2026-10-11',
         origins: [
           {
             pickingName: 'WH/PICK/00001',
@@ -38,6 +39,7 @@ describe('planLessQuantityTasks', () => {
       {
         pickingId: 'out1',
         assigneeId: 'u1',
+        dueAt: '2026-10-11T00:00:00.000Z',
         originPickingName: 'WH/PICK/00001',
         exceptions: [{ productName: 'Belt', uomName: 'Units', newQuantity: 3, oldQuantity: 5 }],
         impactedPickingNames: ['WH/RET/00001'],
@@ -48,6 +50,7 @@ describe('planLessQuantityTasks', () => {
   it('splits one following transfer by product responsible', () => {
     const tasks = planLessQuantityTasks({
       digits: 2,
+      today: '2026-10-11',
       origins: [
         { pickingName: 'IN1', productName: 'A', uomName: 'Units', demand: 2, pickedQuantity: 1, destinations: [{ pickingId: 'x', responsibleId: 'u1', downstreamPickingNames: [] }] },
         { pickingName: 'IN1', productName: 'B', uomName: 'Units', demand: 2, pickedQuantity: 1, destinations: [{ pickingId: 'x', responsibleId: null, downstreamPickingNames: [] }] },
