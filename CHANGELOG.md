@@ -2,6 +2,25 @@
 
 All notable changes to this application are documented in this file.
 
+## 2.3.0 (unreleased)
+
+- Inventory: warehouses, locations, operation types, transfers, moves and move lines, stock
+  levels, physical counts, scrap, returns and backorders; multi-step routes and rules, putaway
+  rules and storage categories; lots and serial numbers with expiry dates; packages and
+  consignment; reordering rules and the replenishment list; batch and wave transfers.
+- Stock levels change by compare-and-set and buttons that change stock take a claim, so two
+  people validating at once move the stock once. A daily job reserves, reorders, checks the stock
+  against the done moves and resumes stopped runs.
+- Screens: the Inventory menu, tabs on Twenty's record pages, the Overview, lists of at most 10
+  columns, saved views and the Moves Analysis page. Reports: forecast, inventory at date,
+  traceability, reception allocation, product routes.
+- Printing as printable pages and ZPL downloads; automatic print links at Validate; product, lot,
+  location, operation type, package and packaging labels; delivery signature with the signed
+  delivery slip saved on the transfer.
+- Three member roles ship with the app, assigned to nobody: Inventory User, Inventory
+  Administrator, Products: Create.
+- Screen text is translatable (`locales/`, English for now).
+
 ## 2.2.0
 
 - Products and units of measure: products and their variants, attributes and

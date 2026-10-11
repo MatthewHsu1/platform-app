@@ -4,8 +4,8 @@ Twenty app (twenty-sdk 2.45.0, same as the server). Read `README.md` first. Desi
 `docs/superpowers/specs/2026-10-06-twenty-platform-crm-design.md`.
 
 - One folder per module under `src/` (`src/crm/`, `src/utm/`, `src/uom/`,
-  `src/product/`). Each module keeps its universal
-  ids in `*-universal-identifiers.constant.ts`. New ids are random UUID v4, never changed after
+  `src/product/`, `src/stock/`, `src/stock-picking-batch/`, `src/product-expiry/`, `src/base/`).
+  Each module keeps its universal ids in `*-universal-identifiers.constant.ts`. New ids are random UUID v4, never changed after
   release.
 - Names: object = the module's reference model name in camelCase (`crm.lead` → `crmLead`); field = the
   reference field name in camelCase without `_id`/`_ids`. When Twenty reserves the name, pick a close one and note it
@@ -48,3 +48,21 @@ Twenty app (twenty-sdk 2.45.0, same as the server). Read `README.md` first. Desi
 - Validation-rule expressions name relation fields (`isDefined(productTmpl)`), never join columns
   (`productTmplId` does not parse). Fields the app fills after the save (vendor price
   `productTmpl`, template attribute value fields) get no required rule.
+- Stock levels change only through `applyQuantDelta` (compare-and-set on the row's `version`:
+  update where id and version match, retry on zero rows). Never write `quantity` or
+  `reservedQuantity` directly; reserved is recomputed by `recomputeReserved`.
+- A button that changes stock or moves takes a claim (`withClaim`, `src/shared/claims/`) and every
+  step after it is safe to run twice.
+- Each derived value has one writer (`recomputeMove`, `recomputePickingState`,
+  `recomputeProductQuantities`, `recomputeLocation`, ...). Buttons, triggers and the daily job
+  call that writer; nothing else writes the value.
+- Values a record page shows but nobody stores are computed on read by a route and shown by a
+  front component (`src/stock/facts/`), not stored.
+- Every user-visible string is translatable: `t`/`msg`/`Trans` in front components,
+  `translate()` in logic functions; run `yarn twenty dev:translations-extract` after adding text.
+- Front components: twenty-ui `Button`/`Input`, native `<select>` styled from theme tokens read
+  inside the component, no twenty-ui popups, no `<canvas>`, catch every error.
+- Never replace a record page. Add tabs to Twenty's generated page with `definePageLayoutTab`
+  (target: `getSystemRecordPageLayoutUniversalIdentifier` with the app id); fields stay on
+  Twenty's left side.
+- A list view shows at most 10 visible columns; every other field is a hidden column.

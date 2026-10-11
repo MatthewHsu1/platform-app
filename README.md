@@ -9,12 +9,12 @@ Our generic business app for Twenty, with a CRM, units of measure and a product 
 | `src/utm/` | Source, Medium, Campaign (`utmSource`, `utmMedium`, `utmCampaign`) |
 | `src/uom/` | Units of measure (`uomUom`) with 30 default units |
 | `src/product/` | Products (`productTemplate`), variants (`productProduct`), categories, tags, attributes and values, attribute lines, exclusions, packaging barcodes, vendor prices, pricelists and rules, combos |
+| `src/stock/`, `src/stock-picking-batch/`, `src/product-expiry/`, `src/base/` | Inventory: warehouses, locations, operation types, transfers, moves, stock levels, counts, scrap, returns, backorders, routes and rules, putaway, storage categories, lots and serial numbers, expiry dates, packages, consignment, reordering rules, batch and wave transfers, reports, printing, the delivery signature. `src/base/` holds number sequences |
 | `src/row-access/` | Row access: the settings tab that picks the owner-only objects, their owner field and the roles that see every row. The rules are the `ROW_ACCESS_CONFIG` variable |
 | `src/shared/install/` | The post-install hook |
 | `src/roles/` | The role the logic functions and the settings page run with, and three roles for staff, assigned to nobody: Inventory User, Inventory Administrator, Products: Create (`inventory-role-table.ts` lists their rights per object) |
 
-Later modules, each with its own design: Stock and parts orders, Work cases, Field
-service.
+Later modules, each with its own design: Sales, Purchase, Work cases, Field service.
 
 The application universal id must equal the server constant
 `SPIRIT_PLATFORM_APPLICATION_UNIVERSAL_IDENTIFIER`: the server reads the row access rules from
@@ -132,6 +132,107 @@ the upgrade then stops): the names in the object files, for example `listPrice`,
 `defaultCode`, `barcode`, `weight`, `volume`, `saleOk`, `purchaseOk`, `productType`, `categ`,
 `uom`, `active`, `sequence`, `priceExtra`, `lstPrice`, `createVariant`, `displayType`,
 `relativeFactor`, `completeName`.
+
+## Inventory
+
+Warehouses and their locations, operation types, transfers with their moves and move lines,
+stock levels per product, location, lot, package and owner, physical counts, scrap, returns,
+backorders, multi-step routes and rules, putaway rules, storage categories, lots and serial
+numbers with expiry dates, packages, consignment stock, reordering rules, batch and wave
+transfers (design: `docs/superpowers/specs/2026-10-08-platform-inventory-design.md`).
+
+**Stock levels.** A done move line adds to or takes from the stock level of its source and
+destination. Each stock level row carries a version; a write only lands when the version is
+still the one read (compare-and-set), so two runs never lose an update. Reserved quantities are
+summed again from the open move lines after each change. Stock may go negative.
+
+**Buttons that change stock** (Validate, also on a batch; Mark as Todo, Return, Scrap, Apply
+counts, Relocate, Allocation) first take a claim on the record. A second click while the first run
+works answers "This record is being processed. Try again in a moment." A run that stopped half
+way (server restart) is resumed by the next click on the same record after 15 minutes, or by the
+daily job.
+
+**The daily job** (once a day, as the app): reordering rules, reservations whose date has come,
+lot expiry alerts, removal of empty stock rows, the nightly stock check, resuming stopped runs,
+and the rest of the list trim (see Screens).
+
+**The nightly stock check** compares each stock level with the sum of its done move lines. A
+difference that is still there two minutes later, with no write in between, is fixed and a note
+on the stock level says so.
+
+**After a save.** As in Products, rules run after the save: a change that is not allowed is put
+back with a note ("Change undone", "Delete undone"); a refused new row is removed.
+
+**App variables** (Settings → Applications → Platform → Variables, admin only):
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `ANNUAL_INVENTORY_MONTH`, `ANNUAL_INVENTORY_DAY` | 12, 31 | Yearly count date (month 0: no yearly count) |
+| `REPLENISHMENT_HORIZON_DAYS` | 365 | How far reordering rules look ahead |
+| `SHOW_EXPECTED_QUANTITY_COUNT` | off | Print the quantity on hand on count sheets |
+| `PRODUCT_UNIT_DIGITS` | 2 | Decimals of quantities |
+
+**Roles.** The app ships three member roles, assigned to nobody: Inventory User, Inventory
+Administrator, Products: Create. An admin assigns them in Settings → Roles. A member holds one
+role, so there are no combined roles yet. Buttons that only a stock manager may use (Clear and
+Set to 0 on counts, Request a Count, Lock and Unlock, Relocate, the count conflict pop-up) need the
+right to update warehouses, which only Inventory Administrator has. Sign needs the right to update
+the transfer. The shipped roles keep Twenty's Member defaults for every other object, except
+that they may not destroy records. An admin's edit to a shipped role is undone by the next
+upgrade, because the app's definition wins: make a copy of a role to customise it.
+
+**Row access and Platform buttons.** While a row access rule is on, tick "Platform function role"
+on the see-all roles list (Settings → Applications → Platform), next to Admin and any role that
+must see every row. At the gate, with a rule on transfers and only Admin on the list, an Admin saw
+every transfer in Twenty's plain lists but only their own through Platform routes (the Overview
+counts, prints, Sign, Reserve); with the role ticked as well, the Admin saw all.
+
+**Screens.** Record pages are Twenty's own page with every field on the left; the app adds tabs
+for related lists and reports. Inventory lists open with at most 10 columns; the other fields are
+hidden columns staff can switch on. On install the app hides all but 10 columns of each object's
+"All" list once; a column staff show again stays shown. A fresh install finishes the trim within
+a day (the daily job carries on where the install stopped). Counts on the Overview open saved
+views of the list. Status buttons on a transfer open one record. Physical Inventory and My
+Counts sort by location only.
+
+**Printing.** A Print command gives a link that opens a printable page in a new browser tab
+(barcodes drawn on the page); print it from the browser. ZPL labels download as a `.zpl` file. A
+link works once and for 10 minutes. Nothing is saved, except the signed delivery slip, which is
+kept on the transfer. Operation types can offer slips and labels automatically at Validate, only
+for a Validate a person makes (a Validate the daily job resumes shows no links). Labels: Print
+Labels on products and transfers.
+
+**Delivery email.** The app sends none. An admin can build a Twenty workflow: Record is Updated on
+Transfers, state Done on a delivery, then Send Email from a connected mailbox. The workflow fires
+on transfers the app sets to Done, and its To field can use the contact person's email. A
+workspace needs a connected mailbox to send; the first test of this workflow, on a workspace with
+none, sent nothing.
+
+**Reports.** Inventory → Overview, Moves Analysis (a page with charts and the done moves);
+Forecasted (products, moves, reordering rules), Inventory at Date (product variants, opened from
+the variant list, pages of 80 with search), Traceability (lots, done transfers), Allocation
+(receipts), Product Routes Report (products).
+
+**Translations.** Screen text is translatable (`locales/`); English only for now. Refresh the
+catalog with `yarn twenty dev:translations-extract` after adding text. Record data (names,
+descriptions) is one language for everyone.
+
+**Known limits.**
+
+- Inventory is one flat menu folder.
+- List views are not grouped by warehouse, location or product, and a saved view keeps one sort
+  key.
+- Buttons on a selection act on the ticked rows only; select-all is refused.
+- The note on a signed slip names the file and links the record.
+- Messages from logic functions are English only.
+- Sign is still offered on a delivery that is already signed; the pop-up then says so.
+- A Locations filter on warehouse reads "Location: NotEmpty", and the Late views read "Past
+  36500 days"; the queries behind them are right.
+
+**Not included:** `company_id` and several companies in one workspace, stock valuation and
+landed costs (with Purchase), delivery carriers (with Sales), barcode scanning screens, GS1
+barcodes (SSCC package labels are built), per-type custom fields, pivot views, partner languages
+on printed documents.
 
 ## Rules for staff
 
