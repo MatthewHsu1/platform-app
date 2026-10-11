@@ -10,6 +10,7 @@ import { type PickingState } from 'src/stock/types/picking-state.type';
 import {
   inInternalWarehouseLocation,
   isNotSnoozed,
+  mainPackageIds,
   nextTransferIds,
   openLinePackageIds,
   statusTarget,
@@ -23,29 +24,33 @@ type Target = { source: Source; find: (recordId: string, sourceState: PickingSta
 
 const idsOf = (rows: { id: string }[]) => rows.map((row) => row.id);
 
-const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+const readIdsAsPerson = async (objectPlural: string, filterType: string, filter: Record<string, unknown>) =>
+  idsOf(await findReadableAsPerson<{ id: string }>(objectPlural, filterType, filter, 'id'));
 
-const readIdsAsPerson = async (objectNameSingular: string, objectPlural: string, filter: Record<string, unknown>) =>
-  idsOf(await findReadableAsPerson<{ id: string }>(objectPlural, `${capitalize(objectNameSingular)}FilterInput`, filter, 'id'));
-
-const returnIdsOf = (pickingId: string) => readIdsAsPerson('stockPicking', 'stockPickings', { returnPickingId: { eq: pickingId } });
+const returnIdsOf = (pickingId: string) => readIdsAsPerson('stockPickings', 'StockPickingFilterInput', { returnPickingId: { eq: pickingId } });
 
 const found = (objectNameSingular: string) => (ids: string[]): Found => ({ objectNameSingular, ids });
 
 // A done transfer shows the package records it left behind; an open one shows
-// the packages its lines fill, with every package those go into.
+// the packages its lines fill, with every package those go into. Either list
+// keeps only the outermost ones.
 const pickingPackages = async (pickingId: string, pickingState: PickingState | null): Promise<Found> => {
   if (pickingState === PICKING_STATE.DONE) {
-    const links = await findReadableAsPerson<{ stockPackageHistory: { id: string; deletedAt: string | null } | null }>(
+    const links = await findReadableAsPerson<{
+      stockPackageHistory: { id: string; parentDestId: string | null; deletedAt: string | null } | null;
+    }>(
       'stockPackageHistoryStockPickingRels',
       'StockPackageHistoryStockPickingRelFilterInput',
       { stockPickingId: { eq: pickingId } },
-      'stockPackageHistory { id deletedAt }',
+      'stockPackageHistory { id parentDestId deletedAt }',
+    );
+    const histories = new Map(
+      links.flatMap(({ stockPackageHistory: history }) =>
+        history && !history.deletedAt ? [[history.id, { id: history.id, containerId: history.parentDestId }] as const] : [],
+      ),
     );
 
-    return found('stockPackageHistory')([
-      ...new Set(links.flatMap(({ stockPackageHistory }) => (stockPackageHistory && !stockPackageHistory.deletedAt ? [stockPackageHistory.id] : []))),
-    ]);
+    return found('stockPackageHistory')(mainPackageIds([...histories.values()]));
   }
   const lines = await findReadableAsPerson<{ state: MoveState; resultPackageId: string | null }>(
     'stockMoveLines',
@@ -60,11 +65,13 @@ const pickingPackages = async (pickingId: string, pickingState: PickingState | n
     selection: 'id packageDestId',
   });
 
-  return found('stockPackage')(await filterReadableIds('stockPackage', 'stockPackages', [...packages.keys()]));
+  const mainIds = mainPackageIds([...packages.values()].map((row) => ({ id: row.id, containerId: row.packageDestId })));
+
+  return found('stockPackage')(await filterReadableIds('stockPackage', 'stockPackages', mainIds));
 };
 
 const pickingNextTransferIds = async (pickingId: string) => {
-  const moveIds = await readIdsAsPerson('stockMove', 'stockMoves', { pickingId: { eq: pickingId } });
+  const moveIds = await readIdsAsPerson('stockMoves', 'StockMoveFilterInput', { pickingId: { eq: pickingId } });
   const links = await findReadableAsPerson<{ moveDestId: string }>(
     'stockMoveMoveRels',
     'StockMoveMoveRelFilterInput',
@@ -110,19 +117,19 @@ const TARGETS: Record<StatusButton, Target> = {
   pickingReturns: { source: 'picking', find: async (pickingId) => found('stockPicking')(await returnIdsOf(pickingId)) },
   pickingScraps: {
     source: 'picking',
-    find: async (pickingId) => found('stockScrap')(await readIdsAsPerson('stockScrap', 'stockScraps', { pickingId: { eq: pickingId } })),
+    find: async (pickingId) => found('stockScrap')(await readIdsAsPerson('stockScraps', 'StockScrapFilterInput', { pickingId: { eq: pickingId } })),
   },
   pickingPackages: { source: 'picking', find: pickingPackages },
   pickingMoves: {
     source: 'picking',
-    find: async (pickingId) => found('stockMoveLine')(await readIdsAsPerson('stockMoveLine', 'stockMoveLines', { pickingId: { eq: pickingId } })),
+    find: async (pickingId) => found('stockMoveLine')(await readIdsAsPerson('stockMoveLines', 'StockMoveLineFilterInput', { pickingId: { eq: pickingId } })),
   },
   pickingNextTransfers: { source: 'picking', find: async (pickingId) => found('stockPicking')(await pickingNextTransferIds(pickingId)) },
   variantHistory: {
     source: 'variant',
     find: async (productId) =>
       found('stockMoveLine')(
-        await readIdsAsPerson('stockMoveLine', 'stockMoveLines', { productId: { eq: productId }, state: { eq: MOVE_STATE.DONE } }),
+        await readIdsAsPerson('stockMoveLines', 'StockMoveLineFilterInput', { productId: { eq: productId }, state: { eq: MOVE_STATE.DONE } }),
       ),
   },
   variantReplenishment: { source: 'variant', find: async (productId) => found('stockWarehouseOrderpoint')(await variantReplenishmentIds(productId)) },

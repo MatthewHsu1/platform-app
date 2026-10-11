@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   inInternalWarehouseLocation,
   isNotSnoozed,
+  mainPackageIds,
   nextTransferIds,
   openLinePackageIds,
   statusTarget,
@@ -38,6 +39,28 @@ describe('openLinePackageIds', () => {
         { state: 'DONE', resultPackageId: 'box3' },
         { state: 'CANCEL', resultPackageId: 'box4' },
         { state: 'ASSIGNED', resultPackageId: null },
+      ]),
+    ).toEqual(['box1', 'box2']);
+  });
+});
+
+describe('mainPackageIds', () => {
+  it('keeps the pallet when two boxes are packed on it', () => {
+    expect(
+      mainPackageIds([
+        { id: 'box1', containerId: 'pallet' },
+        { id: 'box2', containerId: 'pallet' },
+        { id: 'pallet', containerId: null },
+      ]),
+    ).toEqual(['pallet']);
+  });
+
+  it('keeps every package that goes into no other one', () => {
+    expect(
+      mainPackageIds([
+        { id: 'box1', containerId: null },
+        { id: 'box2', containerId: '' },
+        { id: 'box3', containerId: 'box1' },
       ]),
     ).toEqual(['box1', 'box2']);
   });

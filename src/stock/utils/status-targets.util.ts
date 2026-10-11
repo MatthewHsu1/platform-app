@@ -13,7 +13,7 @@ export const nextTransferIds = ({
   returnIds: string[];
 }) => [...new Set(destinationPickingIds)].filter((id) => !returnIds.includes(id));
 
-// One match opens its record; several open a list.
+// One match opens its record; several are only counted.
 export const statusTarget = (ids: string[]): StatusTarget =>
   ids.length === 0 ? { kind: 'none' } : ids.length === 1 ? { kind: 'record', id: ids[0] } : { kind: 'list', ids };
 
@@ -21,6 +21,11 @@ export const statusTarget = (ids: string[]): StatusTarget =>
 export const openLinePackageIds = (lines: { state: MoveState; resultPackageId: string | null }[]) => [
   ...new Set(lines.flatMap((line) => (CLOSED_LINE_STATES.has(line.state) || !line.resultPackageId ? [] : [line.resultPackageId]))),
 ];
+
+// A package list shows by default only the outermost packages: the rows that
+// go into no other package.
+export const mainPackageIds = (rows: { id: string; containerId: string | null }[]) =>
+  rows.flatMap((row) => (row.containerId ? [] : [row.id]));
 
 // Dates are YYYY-MM-DD, so text order is date order.
 export const isNotSnoozed = (snoozedUntil: string | null, today: string) => !snoozedUntil || snoozedUntil <= today;
