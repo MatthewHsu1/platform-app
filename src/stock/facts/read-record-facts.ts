@@ -14,7 +14,7 @@ import { walkPackageTree } from 'src/stock/package/walk-package-tree';
 import { readOpenLinePackageChain, readReturnIds } from 'src/stock/picking/read-picking-related';
 import { pickingWarningText } from 'src/stock/printing/utils/picking-print-data.util';
 import { StockUserError } from 'src/stock/stock-errors';
-import { MOVE_STATE, PICKING_STATE, PRODUCT_TRACKING } from 'src/stock/stock-options.constant';
+import { MOVE_STATE, PICKING_STATE, PICKING_TYPE_CODE, PRODUCT_TRACKING } from 'src/stock/stock-options.constant';
 import { findReadableAsPerson } from 'src/stock/stock-person-writes';
 import { categoryChain } from 'src/stock/utils/product-routes-report.util';
 import {
@@ -25,6 +25,7 @@ import {
   oneYearBefore,
   packageContentSummary,
   reorderingSummary,
+  sortVariantsInListOrder,
 } from 'src/stock/utils/record-facts.util';
 import { inInternalWarehouseLocation } from 'src/stock/utils/status-targets.util';
 import { type MoveLotTotal } from 'src/stock/utils/types/move-lot-total.type';
@@ -62,6 +63,7 @@ type WarnContact = { deletedAt: string | null; pickingWarnMsg: string | null };
 
 const pickingFacts = async (pickingId: string): Promise<PickingFacts> => {
   const picking = await readOne<{
+    pickingTypeCode: string | null;
     signature: unknown[] | null;
     person: Live<WarnContact & { company: Live<WarnContact> }>;
     company: Live<WarnContact>;
@@ -69,7 +71,7 @@ const pickingFacts = async (pickingId: string): Promise<PickingFacts> => {
     'stockPickings',
     'StockPickingFilterInput',
     pickingId,
-    `signature { fileId }
+    `pickingTypeCode signature { fileId }
     person { deletedAt pickingWarnMsg company { deletedAt pickingWarnMsg } }
     company { deletedAt pickingWarnMsg }`,
   );
@@ -87,6 +89,7 @@ const pickingFacts = async (pickingId: string): Promise<PickingFacts> => {
     warningText: pickingWarningText(contact?.pickingWarnMsg ?? null, live(person?.company ?? null)?.pickingWarnMsg ?? null),
     returnCount: (await readReturnIds(pickingId)).length,
     isSigned: (picking.signature ?? []).length > 0,
+    isDelivery: picking.pickingTypeCode === PICKING_TYPE_CODE.OUTGOING,
     hasTracking: moves.some((move) => (live(live(move.product)?.productTmpl ?? null)?.tracking ?? PRODUCT_TRACKING.NONE) !== PRODUCT_TRACKING.NONE),
   };
 };
@@ -137,16 +140,6 @@ const moveLots = async (moveId: string): Promise<{ lots: MoveLotTotal[] }> => {
 
 type Variant = { id: string; name: string | null; defaultCode: string | null; createdAt: string };
 
-// Variants in their list order: internal reference (none last), name, then the oldest first.
-const byVariantOrder = (left: Variant, right: Variant) => {
-  const code = (variant: Variant) => variant.defaultCode ?? '';
-
-  if (code(left) !== code(right)) {
-    return code(left) === '' ? 1 : code(right) === '' ? -1 : code(left).localeCompare(code(right));
-  }
-  return (left.name ?? '').localeCompare(right.name ?? '') || left.createdAt.localeCompare(right.createdAt);
-};
-
 // Done lines of the last twelve months, counted per operation type code of their transfer.
 const countMovesLastYear = async (variantIds: string[]) => {
   const since = oneYearBefore(new Date().toISOString());
@@ -174,20 +167,20 @@ const countMovesLastYear = async (variantIds: string[]) => {
 };
 
 const productInventory = async (templateId: string): Promise<ProductInventoryFacts> => {
-  const template = await readOne<{ categId: string | null; lotSequence: Live<{ numberNext: number; padding: number }> }>(
-    'productTemplates',
-    'ProductTemplateFilterInput',
-    templateId,
-    'categId lotSequence { deletedAt numberNext padding }',
-  );
-  const variants = (
+  const template = await readOne<{
+    categId: string | null;
+    tracking: string | null;
+    isStorable: boolean | null;
+    lotSequence: Live<{ numberNext: number; padding: number }>;
+  }>('productTemplates', 'ProductTemplateFilterInput', templateId, 'categId tracking isStorable lotSequence { deletedAt numberNext padding }');
+  const variants = sortVariantsInListOrder(
     await findReadableAsPerson<Variant>(
       'productProducts',
       'ProductProductFilterInput',
       { productTmplId: { eq: templateId }, active: { eq: true } },
       'id name defaultCode createdAt',
-    )
-  ).sort(byVariantOrder);
+    ),
+  );
   const variantIds = variants.map((variant) => variant.id);
   const variantName = new Map(variants.map((variant) => [variant.id, variant.name ?? '']));
   const [category] =
@@ -214,20 +207,23 @@ const productInventory = async (templateId: string): Promise<ProductInventoryFac
       'id name productId productMinQty productMaxQty location { deletedAt completeName }',
     ),
   );
-  const putawayRules = await findReadableAsPerson<{
+  type PutawayNode = {
     id: string;
     name: string | null;
     locationIn: Live<{ completeName: string | null }>;
     locationOut: Live<{ completeName: string | null }>;
-  }>(
-    'stockPutawayRules',
-    'StockPutawayRuleFilterInput',
-    {
-      active: { eq: true },
-      or: [{ productId: { in: variantIds } }, { categoryId: { in: category === undefined ? [] : categoryChain(category.id, category.parentPath) } }],
-    },
-    'id name locationIn { deletedAt completeName } locationOut { deletedAt completeName }',
-  );
+  };
+  const readPutawayRules = (filter: Record<string, unknown>) =>
+    findReadableAsPerson<PutawayNode>(
+      'stockPutawayRules',
+      'StockPutawayRuleFilterInput',
+      { active: { eq: true }, ...filter },
+      'id name locationIn { deletedAt completeName } locationOut { deletedAt completeName }',
+    );
+  const productRules = await readInChunks(variantIds, (part) => readPutawayRules({ productId: { in: part } }));
+  const categoryRules = await readPutawayRules({ categoryId: { in: category === undefined ? [] : categoryChain(category.id, category.parentPath) } });
+  // A rule naming both a variant and the category is read twice.
+  const putawayRules = [...new Map([...productRules, ...categoryRules].map((row) => [row.id, row])).values()];
   const storageCapacities = await readInChunks(variantIds, (part) =>
     findReadableAsPerson<{ id: string; name: string | null; quantity: number | null; storageCategory: Live<{ name: string | null }> }>(
       'stockStorageCategoryCapacities',
@@ -252,6 +248,8 @@ const productInventory = async (templateId: string): Promise<ProductInventoryFac
   });
 
   return {
+    tracking: template.tracking ?? PRODUCT_TRACKING.NONE,
+    isStorable: template.isStorable === true,
     nextSerial: nextSerialOfSequence(live(template.lotSequence)),
     ...(await countMovesLastYear(variantIds)),
     ...reorderingSummary(groups, true),

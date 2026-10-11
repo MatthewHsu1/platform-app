@@ -41,6 +41,21 @@ export const reorderingSummary = (
     { nbrReorderingRules: 0, reorderingMinQty: 0, reorderingMaxQty: 0 },
   );
 
+// Variants in list order: internal reference, those without one last, then
+// the oldest first (all variants of a product share its name).
+export const sortVariantsInListOrder = <TVariant extends { defaultCode: string | null; createdAt: string }>(variants: TVariant[]) => {
+  const rank = (code: string | null) => (code === null || code === '' ? 1 : 0);
+
+  return [...variants].sort((left, right) => {
+    const byRank = rank(left.defaultCode) - rank(right.defaultCode);
+
+    if (byRank !== 0) {
+      return byRank;
+    }
+    return (left.defaultCode ?? '').localeCompare(right.defaultCode ?? '') || left.createdAt.localeCompare(right.createdAt);
+  });
+};
+
 const HOLDING_USAGES = new Set<string>([LOCATION_USAGE.INTERNAL, LOCATION_USAGE.TRANSIT]);
 
 // A serial number held in stock in two places at once marks every row of that

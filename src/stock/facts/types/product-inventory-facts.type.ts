@@ -1,4 +1,6 @@
 export type ProductInventoryFacts = {
+  tracking: string;
+  isStorable: boolean;
   nextSerial: string;
   movesIn: number;
   movesOut: number;
