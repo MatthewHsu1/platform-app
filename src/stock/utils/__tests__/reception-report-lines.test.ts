@@ -173,6 +173,19 @@ describe('receptionReportLines across warehouses', () => {
 });
 
 describe('receptionReportLines for a receipt made from lines only', () => {
+  it('offers nothing to allocate while that receipt is still a draft', () => {
+    const result = receptionReportLines({
+      docs: [{ id: 'R', state: 'DRAFT', pickingTypeCode: 'INCOMING' }],
+      moves: [
+        move({ id: 'in', productQty: 0, quantity: 1, state: 'DRAFT', locationId: 'vendors', pickingId: 'R' }),
+        move({ id: 'out', productQty: 1, state: 'CONFIRMED', pickingId: 'D', pickingName: 'WH/OUT/1' }),
+      ],
+      warehouseLocationIds: WAREHOUSE,
+      digits: 2,
+    });
+    expect(flatten(result)).toEqual([{ source: 'D', product: 'P', quantity: 1, assignable: false }]);
+  });
+
   it('uses the done quantity of a receipt move that has no demand', () => {
     const result = receptionReportLines({
       docs: [{ id: 'R', state: 'DONE', pickingTypeCode: 'INCOMING' }],
