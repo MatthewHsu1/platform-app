@@ -77,3 +77,25 @@ export const STATUS_BUTTON_UNIVERSAL_IDENTIFIERS = {
   variantLocationsFrontComponent: 'd3d1372b-937f-4ead-9b7c-6a8241db6299',
   variantLocationsCommandMenuItem: 'cd8da023-ea97-4c8b-ab54-f41d6488d106',
 };
+
+export const OVERVIEW_ROUTE_PATH = '/stock/overview';
+export const OVERVIEW_NEW_TRANSFER_ROUTE_PATH = '/stock/overview/new';
+
+export const OVERVIEW_UNIVERSAL_IDENTIFIERS = {
+  logicFunction: '52df7eda-25b6-42c5-8039-1d27e3df6b6e',
+  newTransferLogicFunction: 'ea66beac-7e6f-449a-935d-770edcfb09d1',
+  frontComponent: '1cd6dc13-622a-4fec-8319-d0158fef4e73',
+  pageLayout: '0231583e-c7a2-401d-8d55-1145747670f2',
+  tab: '43c7a33c-0841-44fc-95e3-17fc1ce0f459',
+  widget: '766e023d-41ab-4498-ab89-6a380c694616',
+  navigationItem: 'df045b72-3cec-4aba-a3d3-d469622850e9',
+};
+
+// The saved transfer lists the Overview counts open (the Ready, Waiting, Late
+// and Backorders views of the Inventory module).
+export const OVERVIEW_COUNT_VIEW_UNIVERSAL_IDENTIFIERS = {
+  ready: 'f0b7668f-5d14-41f0-9214-33c31ec4150e',
+  waiting: '6a32be16-d97e-44a9-8b1a-7a99d0aa64c1',
+  late: '51194025-2600-4b66-b76c-92b1c25fcd1b',
+  backorders: '24068fff-b295-4f5e-9fed-de0975cfbc00',
+};
