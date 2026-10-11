@@ -23,6 +23,8 @@ export const PRINT_ROUTE_TEXTS = [
   msg('Nothing to print.'),
   msg('These print options are not valid.'),
   msg('Your time zone is not known. Check the time zone in your settings and print again.'),
+  msg('Choose one record to print this report.'),
+  msg('Up to {max} unfolded or chosen lines can be printed at once. Fold or untick some and print again.'),
 ];
 
 export default defineFrontComponent({

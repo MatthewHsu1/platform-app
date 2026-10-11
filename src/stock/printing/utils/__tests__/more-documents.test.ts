@@ -78,7 +78,7 @@ const pallet = {
   packDate: '2026-10-08',
   packageTypeName: 'Pallet',
   quants: [row('belt', 'Belt', '', 4, 'Units', '123')],
-  children: [{ name: 'BOX1', quants: [row('oil', 'Oil', 'L1', 2, 'L')] }],
+  children: [{ name: 'BOX1', packDate: null, quants: [row('oil', 'Oil', 'L1', 2, 'L')] }],
   containedQuantCount: 2,
   directQuantCount: 1,
 };
@@ -125,6 +125,13 @@ describe('buildPackageContents', () => {
     expect(tables(blocks)[0].rows).toEqual([['', 'Belt', '4.0 Units', '']]);
   });
 
+  it('shows a package named with a valid SSCC as a QR code of its GS1 code', () => {
+    expect(buildPackageContents([{ ...pallet, name: '106141411234567897' }], 2).blocks.slice(0, 2)).toEqual([
+      { kind: 'title', text: '106141411234567897' },
+      { kind: 'barcode', symbology: 'qrcode', value: '0010614141123456789713261008', widthMm: 26, heightMm: 26 },
+    ]);
+  });
+
   it('starts each package on a new page', () => {
     expect(buildPackageContents([pallet, { ...pallet, name: 'PALLET2' }], 2).blocks.filter((block) => block.kind === 'pageBreak')).toHaveLength(1);
   });
@@ -141,6 +148,17 @@ describe('buildPackageSmall', () => {
   });
 });
 
+describe('buildPackageSmall with an SSCC', () => {
+  it('prints a DataMatrix of the GS1 code and the SSCC, pack date and type', () => {
+    expect(buildPackageSmall([{ ...pallet, name: '106141411234567897' }]).blocks).toEqual([
+      { kind: 'barcode', symbology: 'datamatrix', value: '0010614141123456789713261008', widthMm: 53, heightMm: 53 },
+      { kind: 'text', text: 'SSCC: 106141411234567897' },
+      { kind: 'text', text: 'Pack Date: 2026-10-08' },
+      { kind: 'text', text: 'Package Type: Pallet' },
+    ]);
+  });
+});
+
 describe('buildReceptionReport', () => {
   const data = {
     reason: null,
@@ -148,6 +166,7 @@ describe('buildReceptionReport', () => {
     sources: [
       {
         name: 'WH/OUT/00002',
+        isUrgent: false,
         partnerName: 'Gym A',
         scheduledDate: '2026-10-11T02:30:00.000Z',
         lines: [
@@ -155,7 +174,7 @@ describe('buildReceptionReport', () => {
           { productName: 'Bolt', quantity: 1, uomName: 'Units', isAssigned: false },
         ],
       },
-      { name: 'WH/OUT/00003', partnerName: '', scheduledDate: null, lines: [{ productName: 'Oil', quantity: 2, uomName: 'L', isAssigned: false }] },
+      { name: 'WH/OUT/00003', isUrgent: false, partnerName: '', scheduledDate: null, lines: [{ productName: 'Oil', quantity: 2, uomName: 'L', isAssigned: false }] },
     ],
   };
 
@@ -174,6 +193,12 @@ describe('buildReceptionReport', () => {
       { kind: 'table', columns: ['WH/OUT/00002: Gym A', 'Expected Delivery: 2026-10-10'], rows: [['Belt', '4.0 Units']], widths: [3, 2] },
     ]);
     expect(texts(blocks)).toEqual(['WH/IN/00001', 'Ready']);
+  });
+
+  it('stars an urgent delivery', () => {
+    const urgent = { ...data, sources: [{ ...data.sources[0], isUrgent: true }] };
+
+    expect(tables(buildReceptionReport(urgent, UTC).blocks)[0].columns[0]).toBe('★ WH/OUT/00002: Gym A');
   });
 
   it('says why when the transfers cannot be reported on', () => {

@@ -1,7 +1,8 @@
+import { findInOrder } from 'src/stock/printing/print-rows';
 import { registerPrintable } from 'src/stock/printing/printables';
+import { PRINT_MESSAGES } from 'src/stock/printing/print-messages.constant';
 import { readBatchPrintData } from 'src/stock/printing/printables/read-batch-print-data';
 import {
-  findInOrder,
   readHistoryPackageIds,
   readPackagePrintData,
   readPickingPackageIds,
@@ -29,12 +30,11 @@ import {
   buildTraceabilityPdf,
 } from 'src/stock/printing/utils/more-documents.util';
 import { stockLocations, stockPickings, stockPickingTypes, stockQuants } from 'src/stock/stock-records';
+import { StockUserError } from 'src/stock/stock-errors';
 import { readStockSettings } from 'src/stock/stock-settings';
 import { readResolvedUoms } from 'src/stock/stock-uoms';
 import { type TraceabilityModel } from 'src/stock/utils/types/traceability-model.type';
 
-// Every printable here reads as the app: the print page has no user. The print route has checked
-// the user may read the records it names.
 
 const text = (value: string | null | undefined) => value ?? '';
 
@@ -49,14 +49,14 @@ type QuantRow = {
 
 // Twenty returns a nested to-one relation as null unless its deletedAt is selected.
 const QUANT_SELECTION = `id quantity location { deletedAt completeName } product { deletedAt name productTmpl { deletedAt uomId } }
-  lot { deletedAt name } package { deletedAt name completeName }`;
+  lot { id deletedAt name } package { id deletedAt name completeName }`;
 
 registerPrintable<QuantRow & { uomName: string }>({
   key: 'countSheet',
   objectSingular: 'stockQuant',
   objectPlural: 'stockQuants',
-  read: async (recordIds) => {
-    const [rows, uoms] = await Promise.all([findInOrder<QuantRow>(stockQuants, recordIds, QUANT_SELECTION), readResolvedUoms()]);
+  read: async (recordIds, _options, find) => {
+    const [rows, uoms] = await Promise.all([findInOrder<QuantRow>(find, stockQuants, recordIds, QUANT_SELECTION), readResolvedUoms()]);
 
     return rows.map((row) => ({ ...row, uomName: uoms.get(row.product?.productTmpl?.uomId ?? '')?.name ?? '' }));
   },
@@ -85,7 +85,7 @@ registerPrintable<NamedBarcode>({
   key: 'locationBarcode',
   objectSingular: 'stockLocation',
   objectPlural: 'stockLocations',
-  read: (recordIds) => findInOrder<NamedBarcode>(stockLocations, recordIds, 'id name barcode'),
+  read: (recordIds, _options, find) => findInOrder<NamedBarcode>(find, stockLocations, recordIds, 'name barcode'),
   build: (rows) => buildBarcodeSheet(rows.map((row) => ({ name: text(row.name), barcode: text(row.barcode) }))),
   fileName: (rows) => (rows.length === 1 ? `Location - ${text(rows[0].name)}` : 'Location Barcode'),
 });
@@ -94,7 +94,7 @@ registerPrintable<NamedBarcode>({
   key: 'pickingTypeLabelPdf',
   objectSingular: 'stockPickingType',
   objectPlural: 'stockPickingTypes',
-  read: (recordIds) => findInOrder<NamedBarcode>(stockPickingTypes, recordIds, 'id name barcode'),
+  read: (recordIds, _options, find) => findInOrder<NamedBarcode>(find, stockPickingTypes, recordIds, 'name barcode'),
   build: (rows) => buildBarcodeSheet(rows.map((row) => ({ name: text(row.name), barcode: text(row.barcode) }))),
   fileName: (rows) => (rows.length === 1 ? `Operation-type - ${text(rows[0].name)}` : 'Operation type (PDF)'),
 });
@@ -109,7 +109,7 @@ for (const report of PACKAGE_REPORTS) {
     key: report.key,
     objectSingular: 'stockPackage',
     objectPlural: 'stockPackages',
-    read: readPackagePrintData,
+    read: (recordIds, _options, find) => readPackagePrintData(find, recordIds),
     build: report.build,
     fileName: () => report.fileName,
   });
@@ -118,7 +118,7 @@ for (const report of PACKAGE_REPORTS) {
     key: report.key,
     objectSingular: 'stockPackageHistory',
     objectPlural: 'stockPackageHistories',
-    read: async (recordIds) => readPackagePrintData(await readHistoryPackageIds(recordIds)),
+    read: async (recordIds, _options, find) => readPackagePrintData(find, await readHistoryPackageIds(find, recordIds)),
     build: report.build,
     fileName: () => report.fileName,
   });
@@ -128,17 +128,28 @@ registerPrintable<{ pickingNames: string[]; packages: PackagePrintData[] }>({
   key: 'pickingPackages',
   objectSingular: 'stockPicking',
   objectPlural: 'stockPickings',
-  read: async (recordIds) => {
-    const pickings = await findInOrder<{ id: string; name: string | null }>(stockPickings, recordIds, 'id name');
+  read: async (recordIds, _options, find) => {
+    const pickings = await findInOrder<{ id: string; name: string | null }>(find, stockPickings, recordIds, 'name');
+    const packages = await readPackagePrintData(find, await readPickingPackageIds(find, recordIds));
 
-    return [{ pickingNames: pickings.map((picking) => text(picking.name)), packages: await readPackagePrintData(await readPickingPackageIds(recordIds)) }];
+    return [{ pickingNames: pickings.map((picking) => text(picking.name)), packages }];
   },
   build: (data) => buildPackageContents(data[0]?.packages ?? [], readStockSettings().productUnitDigits),
   fileName: (data) => (data[0]?.pickingNames.length === 1 ? `Packages - ${data[0].pickingNames[0]}` : 'Packages'),
 });
 
+// A report of one record (a batch's reception, a traceability tree) refuses several.
+const oneRecord = (recordIds: string[]) => {
+  if (recordIds.length !== 1) {
+    throw new StockUserError(PRINT_MESSAGES.oneRecordOnly);
+  }
+  return recordIds[0];
+};
+
 const receptionRequest = (objectSingular: string, recordIds: string[]): ReceptionPrintRequest =>
-  objectSingular === 'stockPickingBatch' ? { pickingIds: [], batchId: recordIds[0] ?? null } : { pickingIds: recordIds, batchId: null };
+  objectSingular === 'stockPickingBatch' ? { pickingIds: [], batchId: oneRecord(recordIds) } : { pickingIds: recordIds, batchId: null };
+
+const idList = (value: unknown) => (Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : null);
 
 for (const [objectSingular, objectPlural] of [
   ['stockPicking', 'stockPickings'],
@@ -148,27 +159,27 @@ for (const [objectSingular, objectPlural] of [
     key: 'receptionReport',
     objectSingular,
     objectPlural,
-    read: async (recordIds) => [await readReceptionPrintData(receptionRequest(objectSingular, recordIds))],
+    read: async (recordIds, _options, find) => [await readReceptionPrintData(find, receptionRequest(objectSingular, recordIds))],
     build: (data, _options, context) => buildReceptionReport(data[0], context),
     fileName: () => 'Reception Report',
   });
 
-  // From the report the labels follow what is allocated; after a receipt is validated they follow
-  // the moves it feeds.
+  // From the report the labels follow what is allocated (all of it, one delivery's or one line's
+  // delivery moves); after a receipt is validated they follow the moves it feeds.
   registerPrintable<ReceptionLabel>({
     key: 'receptionReportLabels',
     objectSingular,
     objectPlural,
-    read: async (recordIds, options) =>
+    read: async (recordIds, options, find) =>
       options.allocatedOnly === true || objectSingular === 'stockPickingBatch'
-        ? readAllocatedLabels(receptionRequest(objectSingular, recordIds))
-        : readDestinationLabels(recordIds),
+        ? readAllocatedLabels(find, receptionRequest(objectSingular, recordIds), idList(options.moveIds))
+        : readDestinationLabels(find, recordIds),
     build: buildReceptionLabels,
     fileName: () => 'Reception Report Label',
   });
 }
 
-// The report as the user unfolded it, its rows worked out again when the page opens.
+// The report as the user unfolded it, its rows worked out again through the print's reader.
 for (const [objectSingular, objectPlural] of [
   ['stockLot', 'stockLots'],
   ['stockPicking', 'stockPickings'],
@@ -178,16 +189,9 @@ for (const [objectSingular, objectPlural] of [
     key: 'traceability',
     objectSingular,
     objectPlural,
-    read: async (recordIds, options) =>
-      recordIds.length === 0
-        ? []
-        : [
-            await readTraceabilityPrintLines(
-              objectSingular as TraceabilityModel,
-              recordIds[0],
-              Array.isArray(options.openLineIds) ? options.openLineIds.filter((id): id is string => typeof id === 'string') : [],
-            ),
-          ],
+    read: async (recordIds, options, find) => [
+      await readTraceabilityPrintLines(find, objectSingular as TraceabilityModel, oneRecord(recordIds), idList(options.openLineIds) ?? []),
+    ],
     build: (data, _options, context) => buildTraceabilityPdf(data[0]?.lines ?? [], data[0]?.reference ?? '', context),
     fileName: () => 'Traceability Report',
   });
@@ -197,7 +201,7 @@ registerPrintable<BatchPrintData>({
   key: 'batchTransfer',
   objectSingular: 'stockPickingBatch',
   objectPlural: 'stockPickingBatches',
-  read: readBatchPrintData,
+  read: (recordIds, _options, find) => readBatchPrintData(find, recordIds),
   build: (batches, _options, context) => buildBatchTransfer(batches, context),
   fileName: () => 'Batch Transfer',
 });

@@ -1,5 +1,4 @@
-import { type GraphqlCaller } from 'src/shared/twenty-graphql';
-import { pruneEmptyLists, records } from 'src/shared/triggers/records';
+import { compareText } from 'src/shared/utils/compare-text.util';
 import { readInChunks } from 'src/shared/utils/read-in-chunks.util';
 import { readStockProducts } from 'src/stock/product/read-stock-products';
 import { type AllocationInputs } from 'src/stock/reports/reception/types/allocation-inputs.type';
@@ -7,7 +6,7 @@ import { type AllocationRequest } from 'src/stock/reports/reception/types/alloca
 import { type ReceptionData } from 'src/stock/reports/reception/types/reception-data.type';
 import { readMoveReferences } from 'src/stock/move/move-links';
 import { LOCATION_USAGE, MOVE_STATE, PICKING_STATE, PICKING_TYPE_CODE, PRIORITY } from 'src/stock/stock-options.constant';
-import { findAsPerson } from 'src/stock/stock-person-writes';
+import { findAs } from 'src/stock/stock-person-writes';
 import {
   stockLocations,
   stockMoveLines,
@@ -22,6 +21,7 @@ import { type MoveState } from 'src/stock/types/move-state.type';
 import { type PickingState } from 'src/stock/types/picking-state.type';
 import { type PickingTypeCode } from 'src/stock/types/picking-type-code.type';
 import { type Priority } from 'src/stock/types/priority.type';
+import { type RowFinder } from 'src/stock/types/row-finder.type';
 import { lineQuantityInProductUnit } from 'src/stock/utils/line-quantity-in-product-unit.util';
 import { convertQuantity } from 'src/stock/utils/stock-uom.util';
 import { type AllocationIn } from 'src/stock/utils/types/allocation-in.type';
@@ -81,33 +81,12 @@ const CANDIDATE_STATES: MoveState[] = [
 
 const distinct = (ids: string[]) => [...new Set(ids)];
 
-const compareText = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
 
-type Find = <TRow>(objectPlural: string, filterType: string, filter: Record<string, unknown>, selection: string) => Promise<TRow[]>;
+const readPickings = (find: RowFinder, filter: (ids: string[]) => Record<string, unknown>, ids: string[]) =>
+  readInChunks(distinct(ids), (part) => find<PickingNode>('stockPicking', 'stockPickings', filter(part), PICKING_SELECTION));
 
-// Rows the clicking user can read, or, for a print page that has no user, rows read as the app.
-// Twenty refuses an empty `in` list: such a filter matches nothing.
-const finder =
-  (caller: GraphqlCaller): Find =>
-  async <TRow>(objectPlural: string, filterType: string, filter: Record<string, unknown>, selection: string) => {
-    const sendable = pruneEmptyLists(filter);
-
-    if (sendable === null) {
-      return [];
-    }
-    if (caller === 'person') {
-      return findAsPerson<TRow>(objectPlural, filterType, sendable, selection);
-    }
-    const objectSingular = `${filterType.charAt(0).toLowerCase()}${filterType.slice(1).replace(/FilterInput$/, '')}`;
-
-    return records(objectSingular, objectPlural).find<TRow>(sendable, selection);
-  };
-
-const readPickings = (find: Find, filter: (ids: string[]) => Record<string, unknown>, ids: string[]) =>
-  readInChunks(distinct(ids), (part) => find<PickingNode>('stockPickings', 'StockPickingFilterInput', filter(part), PICKING_SELECTION));
-
-const readMoves = (find: Find, filter: (ids: string[]) => Record<string, unknown>, ids: string[]) =>
-  readInChunks(distinct(ids), (part) => find<MoveNode>('stockMoves', 'StockMoveFilterInput', filter(part), MOVE_SELECTION));
+const readMoves = (find: RowFinder, filter: (ids: string[]) => Record<string, unknown>, ids: string[]) =>
+  readInChunks(distinct(ids), (part) => find<MoveNode>('stockMove', 'stockMoves', filter(part), MOVE_SELECTION));
 
 // Both directions of every link touching these moves.
 const readLinks = async (moveIds: string[]) => {
@@ -177,22 +156,20 @@ const readTypeCodes = async (pickings: PickingNode[]) => {
   return (picking: PickingNode) => picking.pickingTypeCode ?? (picking.pickingTypeId === null ? null : (codeOf.get(picking.pickingTypeId) ?? null));
 };
 
-const productLabel = (product: { displayName: string; defaultCode: string | null }) =>
-  product.defaultCode === null ? product.displayName : `[${product.defaultCode}] ${product.displayName}`;
+// A variant's name already holds its internal reference.
+const productLabel = (product: { displayName: string }) => product.displayName;
 
 // The reception report's data for the selected transfers or a batch, read as
-// the clicking user (as the app for a print page, which has no user).
-// Transfers and moves come in the order the report walks them, as their lists
-// order them.
+// the clicking user unless a print hands its own reader. Transfers and moves
+// come in the order the report walks them, as their lists order them.
 export const readReceptionData = async (
   { pickingIds, batchId }: { pickingIds: string[]; batchId: string | null },
-  caller: GraphqlCaller = 'person',
+  find: RowFinder = findAs('person'),
 ): Promise<ReceptionData> => {
-  const find = finder(caller);
   const docRows = (
     batchId === null
       ? await readPickings(find, (part) => ({ id: { in: part } }), pickingIds)
-      : await find<PickingNode>('stockPickings', 'StockPickingFilterInput', { batchId: { eq: batchId } }, PICKING_SELECTION)
+      : await find<PickingNode>('stockPicking', 'stockPickings', { batchId: { eq: batchId } }, PICKING_SELECTION)
   ).sort(byTransferOrder);
   const codeOf = await readTypeCodes(docRows);
   const docs = docRows.flatMap((doc) => {
@@ -263,6 +240,7 @@ export const readReceptionData = async (
     docs,
     moves,
     warehouseLocationIds,
+    urgentPickingIds: [...pickingById.values()].filter((picking) => picking.priority === PRIORITY.URGENT).map((picking) => picking.id),
     products: Object.fromEntries(
       [...products.values()].map((product) => [
         product.productId,

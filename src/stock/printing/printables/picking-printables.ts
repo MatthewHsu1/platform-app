@@ -2,11 +2,12 @@ import { registerPrintable } from 'src/stock/printing/printables';
 import { readPickingPrintData } from 'src/stock/printing/printables/read-picking-print-data';
 import { type PickingPrintData } from 'src/stock/printing/types/picking-print-data.type';
 import { buildDeliverySlip, buildPickingOperations, buildReturnSlip } from 'src/stock/printing/utils/picking-documents.util';
+import { type RowFinder } from 'src/stock/types/row-finder.type';
 
 const base = {
   objectSingular: 'stockPicking',
   objectPlural: 'stockPickings',
-  read: (recordIds: string[]) => readPickingPrintData(recordIds),
+  read: (recordIds: string[], _options: Record<string, unknown>, find: RowFinder) => readPickingPrintData(find, recordIds),
 };
 
 // One transfer is named after its contact and reference; several print under the report name.

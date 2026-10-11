@@ -8,7 +8,7 @@ export type PackagePrintData = {
   packDate: string | null;
   packageTypeName: string;
   quants: PackageQuantRow[];
-  children: { name: string; quants: PackageQuantRow[] }[];
+  children: { name: string; packDate: string | null; quants: PackageQuantRow[] }[];
   containedQuantCount: number;
   directQuantCount: number;
 };

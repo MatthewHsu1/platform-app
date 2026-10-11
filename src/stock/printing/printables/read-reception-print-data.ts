@@ -1,5 +1,6 @@
+import { compareText } from 'src/shared/utils/compare-text.util';
 import { readInChunks } from 'src/shared/utils/read-in-chunks.util';
-import { findInOrder } from 'src/stock/printing/printables/read-package-print-data';
+import { findIn, findInOrder } from 'src/stock/printing/print-rows';
 import { type ReceptionLabel } from 'src/stock/printing/types/reception-label.type';
 import { type ReceptionPrintData } from 'src/stock/printing/types/reception-print-data.type';
 import { type ReceptionPrintRequest } from 'src/stock/printing/types/reception-print-request.type';
@@ -8,6 +9,7 @@ import { readReceptionData } from 'src/stock/reports/reception/read-reception-da
 import { PICKING_TYPE_CODE } from 'src/stock/stock-options.constant';
 import { stockMoveMoveRels, stockMoves, stockPickings } from 'src/stock/stock-records';
 import { readStockSettings } from 'src/stock/stock-settings';
+import { type RowFinder } from 'src/stock/types/row-finder.type';
 import { receptionReportLines } from 'src/stock/utils/reception-report-lines.util';
 import { type ReceptionSource } from 'src/stock/utils/types/reception-source.type';
 
@@ -37,11 +39,10 @@ type MoveRow = {
 
 // Twenty returns a nested to-one relation as null unless its deletedAt is selected.
 const ADDRESS = 'address { addressStreet1 addressStreet2 addressCity addressState addressPostcode addressCountry }';
-const PICKING_SELECTION = `id name state company { deletedAt name ${ADDRESS} }
-  person { deletedAt name { firstName lastName } phones { primaryPhoneNumber primaryPhoneCallingCode } company { deletedAt name ${ADDRESS} } }`;
+const PICKING_SELECTION = `id name state company { id deletedAt name ${ADDRESS} }
+  person { id deletedAt name { firstName lastName } phones { primaryPhoneNumber primaryPhoneCallingCode } company { id deletedAt name ${ADDRESS} } }`;
 
 const text = (value: string | null | undefined) => value ?? '';
-const compareText = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
 
 const addressLines = (address: Address) =>
   [
@@ -71,23 +72,23 @@ const partnerAddress = (picking: PickingRow | undefined) => {
     .join('\n');
 };
 
-const readPickings = (ids: string[]) => findInOrder<PickingRow>(stockPickings, ids, PICKING_SELECTION);
+const readPickings = (find: RowFinder, ids: string[]) => findInOrder<PickingRow>(find, stockPickings, ids, PICKING_SELECTION);
 
-// The report's lines, read as the app (the print page has no user), or why it cannot run.
-const readLines = async (request: ReceptionPrintRequest) => {
-  const data = await readReceptionData(request, 'application');
+// The report's lines through the print's reader, or why it cannot run.
+const readLines = async (find: RowFinder, request: ReceptionPrintRequest) => {
+  const data = await readReceptionData(request, find);
 
   return { data, result: receptionReportLines({ ...data, digits: readStockSettings().productUnitDigits }) };
 };
 
-export const readReceptionPrintData = async (request: ReceptionPrintRequest): Promise<ReceptionPrintData> => {
-  const { data, result } = await readLines(request);
+export const readReceptionPrintData = async (find: RowFinder, request: ReceptionPrintRequest): Promise<ReceptionPrintData> => {
+  const { data, result } = await readLines(find, request);
 
   if (result.kind === 'refused') {
     return { reason: result.reason, docs: [], sources: [] };
   }
   const pickings = new Map(
-    (await readPickings([...result.docIds, ...result.sources.map((source) => source.pickingId)])).map((picking) => [picking.id, picking]),
+    (await readPickings(find, [...result.docIds, ...result.sources.map((source) => source.pickingId)])).map((picking) => [picking.id, picking]),
   );
   const products = await readStockProducts(result.sources.flatMap((source) => source.lines.map((line) => line.productId)));
 
@@ -100,6 +101,7 @@ export const readReceptionPrintData = async (request: ReceptionPrintRequest): Pr
     }),
     sources: result.sources.map((source) => ({
       name: source.pickingName,
+      isUrgent: data.urgentPickingIds.includes(source.pickingId),
       partnerName: partnerName(pickings.get(source.pickingId)),
       scheduledDate: source.scheduledDate,
       lines: source.lines.map((line) => ({
@@ -113,11 +115,12 @@ export const readReceptionPrintData = async (request: ReceptionPrintRequest): Pr
 };
 
 const labelsFor = async (
+  find: RowFinder,
   entries: { productId: string; pickingId: string | null; demand: number }[],
 ): Promise<ReceptionLabel[]> => {
   const products = await readStockProducts(entries.map((entry) => entry.productId));
   const pickings = new Map(
-    (await readPickings(entries.flatMap((entry) => (entry.pickingId === null ? [] : [entry.pickingId])))).map((picking) => [picking.id, picking]),
+    (await readPickings(find, entries.flatMap((entry) => (entry.pickingId === null ? [] : [entry.pickingId])))).map((picking) => [picking.id, picking]),
   );
 
   return entries.map((entry) => {
@@ -133,25 +136,31 @@ const labelsFor = async (
 };
 
 // The labels the report's Print Labels gives: one per unit of each allocated quantity, at least one.
-export const readAllocatedLabels = async (request: ReceptionPrintRequest): Promise<ReceptionLabel[]> => {
-  const { result } = await readLines(request);
+// A delivery's or a line's own button gives those of its delivery moves only.
+export const readAllocatedLabels = async (
+  find: RowFinder,
+  request: ReceptionPrintRequest,
+  moveIds: string[] | null,
+): Promise<ReceptionLabel[]> => {
+  const { result } = await readLines(find, request);
 
   if (result.kind === 'refused') {
     return [];
   }
   const allocated = result.sources.flatMap((source: ReceptionSource) =>
     source.lines
-      .filter((line) => line.isAssigned)
+      .filter((line) => line.isAssigned && (moveIds === null || moveIds.includes(line.moveOutId)))
       .map((line) => ({ productId: line.productId, pickingId: source.pickingId, demand: Math.max(1, Math.ceil(line.quantity)) })),
   );
 
-  return labelsFor(allocated);
+  return labelsFor(find, allocated);
 };
 
 // The moves the receipts feed, one label per unit of their demand. Deliveries print none.
-export const readDestinationLabels = async (pickingIds: string[]): Promise<ReceptionLabel[]> => {
+export const readDestinationLabels = async (find: RowFinder, pickingIds: string[]): Promise<ReceptionLabel[]> => {
   const receipts = (
     await findInOrder<{ id: string; pickingTypeCode: string | null; pickingType: { code: string | null } | null }>(
+      find,
       stockPickings,
       pickingIds,
       'id pickingTypeCode pickingType { deletedAt code }',
@@ -160,7 +169,7 @@ export const readDestinationLabels = async (pickingIds: string[]): Promise<Recep
   const moves = (
     await readInChunks(
       receipts.map((picking) => picking.id),
-      (part) => stockMoves.find<MoveRow>({ pickingId: { in: part } }, 'id createdAt sequence pickingId productId productUomQty'),
+      (part) => findIn<MoveRow>(find, stockMoves, { pickingId: { in: part } }, 'id createdAt sequence pickingId productId productUomQty'),
     )
   ).sort((left, right) => (left.sequence ?? 0) - (right.sequence ?? 0) || compareText(left.createdAt, right.createdAt));
   const links = await readInChunks(
@@ -170,9 +179,10 @@ export const readDestinationLabels = async (pickingIds: string[]): Promise<Recep
   const destIds = [
     ...new Set(moves.flatMap((move) => links.filter((link) => link.moveOrigId === move.id).map((link) => link.moveDestId))),
   ];
-  const destinations = await findInOrder<MoveRow>(stockMoves, destIds, 'id createdAt sequence pickingId productId productUomQty');
+  const destinations = await findInOrder<MoveRow>(find, stockMoves, destIds, 'id createdAt sequence pickingId productId productUomQty');
 
   return labelsFor(
+    find,
     destinations.map((move) => ({ productId: move.productId, pickingId: move.pickingId, demand: Math.ceil(move.productUomQty ?? 0) })),
   );
 };

@@ -1,5 +1,6 @@
 import { type Records } from 'src/shared/triggers/records';
 import { chunks } from 'src/shared/utils/chunks.util';
+import { findIn } from 'src/stock/printing/print-rows';
 import { stockPackageHistories, stockPackageHistoryPickingLinks, stockPackages } from 'src/stock/package/package-records';
 import { type PickingPrintBackorderMove } from 'src/stock/printing/types/picking-print-backorder-move.type';
 import { type PickingPrintData } from 'src/stock/printing/types/picking-print-data.type';
@@ -16,6 +17,7 @@ import {
 import { PICKING_STATE, PICKING_TYPE_CODE, PRODUCT_TRACKING } from 'src/stock/stock-options.constant';
 import { stockMoveLines, stockMoves, stockPickings } from 'src/stock/stock-records';
 import { readStockSettings } from 'src/stock/stock-settings';
+import { type RowFinder } from 'src/stock/types/row-finder.type';
 
 type Address = {
   addressStreet1: string | null;
@@ -104,10 +106,10 @@ const ID_CHUNK = 200;
 
 // Twenty returns a nested to-one relation as null unless its deletedAt is selected.
 const ADDRESS = 'address { addressStreet1 addressStreet2 addressCity addressState addressPostcode addressCountry }';
-const COMPANY = `deletedAt name ${ADDRESS}`;
-const PERSON = `deletedAt name { firstName lastName } company { ${COMPANY} }`;
+const COMPANY = `id deletedAt name ${ADDRESS}`;
+const PERSON = `id deletedAt name { firstName lastName } company { ${COMPANY} }`;
 const PICKING_SELECTION = `id name origin state pickingTypeCode scheduledDate dateDone note { markdown }
-  person { deletedAt name { firstName lastName } pickingWarnMsg company { ${COMPANY} pickingWarnMsg } }
+  person { id deletedAt name { firstName lastName } pickingWarnMsg company { ${COMPANY} pickingWarnMsg } }
   company { ${COMPANY} pickingWarnMsg }
   responsibleUser { deletedAt name { firstName lastName } }
   pickingType { deletedAt code warehouse { deletedAt name partner { ${COMPANY} } } }
@@ -117,15 +119,15 @@ const MOVE_SELECTION = `id pickingId sequence createdAt state productId productU
   product { deletedAt name barcode productTmpl { deletedAt tracking } }
   productUom { deletedAt name factor } packagingUom { deletedAt name factor }
   person { ${PERSON} } company { ${COMPANY} }`;
-const LINE_SELECTION = `moveId createdAt quantity isEntirePack lotName lot { deletedAt name expirationDate }
+const LINE_SELECTION = `moveId createdAt quantity isEntirePack lotName lot { id deletedAt name expirationDate }
   product { deletedAt name } productUom { deletedAt name }
   location { deletedAt completeName } locationDest { deletedAt completeName }
-  packageId package { deletedAt name } resultPackageId resultPackage { deletedAt name } packageHistoryId`;
-const HISTORY_SELECTION = `id packageId packageName package { deletedAt name }
+  packageId package { id deletedAt name } resultPackageId resultPackage { id deletedAt name } packageHistoryId`;
+const HISTORY_SELECTION = `id packageId packageName package { id deletedAt name }
   location { deletedAt completeName } locationDest { deletedAt completeName }
   parentOrigName parentDestId parentDestName outermostDestId`;
 const PACKAGE_SELECTION = `id name packageDestId location { deletedAt completeName }
-  parentPackage { deletedAt name } packageDest { deletedAt name }`;
+  parentPackage { id deletedAt name } packageDest { id deletedAt name }`;
 
 const text = (value: string | null | undefined) => value ?? '';
 const fullName = (name: FullName | null | undefined) => [name?.firstName, name?.lastName].filter(Boolean).join(' ');
@@ -151,11 +153,11 @@ const contactOf = (person: PersonNode | null, company: CompanyNode | null) =>
       ? { kind: 'company' as const, name: text(company.name), address: addressText(company.address) }
       : null;
 
-const findInChunks = async <TRow>(of: Records, field: string, ids: string[], selection: string) => {
+const findInChunks = async <TRow>(find: RowFinder, of: Records, field: string, ids: string[], selection: string) => {
   const rows: TRow[] = [];
 
   for (const part of chunks([...new Set(ids)], ID_CHUNK)) {
-    rows.push(...(await of.find<TRow>({ [field]: { in: part } }, selection)));
+    rows.push(...(await findIn<TRow>(find, of, { [field]: { in: part } }, selection)));
   }
 
   return rows;
@@ -171,13 +173,13 @@ const groupBy = <TRow>(rows: TRow[], keyOf: (row: TRow) => string) => {
   return groups;
 };
 
-const readBackorders = async (pickingIds: string[]) => {
+const readBackorders = async (find: RowFinder, pickingIds: string[]) => {
   const found: BackorderNode[] = [];
   const seen = new Set(pickingIds);
   let parents = pickingIds;
 
   while (parents.length > 0) {
-    const children = (await findInChunks<BackorderNode>(stockPickings, 'backorderId', parents, 'id backorderId state')).filter(
+    const children = (await findInChunks<BackorderNode>(find, stockPickings, 'backorderId', parents, 'id backorderId state')).filter(
       (child) => !found.some((known) => known.id === child.id),
     );
 
@@ -190,12 +192,12 @@ const readBackorders = async (pickingIds: string[]) => {
 };
 
 // Packages a line is headed into, and every container above them, read level by level.
-const readOpenPackages = async (packageIds: string[]) => {
+const readOpenPackages = async (find: RowFinder, packageIds: string[]) => {
   const packages = new Map<string, PackageNode>();
   let wanted = [...new Set(packageIds)];
 
   while (wanted.length > 0) {
-    const found = await findInChunks<PackageNode>(stockPackages, 'id', wanted, PACKAGE_SELECTION);
+    const found = await findInChunks<PackageNode>(find, stockPackages, 'id', wanted, PACKAGE_SELECTION);
 
     found.forEach((node) => packages.set(node.id, node));
     wanted = [...new Set(found.flatMap((node) => (node.packageDestId === null ? [] : [node.packageDestId])))].filter(
@@ -218,14 +220,16 @@ const readOpenPackages = async (packageIds: string[]) => {
   );
 };
 
-const readPackageHistories = async (pickingIds: string[]) => {
+const readPackageHistories = async (find: RowFinder, pickingIds: string[]) => {
   const links = await findInChunks<{ stockPackageHistoryId: string; stockPickingId: string }>(
+    find,
     stockPackageHistoryPickingLinks,
     'stockPickingId',
     pickingIds,
     'stockPackageHistoryId stockPickingId',
   );
   const histories = await findInChunks<HistoryNode>(
+    find,
     stockPackageHistories,
     'id',
     links.map((link) => link.stockPackageHistoryId),
@@ -347,22 +351,24 @@ const toBackorderMove = (
 // Runs on the public print page with no signed-in person: the ids were checked as the person
 // who asked for the print, so everything here reads as the application. Ids with no row
 // (deleted since) are left out.
-export const readPickingPrintData = async (pickingIds: string[]): Promise<PickingPrintData[]> => {
-  const pickings = await findInChunks<PickingNode>(stockPickings, 'id', pickingIds, PICKING_SELECTION);
+export const readPickingPrintData = async (find: RowFinder, pickingIds: string[]): Promise<PickingPrintData[]> => {
+  const pickings = await findInChunks<PickingNode>(find, stockPickings, 'id', pickingIds, PICKING_SELECTION);
   const printedIds = pickings.map((picking) => picking.id);
-  const backorders = await readBackorders(printedIds);
+  const backorders = await readBackorders(find, printedIds);
   const chains = backorderChains(printedIds, backorders);
   const moves = await findInChunks<MoveNode>(
+    find,
     stockMoves,
     'pickingId',
     [...printedIds, ...backorders.map((backorder) => backorder.id)],
     MOVE_SELECTION,
   );
-  const lines = await findInChunks<LineNode>(stockMoveLines, 'moveId', moves.map((move) => move.id), LINE_SELECTION);
+  const lines = await findInChunks<LineNode>(find, stockMoveLines, 'moveId', moves.map((move) => move.id), LINE_SELECTION);
   const movesByPicking = groupBy([...moves].sort(byPosition), (move) => move.pickingId);
   const linesByMove = groupBy(lines, (line) => line.moveId);
   const pickingById = new Map(pickings.map((picking) => [picking.id, picking]));
   const historiesByPicking = await readPackageHistories(
+    find,
     pickings.filter((picking) => picking.state === PICKING_STATE.DONE).map((picking) => picking.id),
   );
   const openPickingIds = new Set(pickings.filter((picking) => picking.state !== PICKING_STATE.DONE).map((picking) => picking.id));
@@ -371,6 +377,7 @@ export const readPickingPrintData = async (pickingIds: string[]): Promise<Pickin
       .flatMap((move) => linesByMove.get(move.id) ?? [])
       .filter((line) => line.isEntirePack === true && line.packageId !== null);
   const openPackages = await readOpenPackages(
+    find,
     [...openPickingIds].flatMap((id) => entireLinesOf(id).map((line) => line.packageId ?? '')),
   );
   const unitDigits = readStockSettings().productUnitDigits;

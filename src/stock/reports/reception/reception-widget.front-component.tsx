@@ -38,8 +38,12 @@ type ReceptionAnswer = {
   sources: ReceptionSource[];
   canAllocate: boolean;
   products: Record<string, { name: string; uomName: string }>;
+  urgentPickingIds: string[];
   digits: number;
 };
+
+// The report, all allocated labels, or the labels of some delivery moves only.
+type Printing = { report: 'receptionReport' } | { report: 'receptionReportLabels'; moveIds: string[] | null };
 
 const formatQuantity = (quantity: number, digits: number, locale: string) => {
   try {
@@ -63,7 +67,7 @@ export const ReceptionReport = ({ pickingIds }: { pickingIds?: string[] }) => {
   const [answer, setAnswer] = useState<ReceptionAnswer | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
-  const [printing, setPrinting] = useState<'report' | 'labels' | null>(null);
+  const [printing, setPrinting] = useState<Printing | null>(null);
   const isBatch = pickingIds === undefined && objectName === 'stockPickingBatch';
   const ids = pickingIds ?? selectedIds;
   const requestKey = JSON.stringify(isBatch ? { batchId: ids[0] ?? null } : { pickingIds: ids });
@@ -126,11 +130,15 @@ export const ReceptionReport = ({ pickingIds }: { pickingIds?: string[] }) => {
   if (printing !== null) {
     return (
       <PrintNow
-        report={printing === 'report' ? 'receptionReport' : 'receptionReportLabels'}
-        text={printing === 'report' ? RECEPTION_PRINT_TEXT : RECEPTION_LABELS_PRINT_TEXT}
+        report={printing.report}
+        text={printing.report === 'receptionReport' ? RECEPTION_PRINT_TEXT : RECEPTION_LABELS_PRINT_TEXT}
         objectSingular={isBatch ? 'stockPickingBatch' : 'stockPicking'}
         recordIds={isBatch ? ids.slice(0, 1) : ids}
-        options={printing === 'labels' ? { allocatedOnly: true } : {}}
+        options={
+          printing.report === 'receptionReport'
+            ? {}
+            : { allocatedOnly: true, ...(printing.moveIds === null ? {} : { moveIds: printing.moveIds }) }
+        }
         onClose={() => setPrinting(null)}
       />
     );
@@ -141,6 +149,9 @@ export const ReceptionReport = ({ pickingIds }: { pickingIds?: string[] }) => {
     source.lines.filter((line) => line.isQtyAssignable && !line.isAssigned && line.moveInIds.length > 0),
   );
   const product = (line: ReceptionLine) => answer?.products[line.productId];
+  // The labels of the allocated lines given: one delivery's, or one line's.
+  const printLabelsOf = (lines: ReceptionLine[]) =>
+    setPrinting({ report: 'receptionReportLabels', moveIds: [...new Set(lines.filter((line) => line.isAssigned).map((line) => line.moveOutId))] });
   const hasAllocated = (answer?.sources ?? []).some((source) => source.lines.some((line) => line.isAssigned));
 
   return (
@@ -152,10 +163,10 @@ export const ReceptionReport = ({ pickingIds }: { pickingIds?: string[] }) => {
             {t('Allocate All')}
           </Button>
         ) : null}
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => setPrinting('report')}>
+        <Button size="sm" variant="outline" disabled={busy} onClick={() => setPrinting({ report: 'receptionReport' })}>
           {t('Print')}
         </Button>
-        <Button size="sm" variant="outline" disabled={busy || !hasAllocated} onClick={() => setPrinting('labels')}>
+        <Button size="sm" variant="outline" disabled={busy || !hasAllocated} onClick={() => setPrinting({ report: 'receptionReportLabels', moveIds: null })}>
           {t('Print Labels')}
         </Button>
       </div>
@@ -164,7 +175,22 @@ export const ReceptionReport = ({ pickingIds }: { pickingIds?: string[] }) => {
       {answer !== null && answer.sources.length === 0 ? <div>{t('Nothing to allocate.')}</div> : null}
       {(answer?.sources ?? []).map((source) => (
         <div key={source.pickingId} style={styles.card}>
-          <div style={styles.title}>{source.pickingName}</div>
+          <div style={styles.row}>
+            <div style={styles.title}>
+              {answer?.urgentPickingIds.includes(source.pickingId) === true ? '★ ' : ''}
+              {source.pickingName}
+            </div>
+            {source.lines.some((line) => line.moveInIds.length > 0) ? (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy || !source.lines.some((line) => line.isAssigned)}
+                onClick={() => printLabelsOf(source.lines)}
+              >
+                {t('Print Labels')}
+              </Button>
+            ) : null}
+          </div>
           {source.scheduledDate === null ? null : (
             <div style={styles.muted}>{t('Expected delivery: {date}', { date: formatDay(source.scheduledDate, locale) })}</div>
           )}
@@ -193,6 +219,16 @@ export const ReceptionReport = ({ pickingIds }: { pickingIds?: string[] }) => {
                       {t('Allocate')}
                     </Button>
                   ),
+              },
+              {
+                key: 'label',
+                title: '',
+                render: (line) =>
+                  line.isQtyAssignable ? (
+                    <Button size="sm" variant="outline" disabled={busy || !line.isAssigned} onClick={() => printLabelsOf([line])}>
+                      {t('Print Label')}
+                    </Button>
+                  ) : null,
               },
             ]}
           />

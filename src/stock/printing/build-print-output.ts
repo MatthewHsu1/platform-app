@@ -1,3 +1,4 @@
+import { restrictedFinder } from 'src/stock/printing/print-rows';
 import { PRINTABLES, printableKey } from 'src/stock/printing/printables';
 import { type PrintOutput } from 'src/stock/printing/types/print-output.type';
 import { type PrintPass } from 'src/stock/printing/types/print-pass.type';
@@ -10,7 +11,7 @@ export const buildPrintOutput = async (pass: PrintPass): Promise<{ output: Print
   if (printable === undefined) {
     throw new Error(`No printable ${pass.report} for ${pass.objectSingular}`);
   }
-  const data = await printable.read(pass.recordIds, pass.options);
+  const data = await printable.read(pass.recordIds, pass.options, restrictedFinder(pass.rows));
 
   return {
     output: await printable.build(data, pass.options, { timeZone: pass.timeZone }),

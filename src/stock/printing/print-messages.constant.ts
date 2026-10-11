@@ -4,6 +4,8 @@ export const PRINT_MESSAGES = {
   nothingToPrint: 'Nothing to print.',
   optionsNotValid: 'These print options are not valid.',
   timeZoneNotValid: 'Your time zone is not known. Check the time zone in your settings and print again.',
+  oneRecordOnly: 'Choose one record to print this report.',
+  tooManyLines: 'Up to {max} unfolded or chosen lines can be printed at once. Fold or untick some and print again.',
 } as const;
 
 export const PRINT_PAGE_MESSAGES = {

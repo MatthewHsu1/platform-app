@@ -5,7 +5,9 @@ type PrintOptionKind = 'string' | 'number' | 'boolean' | 'idList' | readonly str
 // Options travel inside the stored print pass: they stay small.
 export const PRINT_OPTIONS_MAX_LENGTH = 2000;
 const TEXT_MAX_LENGTH = 200;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// A list of record ids stays within the options size cap.
+export const PRINT_OPTION_MAX_IDS = 50;
 
 export const isPrintOptionsSizeAllowed = (options: Record<string, unknown>) =>
   JSON.stringify(options).length <= PRINT_OPTIONS_MAX_LENGTH;
@@ -22,7 +24,11 @@ const fits = (kind: PrintOptionKind, value: unknown) => {
     case 'boolean':
       return typeof value === 'boolean';
     case 'idList':
-      return Array.isArray(value) && value.every((item) => typeof item === 'string' && UUID.test(item));
+      return (
+        Array.isArray(value) &&
+        value.length <= PRINT_OPTION_MAX_IDS &&
+        value.every((item) => typeof item === 'string' && UUID_PATTERN.test(item))
+      );
   }
 };
 
@@ -44,3 +50,7 @@ export const printOptionsParser =
   };
 
 export const NO_PRINT_OPTIONS = printOptionsParser({});
+
+// The option that lists more ids than a print takes, if any.
+export const isOverIdLimit = (options: Record<string, unknown>) =>
+  Object.values(options).some((value) => Array.isArray(value) && value.length > PRINT_OPTION_MAX_IDS);

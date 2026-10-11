@@ -1,6 +1,7 @@
-import { includingDeleted, pruneEmptyLists } from 'src/shared/triggers/records';
-import { requireData, twentyGraphql } from 'src/shared/twenty-graphql';
+import { includingDeleted, pruneEmptyLists, records } from 'src/shared/triggers/records';
+import { type GraphqlCaller, requireData, twentyGraphql } from 'src/shared/twenty-graphql';
 import { chunks } from 'src/shared/utils/chunks.util';
+import { type RowFinder } from 'src/stock/types/row-finder.type';
 
 // Reads and writes a button makes for the clicking user: their rights apply,
 // and the record triggers treat the writes as a user's.
@@ -50,6 +51,14 @@ export const findReadableAsPerson = async <TRow>(
 
   return sendable === null ? [] : findAsPerson<TRow>(objectPlural, filterType, sendable, selection);
 };
+
+// Rows as the clicking user reads them, or as the app reads them where no user is behind the call.
+export const findAs =
+  (caller: GraphqlCaller): RowFinder =>
+  async <TRow>(objectSingular: string, objectPlural: string, filter: Record<string, unknown>, selection: string) =>
+    caller === 'person'
+      ? findReadableAsPerson<TRow>(objectPlural, `${capitalize(objectSingular)}FilterInput`, filter, selection)
+      : records(objectSingular, objectPlural).find<TRow>(filter, selection);
 
 export const createAsPerson = async (objectPlural: string, inputType: string, data: Record<string, unknown>[]) => {
   const ids: string[] = [];

@@ -24,6 +24,7 @@ export const LABELS_LAYOUT_TEXT: LabelsLayoutText = {
     ZPL_PRICE: msg('ZPL Labels with price'),
   },
   pricelist: msg('Pricelist'),
+  pricelistsFailed: msg('Could not read the pricelists. Without one, labels show the sales price.'),
   extraContent: msg('Extra Content'),
   zplTemplate: msg('ZPL Template'),
   zplTemplates: {

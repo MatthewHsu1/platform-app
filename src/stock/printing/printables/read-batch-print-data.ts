@@ -1,10 +1,12 @@
+import { compareText } from 'src/shared/utils/compare-text.util';
 import { readInChunks } from 'src/shared/utils/read-in-chunks.util';
 import { stockPickingBatches } from 'src/stock-picking-batch/stock-picking-batch-records';
-import { findInOrder } from 'src/stock/printing/printables/read-package-print-data';
+import { findIn, findInOrder } from 'src/stock/printing/print-rows';
 import { type BatchPrintData } from 'src/stock/printing/types/batch-print-data.type';
 import { orderMoveLines } from 'src/stock/printing/utils/picking-print-data.util';
 import { PRIORITY } from 'src/stock/stock-options.constant';
 import { stockMoveLines, stockPickings } from 'src/stock/stock-records';
+import { type RowFinder } from 'src/stock/types/row-finder.type';
 
 type FullName = { firstName: string | null; lastName: string | null } | null;
 type BatchRow = { id: string; name: string | null; responsible: { name: FullName } | null };
@@ -35,12 +37,11 @@ type LineRow = {
 
 // Twenty returns a nested to-one relation as null unless its deletedAt is selected.
 const LINE_SELECTION = `id createdAt pickingId productId quantity product { deletedAt name barcode createdAt } productUom { deletedAt name }
-  lot { deletedAt name } package { deletedAt name } resultPackage { deletedAt name }
+  lot { id deletedAt name } package { id deletedAt name } resultPackage { id deletedAt name }
   location { deletedAt completeName } locationDest { deletedAt completeName }`;
 
 const text = (value: string | null | undefined) => value ?? '';
 const fullName = (name: FullName) => [name?.firstName, name?.lastName].filter(Boolean).join(' ');
-const compareText = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
 
 // Transfers as their list orders them: urgent first, then by scheduled date, then the newest.
 const byTransferOrder = (left: PickingRow, right: PickingRow) =>
@@ -49,20 +50,19 @@ const byTransferOrder = (left: PickingRow, right: PickingRow) =>
   compareText(right.createdAt, left.createdAt);
 
 // The batches with their transfers and the lines of those transfers. Within a source and
-// destination, lines come by product, oldest product first. Read as the app: the print page has
-// no user.
-export const readBatchPrintData = async (batchIds: string[]): Promise<BatchPrintData[]> => {
-  const batches = await findInOrder<BatchRow>(stockPickingBatches, batchIds, 'id name responsible { deletedAt name { firstName lastName } }');
+// destination, lines come by product, oldest product first.
+export const readBatchPrintData = async (find: RowFinder, batchIds: string[]): Promise<BatchPrintData[]> => {
+  const batches = await findInOrder<BatchRow>(find, stockPickingBatches, batchIds, 'id name responsible { deletedAt name { firstName lastName } }');
   const pickings = (
     await readInChunks(
       batches.map((batch) => batch.id),
       (part) =>
-        stockPickings.find<PickingRow>({ batchId: { in: part } }, 'id batchId name state priority scheduledDate createdAt batchSequence'),
+        findIn<PickingRow>(find, stockPickings, { batchId: { in: part } }, 'id batchId name state priority scheduledDate createdAt batchSequence'),
     )
   ).sort(byTransferOrder);
   const lines = await readInChunks(
     pickings.map((picking) => picking.id),
-    (part) => stockMoveLines.find<LineRow>({ pickingId: { in: part } }, LINE_SELECTION),
+    (part) => findIn<LineRow>(find, stockMoveLines, { pickingId: { in: part } }, LINE_SELECTION),
   );
   const productRank = (line: LineRow) => text(line.product?.createdAt);
 

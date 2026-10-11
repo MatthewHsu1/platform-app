@@ -5,6 +5,7 @@ export type ReceptionPrintData = {
   docs: { name: string; state: string }[];
   sources: {
     name: string;
+    isUrgent: boolean;
     partnerName: string;
     scheduledDate: string | null;
     lines: { productName: string; quantity: number; uomName: string; isAssigned: boolean }[];

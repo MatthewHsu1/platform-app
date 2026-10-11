@@ -3,7 +3,7 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import { useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 import { Button } from 'twenty-ui/primitives/input';
 
-import { ClosablePanel, closePopUp, useRunOnce } from 'src/shared/front-components/pop-up';
+import { ClosablePanel, closePopUp, ErrorText, useRunOnce } from 'src/shared/front-components/pop-up';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { LABELS_LAYOUT_TEXT } from 'src/stock/printing/labels/choose-labels-layout.front-component';
 import { LOT_LABELS_LAYOUT_TEXT } from 'src/stock/printing/labels/choose-lot-labels-layout.front-component';
@@ -35,12 +35,17 @@ const ChooseTypeOfLabels = () => {
   const [withLots, setWithLots] = useState<boolean | null>(null);
   const [labelType, setLabelType] = useState<LabelType>('products');
   const [chosen, setChosen] = useState<LabelType | null>(null);
+  const [checkFailed, setCheckFailed] = useState(false);
 
   useRunOnce(() => {
     if (pickingIds.length > 0) {
       hasLotLines(pickingIds)
         .then(setWithLots)
-        .catch(() => setWithLots(true));
+        .catch(() => {
+          // Offer both kinds of labels, and say why the choice is asked.
+          setCheckFailed(true);
+          setWithLots(true);
+        });
     }
   });
 
@@ -56,6 +61,7 @@ const ChooseTypeOfLabels = () => {
 
   return (
     <PopupPanel title={t('Choose Type of Labels To Print')}>
+      <ErrorText error={checkFailed ? t('Could not check whether the transfers have lots or serial numbers.') : null} />
       <FieldRow label={t('Labels to print')}>
         <ChoiceSelect<LabelType>
           value={labelType}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSelectedObjectMetadata, useTranslate } from 'twenty-sdk/front-component';
 import { Button, Input } from 'twenty-ui/primitives/input';
 
-import { closePopUp, useRunOnce } from 'src/shared/front-components/pop-up';
+import { closePopUp, ErrorText, useRunOnce } from 'src/shared/front-components/pop-up';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { PrintNow } from 'src/stock/printing/print-popup';
 import { type LabelsLayoutText } from 'src/stock/printing/types/labels-layout-text.type';
@@ -39,6 +39,7 @@ export const LabelsLayoutForm = ({ text }: { text: LabelsLayoutText }) => {
   const [zplTemplate, setZplTemplate] = useState<ZplTemplate>('normal');
   const [pricelistId, setPricelistId] = useState('');
   const [pricelists, setPricelists] = useState<{ value: string; label: string }[]>([]);
+  const [pricelistsFailed, setPricelistsFailed] = useState(false);
   const [extraContent, setExtraContent] = useState('');
   const [submitted, setSubmitted] = useState<ProductLabelOptions | null>(null);
   const isZpl = format === 'ZPL' || format === 'ZPL_PRICE';
@@ -47,7 +48,7 @@ export const LabelsLayoutForm = ({ text }: { text: LabelsLayoutText }) => {
   useRunOnce(() => {
     loadPricelists()
       .then(setPricelists)
-      .catch(() => setPricelists([]));
+      .catch(() => setPricelistsFailed(true));
   });
 
   if (submitted !== null) {
@@ -93,6 +94,7 @@ export const LabelsLayoutForm = ({ text }: { text: LabelsLayoutText }) => {
       <FieldRow label={t(text.pricelist)}>
         <ChoiceSelect value={pricelistId} onChange={setPricelistId} options={[{ value: '', label: '' }, ...pricelists]} />
       </FieldRow>
+      <ErrorText error={pricelistsFailed ? t(text.pricelistsFailed) : null} />
       {format === 'PRICE_2X7' ? (
         <FieldRow label={t(text.extraContent)}>
           <Input value={extraContent} onValueChange={setExtraContent} />

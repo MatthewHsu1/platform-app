@@ -33,6 +33,7 @@ const handler = stockRouteHandler(async (body) => {
       warehouseLocationIds: data.warehouseLocationIds,
     }),
     products: data.products,
+    urgentPickingIds: data.urgentPickingIds,
     digits,
   };
 });

@@ -1,3 +1,4 @@
+import { compareText } from 'src/shared/utils/compare-text.util';
 import { type BarcodeBlock } from 'src/stock/printing/types/barcode-block.type';
 import { type BatchPrintData } from 'src/stock/printing/types/batch-print-data.type';
 import { type CountSheetQuant } from 'src/stock/printing/types/count-sheet-quant.type';
@@ -13,6 +14,7 @@ import { type ReceptionPrintData } from 'src/stock/printing/types/reception-prin
 import { type TracePrintLine } from 'src/stock/printing/types/trace-print-line.type';
 import { isCode128Text, productBarcodeSymbology } from 'src/stock/printing/utils/picking-documents.util';
 import { dateTimeInTimeZone, dayInTimeZone } from 'src/stock/printing/utils/print-dates.util';
+import { isValidSscc, ssccElementString } from 'src/stock/printing/utils/sscc.util';
 import { PICKING_STATE_OPTIONS } from 'src/stock/stock-options.constant';
 
 type TableBlock = Extract<PrintBlock, { kind: 'table' }>;
@@ -125,14 +127,20 @@ const packageFields = (pack: PackagePrintData): PrintBlock[] => {
   return rows.length === 0 ? [] : [{ kind: 'fields', rows }];
 };
 
-const packageHeader = (name: string, kind: 'title' | 'heading'): PrintBlock[] => [{ kind, text: name }, barcode(name, 79, 13, name)];
+// A package named with a valid SSCC shows a QR code of its GS1 code; any other its name as Code 128.
+const packageHeader = (name: string, packDate: string | null, kind: 'title' | 'heading'): PrintBlock[] => [
+  { kind, text: name },
+  isValidSscc(name)
+    ? { kind: 'barcode', symbology: 'qrcode', value: ssccElementString(name, packDate), widthMm: 26, heightMm: 26 }
+    : barcode(name, 79, 13, name),
+];
 
 export const buildPackageContents = (packages: PackagePrintData[], digits: number): PrintDocument => ({
   kind: 'document',
   blocks: onePerPage(packages, (pack) => [
-    ...packageHeader(pack.name, 'title'),
+    ...packageHeader(pack.name, pack.packDate, 'title'),
     ...packageFields(pack),
-    ...pack.children.flatMap((child) => [...packageHeader(child.name, 'heading'), contentTable(child.quants, digits)]),
+    ...pack.children.flatMap((child) => [...packageHeader(child.name, child.packDate, 'heading'), contentTable(child.quants, digits)]),
     ...(pack.directQuantCount === 0
       ? []
       : [
@@ -145,8 +153,12 @@ export const buildPackageContents = (packages: PackagePrintData[], digits: numbe
 export const buildPackageSmall = (packages: PackagePrintData[]): PrintDocument => ({
   kind: 'document',
   blocks: onePerPage(packages, (pack) => [
-    barcode(pack.name, 159, 26),
-    { kind: 'heading', text: pack.name },
+    ...(isValidSscc(pack.name)
+      ? [
+          { kind: 'barcode' as const, symbology: 'datamatrix' as const, value: ssccElementString(pack.name, pack.packDate), widthMm: 53, heightMm: 53 },
+          { kind: 'text' as const, text: `SSCC: ${pack.name}` },
+        ]
+      : [barcode(pack.name, 159, 26), { kind: 'heading' as const, text: pack.name }]),
     ...(pack.packDate === null || pack.packDate === '' ? [] : [{ kind: 'text' as const, text: `Pack Date: ${pack.packDate}` }]),
     ...(pack.packageTypeName === '' ? [] : [{ kind: 'text' as const, text: `Package Type: ${pack.packageTypeName}` }]),
   ]),
@@ -169,7 +181,8 @@ export const buildReceptionReport = (data: ReceptionPrintData, context: PrintCon
     if (assigned.length === 0) {
       return [];
     }
-    const name = source.partnerName === '' ? source.name : `${source.name}: ${source.partnerName}`;
+    const named = source.partnerName === '' ? source.name : `${source.name}: ${source.partnerName}`;
+    const name = source.isUrgent ? `★ ${named}` : named;
 
     return [
       barcode(source.name, 53, 8),
@@ -234,7 +247,6 @@ export const buildTraceabilityPdf = (lines: TracePrintLine[], reference: string,
   ],
 });
 
-const compareText = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
 
 const responsible = (name: string): PrintBlock[] => (name === '' ? [] : [{ kind: 'fields', rows: [['Responsible:', name]] }]);
 

@@ -14,6 +14,7 @@ export type LabelsLayoutText = {
   format: MessageDescriptor;
   formats: Record<ProductLabelFormat, MessageDescriptor>;
   pricelist: MessageDescriptor;
+  pricelistsFailed: MessageDescriptor;
   extraContent: MessageDescriptor;
   zplTemplate: MessageDescriptor;
   zplTemplates: Record<ZplTemplate, MessageDescriptor>;

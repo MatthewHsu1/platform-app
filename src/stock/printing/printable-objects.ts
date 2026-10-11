@@ -14,12 +14,13 @@ const PRODUCT_LABEL_OPTIONS = printOptionsParser({
 const LOT_LABEL_OPTIONS = printOptionsParser({ labelQuantity: ['LOTS', 'UNITS'] });
 // The lines the user unfolded on screen, so the print shows the report as they had it.
 const TRACEABILITY_OPTIONS = printOptionsParser({ openLineIds: 'idList' });
-// From the reception report, the labels follow what is allocated.
-const RECEPTION_LABEL_OPTIONS = printOptionsParser({ allocatedOnly: 'boolean' });
+// From the reception report, the labels follow what is allocated: all of it, or one delivery's or
+// one line's delivery moves.
+const RECEPTION_LABEL_OPTIONS = printOptionsParser({ allocatedOnly: 'boolean', moveIds: 'idList' });
 
 // What may be printed from which object, the options each print takes, and what a print does at the
-// click. Kept apart from the printables so the print button and Validate do not carry the document
-// builders and the barcode encoder.
+// click. Kept apart from the printables so a caller that only checks a print does not carry the
+// document builders.
 export const PRINTABLE_OBJECTS: Record<
   string,
   { objectPlural: string; reports: Partial<Record<PrintReportKey, PrintOptionsParser>> }
@@ -68,6 +69,7 @@ export const PRINTABLE_OBJECTS: Record<
 export const OPTION_RECORDS: Partial<Record<PrintReportKey, Record<string, { objectSingular: string; objectPlural: string }>>> = {
   productLabels: { pricelistId: { objectSingular: 'productPricelist', objectPlural: 'productPricelists' } },
   traceability: { openLineIds: { objectSingular: 'stockMoveLine', objectPlural: 'stockMoveLines' } },
+  receptionReportLabels: { moveIds: { objectSingular: 'stockMove', objectPlural: 'stockMoves' } },
 };
 
 export const AFTER_PRINT: Partial<Record<PrintReportKey, (recordIds: string[]) => Promise<void>>> = {

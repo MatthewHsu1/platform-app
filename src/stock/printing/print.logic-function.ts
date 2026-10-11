@@ -5,7 +5,7 @@ import { PRINT_MESSAGES } from 'src/stock/printing/print-messages.constant';
 import { AFTER_PRINT, OPTION_RECORDS, printOptionsParserOf } from 'src/stock/printing/printable-objects';
 import { type PrintReportKey } from 'src/stock/printing/types/print-report-key.type';
 import { isTimeZone } from 'src/stock/printing/utils/print-dates.util';
-import { isPrintOptionsSizeAllowed } from 'src/stock/printing/utils/print-options.util';
+import { isOverIdLimit, isPrintOptionsSizeAllowed, PRINT_OPTION_MAX_IDS, UUID_PATTERN } from 'src/stock/printing/utils/print-options.util';
 import { filterReadableIds } from 'src/stock/stock-access';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';
 import { StockUserError } from 'src/stock/stock-errors';
@@ -22,6 +22,9 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> =>
 const readOptions = (value: unknown) => {
   if (value === undefined || value === null) {
     return {};
+  }
+  if (isPlainObject(value) && isOverIdLimit(value)) {
+    throw new StockUserError(PRINT_MESSAGES.tooManyLines, { max: PRINT_OPTION_MAX_IDS });
   }
   if (!isPlainObject(value) || !isPrintOptionsSizeAllowed(value)) {
     throw new StockUserError(PRINT_MESSAGES.optionsNotValid);
@@ -42,8 +45,6 @@ const readTimeZone = (value: unknown) => {
   return value;
 };
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 // An option that names records (a pricelist, the unfolded lines of a report) is kept only when the
 // clicking user may read every one of them: the page reads them later without the user.
 const checkOptionRecords = async (report: PrintReportKey, options: Record<string, unknown>) => {
@@ -54,7 +55,7 @@ const checkOptionRecords = async (report: PrintReportKey, options: Record<string
       continue;
     }
     const ids: unknown[] = Array.isArray(value) ? value : [value];
-    const isIdList = ids.every((id): id is string => typeof id === 'string' && UUID.test(id));
+    const isIdList = ids.every((id): id is string => typeof id === 'string' && UUID_PATTERN.test(id));
 
     if (
       !isIdList ||

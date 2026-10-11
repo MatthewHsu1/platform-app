@@ -7,6 +7,7 @@ import { lotLabelLotIds } from 'src/stock/printing/utils/label-quantities.util';
 import { lotLabelSheet } from 'src/stock/printing/utils/label-sheets.util';
 import { buildProductLabels, productLabelsFileName } from 'src/stock/printing/utils/product-labels.util';
 import { zplLotLabels } from 'src/stock/printing/utils/zpl.util';
+import { type RowFinder } from 'src/stock/types/row-finder.type';
 
 // The options were checked against the report's declared options when the link was made.
 const productLabelOptions = (options: Record<string, unknown>) => options as ProductLabelOptions;
@@ -21,8 +22,8 @@ for (const [objectSingular, objectPlural] of [
     key: 'productLabels',
     objectSingular,
     objectPlural,
-    read: async (recordIds, options) => [
-      await readProductLabelData(objectSingular, recordIds, productLabelOptions(options).pricelistId ?? null),
+    read: async (recordIds, options, find) => [
+      await readProductLabelData(find, objectSingular, recordIds, productLabelOptions(options).pricelistId ?? null),
     ],
     build: (data, options) => buildProductLabels(data[0], productLabelOptions(options), new Date()),
     fileName: (_data, options) => productLabelsFileName(productLabelOptions(options)),
@@ -43,14 +44,14 @@ registerPrintable<LotLabelRow>({
   key: 'lotLabelPdf',
   objectSingular: 'stockLot',
   objectPlural: 'stockLots',
-  read: (recordIds) => readLotLabelRows(recordIds),
+  read: (recordIds, _options, find) => readLotLabelRows(find, recordIds),
   build: lotSheet,
   fileName: lotSheetName,
 });
 
 // From a transfer: the lots on its lines, one label per lot or one per unit.
-const readTransferLots = async (pickingIds: string[], options: Record<string, unknown>) =>
-  readLotLabelRows(lotLabelLotIds({ labelQuantity: labelQuantity(options), lines: await readTransferLotLines(pickingIds) }));
+const readTransferLots = async (pickingIds: string[], options: Record<string, unknown>, find: RowFinder) =>
+  readLotLabelRows(find, lotLabelLotIds({ labelQuantity: labelQuantity(options), lines: await readTransferLotLines(find, pickingIds) }));
 
 registerPrintable<LotLabelRow>({
   key: 'lotLabelPdf',

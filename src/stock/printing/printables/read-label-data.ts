@@ -8,13 +8,16 @@ import { type Pricelist } from 'src/product/utils/types/pricelist.type';
 import { type PricelistRule } from 'src/product/utils/types/pricelist-rule.type';
 import { type Records } from 'src/shared/triggers/records';
 import { chunks } from 'src/shared/utils/chunks.util';
+import { readInChunks } from 'src/shared/utils/read-in-chunks.util';
 import { stockLots } from 'src/stock/lot/lot-records';
+import { findIn } from 'src/stock/printing/print-rows';
 import { type LabelMove } from 'src/stock/printing/types/label-move.type';
 import { type LabelProduct } from 'src/stock/printing/types/label-product.type';
 import { type LotLabelRow } from 'src/stock/printing/types/lot-label-row.type';
 import { type ProductLabelData } from 'src/stock/printing/types/product-label-data.type';
 import { orderMoveLines } from 'src/stock/printing/utils/picking-print-data.util';
 import { stockMoveLines, stockMoves, uomUoms } from 'src/stock/stock-records';
+import { type RowFinder } from 'src/stock/types/row-finder.type';
 import { UOM_SEED_KEY_UNIT } from 'src/uom/uom-universal-identifiers.constant';
 import { resolveUoms } from 'src/uom/utils/uom.util';
 import { type ResolvedUom } from 'src/uom/utils/types/resolved-uom.type';
@@ -103,7 +106,7 @@ const ITEM_SELECTION = `id createdAt pricelistId appliedOn categ { deletedAt par
   priceRound { ${CURRENCY} } priceSurcharge { ${CURRENCY} } priceMinMargin { ${CURRENCY} } priceMaxMargin { ${CURRENCY} }`;
 
 const LINE_SELECTION =
-  'id moveId productId productUomId quantity lotId lotName lot { deletedAt name } resultPackage { deletedAt name } createdAt';
+  'id moveId productId productUomId quantity lotId lotName lot { id deletedAt name } resultPackage { id deletedAt name } createdAt';
 
 const money = (value: Money) => (value?.amountMicros ?? 0) / 1_000_000;
 const text = (value: string | null | undefined) => value ?? '';
@@ -229,19 +232,16 @@ const bySequence = (left: MoveRow, right: MoveRow) =>
   (left.sequence ?? 0) - (right.sequence ?? 0) || (left.createdAt < right.createdAt ? -1 : left.createdAt > right.createdAt ? 1 : 0);
 
 // The moves of the transfers in their order, each with its lines in theirs.
-const readTransferMoves = async (pickingIds: string[]) => {
+const readTransferMoves = async (find: RowFinder, pickingIds: string[]) => {
   const moves: MoveRow[] = [];
   const lines: LineRow[] = [];
 
   for (const part of chunks([...new Set(pickingIds)], ID_CHUNK)) {
     moves.push(
-      ...(await stockMoves.find<MoveRow>({ pickingId: { in: part } }, 'id productId productUomQty quantity sequence createdAt')),
+      ...(await findIn<MoveRow>(find, stockMoves, { pickingId: { in: part } }, 'id productId productUomQty quantity sequence createdAt')),
     );
     lines.push(
-      ...(await stockMoveLines.find<LineRow>(
-        { pickingId: { in: part } },
-        LINE_SELECTION,
-      )),
+      ...(await findIn<LineRow>(find, stockMoveLines, { pickingId: { in: part } }, LINE_SELECTION)),
     );
   }
   const linesOf = new Map<string, LineRow[]>();
@@ -258,12 +258,15 @@ const readTransferMoves = async (pickingIds: string[]) => {
   }));
 };
 
-// The chosen pricelist and every pricelist its rules build on.
+// The chosen pricelist and every pricelist its rules build on. Each id is asked for once, so rules
+// that point back at a pricelist, or at one that is gone, cannot loop.
 const readPricelists = async (pricelistId: string | null) => {
   const pricelists = new Map<string, Pricelist>();
+  const asked = new Set<string>();
   let wanted = pricelistId === null ? [] : [pricelistId];
 
   while (wanted.length > 0) {
+    wanted.forEach((id) => asked.add(id));
     const rows = await findByIds<{ id: string; name: string | null; currencyCode: string | null }>(
       productPricelists,
       wanted,
@@ -281,7 +284,7 @@ const readPricelists = async (pricelistId: string | null) => {
         rules: items.filter((item) => item.pricelistId === row.id).map(toRule),
       }),
     );
-    wanted = [...new Set(items.flatMap((item) => item.basePricelistId ?? []))].filter((id) => !pricelists.has(id));
+    wanted = [...new Set(items.flatMap((item) => item.basePricelistId ?? []))].filter((id) => !asked.has(id));
   }
 
   return [...pricelists.values()];
@@ -314,6 +317,7 @@ const toRule = (item: ItemRow): PricelistRule => ({
 // The products a label print covers: the chosen templates or variants, or the products of a
 // transfer's moves with the moves themselves.
 export const readProductLabelData = async (
+  find: RowFinder,
   objectSingular: string,
   recordIds: string[],
   pricelistId: string | null,
@@ -327,7 +331,7 @@ export const readProductLabelData = async (
   if (objectSingular === 'productProduct') {
     return { products: await readVariantProducts(recordIds, units), moves: null, pricelists };
   }
-  const transferMoves = await readTransferMoves(recordIds);
+  const transferMoves = await readTransferMoves(find, recordIds);
   const moves: LabelMove[] = transferMoves.flatMap(({ move, lines }) =>
     move.productId === null
       ? []
@@ -356,8 +360,10 @@ export const readProductLabelData = async (
 };
 
 // Lots in the order asked for, repeated as asked; a lot with no row is skipped.
-export const readLotLabelRows = async (lotIds: string[]): Promise<LotLabelRow[]> => {
-  const rows = await findByIds<LotRow>(stockLots, lotIds, 'id name product { deletedAt name defaultCode productTmplId }');
+export const readLotLabelRows = async (find: RowFinder, lotIds: string[]): Promise<LotLabelRow[]> => {
+  const rows = await readInChunks([...new Set(lotIds)], (part) =>
+    findIn<LotRow>(find, stockLots, { id: { in: part } }, 'id name product { deletedAt name defaultCode productTmplId }'),
+  );
   const templateNames = new Map(
     (
       await findByIds<{ id: string; name: string | null }>(
@@ -384,16 +390,13 @@ export const readLotLabelRows = async (lotIds: string[]): Promise<LotLabelRow[]>
 };
 
 // The lots on the transfers' lines, transfer by transfer, for one label per lot or per unit.
-export const readTransferLotLines = async (pickingIds: string[]) => {
+export const readTransferLotLines = async (find: RowFinder, pickingIds: string[]) => {
   const units = await readUnits();
   const lines: (LineRow & { pickingId: string | null })[] = [];
 
   for (const part of chunks([...new Set(pickingIds)], ID_CHUNK)) {
     lines.push(
-      ...(await stockMoveLines.find<LineRow & { pickingId: string | null }>(
-        { pickingId: { in: part } },
-        `pickingId ${LINE_SELECTION}`,
-      )),
+      ...(await findIn<LineRow & { pickingId: string | null }>(find, stockMoveLines, { pickingId: { in: part } }, `pickingId ${LINE_SELECTION}`)),
     );
   }
 

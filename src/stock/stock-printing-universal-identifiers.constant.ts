@@ -60,9 +60,8 @@ export const MORE_PRINT_UNIVERSAL_IDENTIFIERS = {
   packageHistorySmallCommand: '672313fb-2f03-4639-9c32-60953e1539cc',
   pickingPackagesFrontComponent: '42e9d64e-07a6-4a0b-a39c-613c383d5191',
   pickingPackagesCommand: 'f33dcebd-20d3-4bee-8ea9-418ef954d258',
-  receptionReportFrontComponent: '9f15a2c9-0f89-4432-b26f-63f38e413e4d',
-  receptionReportCommand: '6aab0d0b-2ac4-43a5-ab32-b30de88c545e',
   batchTransferFrontComponent: 'c88c690e-c799-4e65-883f-5f2df49038bc',
+  batchTransferPinnedCommand: '77167b9d-f99a-475f-8ee1-f13640b2093a',
   batchTransferCommand: '6f77d304-31ff-4844-b1d1-7ec002d6d931',
 } as const;
 

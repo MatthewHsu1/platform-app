@@ -18,6 +18,7 @@ import { isTimeZone } from 'src/stock/printing/utils/print-dates.util';
 import { renderPdf } from 'src/stock/printing/utils/render-pdf.util';
 import { filterReadableIds } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
+import { findAs } from 'src/stock/stock-person-writes';
 import { PICKING_TYPE_CODE } from 'src/stock/stock-options.constant';
 import { SIGN_ROUTE_PATH, SIGNATURE_UNIVERSAL_IDENTIFIERS } from 'src/stock/stock-printing-universal-identifiers.constant';
 import { stockRouteHandler } from 'src/stock/stock-route';
@@ -67,7 +68,7 @@ const handler = stockRouteHandler(async (body) => {
   const pickingId = typeof body.pickingId === 'string' && UUID.test(body.pickingId) ? body.pickingId : null;
   // The clicking user's row rules decide: a transfer they cannot read is not found.
   const [readableId] = pickingId === null ? [] : await filterReadableIds('stockPicking', 'stockPickings', [pickingId]);
-  const [data] = readableId === undefined ? [] : await readPickingPrintData([readableId]);
+  const [data] = readableId === undefined ? [] : await readPickingPrintData(findAs('person'), [readableId]);
 
   if (readableId === undefined || data === undefined) {
     throw new StockUserError(SIGN_MESSAGES.notFound);

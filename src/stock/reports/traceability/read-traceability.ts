@@ -1,5 +1,3 @@
-import { type GraphqlCaller } from 'src/shared/twenty-graphql';
-import { pruneEmptyLists, records } from 'src/shared/triggers/records';
 import { readInChunks } from 'src/shared/utils/read-in-chunks.util';
 import { textOrNull } from 'src/shared/utils/text-or-null.util';
 import { CONTACT_GROUP_SELECTION, contactGroupValues } from 'src/stock-picking-batch/utils/transfer-partner.util';
@@ -8,15 +6,15 @@ import { type StockProduct } from 'src/stock/product/types/stock-product.type';
 import { TRACEABILITY_MESSAGES } from 'src/stock/reports/traceability/traceability-messages.constant';
 import { type TraceabilityAnswer } from 'src/stock/reports/traceability/types/traceability-answer.type';
 import { type TraceabilityRequest } from 'src/stock/reports/traceability/types/traceability-request.type';
-import { filterReadableIds } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
 import { MOVE_STATE } from 'src/stock/stock-options.constant';
-import { findAsPerson } from 'src/stock/stock-person-writes';
+import { findAs } from 'src/stock/stock-person-writes';
 import { stockMoveMoveRels } from 'src/stock/stock-records';
 import { readResolvedUoms } from 'src/stock/stock-uoms';
 import { type TransferForGroups } from 'src/stock-picking-batch/types/transfer-for-groups.type';
 import { convertQuantity } from 'src/stock/utils/stock-uom.util';
 import { findDeliveriesByLot, traceabilityLines, traceabilityPrevious } from 'src/stock/utils/traceability.util';
+import { type RowFinder } from 'src/stock/types/row-finder.type';
 import { type TraceLine } from 'src/stock/utils/types/trace-line.type';
 import { type ResolvedUom } from 'src/uom/utils/types/resolved-uom.type';
 
@@ -65,42 +63,22 @@ const PICKING_SELECTION = `id name pickingTypeCode dateDone pickingType { code d
 
 const distinct = (ids: (string | null)[]) => [...new Set(ids.filter((id): id is string => id !== null))];
 
-type Find = <TRow>(objectPlural: string, filterType: string, filter: Record<string, unknown>, selection: string) => Promise<TRow[]>;
-
-// Rows the clicking user can read, or, for a print page that has no user, rows read as the app.
-// Twenty refuses an empty `in` list: such a filter matches nothing.
-const finder =
-  (caller: GraphqlCaller): Find =>
-  async <TRow>(objectPlural: string, filterType: string, filter: Record<string, unknown>, selection: string) => {
-    const sendable = pruneEmptyLists(filter);
-
-    if (sendable === null) {
-      return [];
-    }
-    if (caller === 'person') {
-      return findAsPerson<TRow>(objectPlural, filterType, sendable, selection);
-    }
-    const objectSingular = `${filterType.charAt(0).toLowerCase()}${filterType.slice(1).replace(/FilterInput$/, '')}`;
-
-    return records(objectSingular, objectPlural).find<TRow>(sendable, selection);
-  };
-
-const findLines = (find: Find, filter: Record<string, unknown>) =>
-  find<LineNode>('stockMoveLines', 'StockMoveLineFilterInput', filter, LINE_SELECTION);
+const findLines = (find: RowFinder, filter: Record<string, unknown>) =>
+  find<LineNode>('stockMoveLine', 'stockMoveLines', filter, LINE_SELECTION);
 
 // Lines in the order they were made, so lines of the same date keep it.
 const byCreation = (left: LineNode, right: LineNode) =>
   left.createdAt < right.createdAt ? -1 : left.createdAt > right.createdAt ? 1 : left.id < right.id ? -1 : 1;
 
-const readLine = async (find: Find, lineId: string) => (await findLines(find, { id: { eq: lineId } }))[0] ?? null;
+const readLine = async (find: RowFinder, lineId: string) => (await findLines(find, { id: { eq: lineId } }))[0] ?? null;
 
-const readDoneLinesOfLots = async (find: Find, lotIds: (string | null)[]) =>
+const readDoneLinesOfLots = async (find: RowFinder, lotIds: (string | null)[]) =>
   (await readInChunks(distinct(lotIds), (part) => findLines(find, { lotId: { in: part }, state: { eq: MOVE_STATE.DONE } }))).sort(byCreation);
 
 // A transfer's done lines that carry a lot, found through its moves as a
 // line's own transfer may be empty.
-const readDoneLotLinesOfPicking = async (find: Find, pickingId: string) => {
-  const moves = await find<{ id: string }>('stockMoves', 'StockMoveFilterInput', { pickingId: { eq: pickingId } }, 'id');
+const readDoneLotLinesOfPicking = async (find: RowFinder, pickingId: string) => {
+  const moves = await find<{ id: string }>('stockMove', 'stockMoves', { pickingId: { eq: pickingId } }, 'id');
 
   return (
     await readInChunks(
@@ -110,8 +88,8 @@ const readDoneLotLinesOfPicking = async (find: Find, pickingId: string) => {
   ).sort(byCreation);
 };
 
-const productLabel = (product: StockProduct | undefined) =>
-  product === undefined ? '' : product.defaultCode === null ? product.displayName : `[${product.defaultCode}] ${product.displayName}`;
+// A variant's name already holds its internal reference.
+const productLabel = (product: StockProduct | undefined) => product?.displayName ?? '';
 
 // The quantity in the product's unit and that unit's name. A line whose unit
 // cannot be converted keeps its own quantity and shows its own unit's name.
@@ -131,13 +109,13 @@ const inProductUnit = (line: LineNode, product: StockProduct | undefined, uoms: 
 // The lines as the report reads them, with their moves, transfers, products
 // and chain links. Moves and transfers are read as the clicking user; the
 // links, products and units are configuration and are read as the app.
-const toTraceLines = async (find: Find, lines: LineNode[], digits: number): Promise<TraceLine[]> => {
+const toTraceLines = async (find: RowFinder, lines: LineNode[], digits: number): Promise<TraceLine[]> => {
   const moves = await readInChunks(distinct(lines.map((line) => line.moveId)), (part) =>
-    find<MoveNode>('stockMoves', 'StockMoveFilterInput', { id: { in: part } }, MOVE_SELECTION),
+    find<MoveNode>('stockMove', 'stockMoves', { id: { in: part } }, MOVE_SELECTION),
   );
   const moveById = new Map(moves.map((move) => [move.id, move]));
   const pickings = await readInChunks(distinct([...lines.map((line) => line.pickingId), ...moves.map((move) => move.pickingId)]), (part) =>
-    find<PickingNode>('stockPickings', 'StockPickingFilterInput', { id: { in: part } }, PICKING_SELECTION),
+    find<PickingNode>('stockPicking', 'stockPickings', { id: { in: part } }, PICKING_SELECTION),
   );
   const pickingById = new Map(pickings.map((picking) => [picking.id, picking]));
   const links = await readInChunks(
@@ -207,7 +185,7 @@ const deliveriesOf = (doneLines: TraceLine[]): TraceabilityAnswer['deliveries'] 
 
 // Unfolding a line shows the lines one step upstream of it, among the done
 // lines of its lot.
-const unfold = async (find: Find, lineId: string, digits: number): Promise<Omit<TraceabilityAnswer, 'digits'>> => {
+const unfold = async (find: RowFinder, lineId: string, digits: number): Promise<Omit<TraceabilityAnswer, 'digits'>> => {
   const line = await readLine(find, lineId);
 
   if (line === null) {
@@ -222,10 +200,9 @@ const unfold = async (find: Find, lineId: string, digits: number): Promise<Omit<
   };
 };
 
-// A print page reads a record the print route already checked the user may read.
-const readStart = async (find: Find, caller: GraphqlCaller, model: 'stockPicking' | 'stockLot', recordId: string) => {
-  const readable =
-    caller === 'person' ? await filterReadableIds(model, model === 'stockLot' ? 'stockLots' : 'stockPickings', [recordId]) : [recordId];
+// The start record must be one the reader can read.
+const readStart = async (find: RowFinder, model: 'stockPicking' | 'stockLot', recordId: string) => {
+  const readable = await find<{ id: string }>(model, model === 'stockLot' ? 'stockLots' : 'stockPickings', { id: { eq: recordId } }, 'id');
 
   if (readable.length === 0) {
     throw new StockUserError(TRACEABILITY_MESSAGES.notFound);
@@ -236,10 +213,8 @@ const readStart = async (find: Find, caller: GraphqlCaller, model: 'stockPicking
 const buildReport = async (
   request: TraceabilityRequest,
   digits: number,
-  caller: GraphqlCaller,
+  find: RowFinder,
 ): Promise<Omit<TraceabilityAnswer, 'digits'>> => {
-  const find = finder(caller);
-
   if (request.kind === 'unfold') {
     return unfold(find, request.lineId, digits);
   }
@@ -253,7 +228,7 @@ const buildReport = async (
 
     return { rows: traceabilityLines({ model: 'stockLot', startLines: doneLines, doneLines, digits }), deliveries: null };
   }
-  const pickingLines = await readStart(find, caller, request.model, request.recordId);
+  const pickingLines = await readStart(find, request.model, request.recordId);
 
   if (pickingLines === null) {
     const doneLines = await toTraceLines(find, await readDoneLinesOfLots(find, [request.recordId]), digits);
@@ -273,12 +248,13 @@ const buildReport = async (
 
 // A lot lists every done line of the lot. A done transfer lists its lines
 // that carry a lot, each one able to unfold upstream. A move line opens the
-// report of its lot. The report reads as the clicking user; a print page reads as the app.
+// report of its lot. Lines, moves and transfers are read as the clicking user
+// unless a print hands its own reader.
 export const traceabilityReport = async (
   request: TraceabilityRequest,
   digits: number,
-  caller: GraphqlCaller = 'person',
+  find: RowFinder = findAs('person'),
 ): Promise<TraceabilityAnswer> => ({
-  ...(await buildReport(request, digits, caller)),
+  ...(await buildReport(request, digits, find)),
   digits,
 });

@@ -1,3 +1,4 @@
+import { compareText } from 'src/shared/utils/compare-text.util';
 import { floatRound } from 'src/shared/utils/float-round.util';
 import { type BarcodeBlock } from 'src/stock/printing/types/barcode-block.type';
 import { type PickingPrintBackorderMove } from 'src/stock/printing/types/picking-print-backorder-move.type';
@@ -51,7 +52,6 @@ const withPackage = (location: string, packageName: string) => (packageName === 
 const stateLabel = (state: string) => PICKING_STATE_OPTIONS.find((option) => option.value === state)?.label ?? state;
 const typeLabel = (code: string) => PICKING_TYPE_CODE_OPTIONS.find((option) => option.value === code)?.label ?? code;
 // Plain code-point order, as names sort on the server.
-const compareText = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
 const compareLocations = (left: PickingPrintLine | undefined, right: PickingPrintLine | undefined) =>
   compareText(left?.from ?? '', right?.from ?? '') || compareText(left?.to ?? '', right?.to ?? '');
 
@@ -65,7 +65,7 @@ const table = (columns: string[], rows: PrintTableCell[][]): TableBlock => ({
 });
 
 // Check digit of a GTIN number (EAN-8, EAN-13): weights 3 and 1 from the right.
-const hasGtinCheckDigit = (digits: string) => {
+export const hasGtinCheckDigit = (digits: string) => {
   const body = [...digits.slice(0, -1)].reverse();
   const total = body.reduce((sum, digit, index) => sum + Number(digit) * (index % 2 === 0 ? 3 : 1), 0);
 

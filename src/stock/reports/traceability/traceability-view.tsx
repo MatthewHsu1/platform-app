@@ -7,6 +7,7 @@ import { DataTable } from 'src/shared/front-components/data-table';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { postAppRoute } from 'src/shared/front-components/post-app-route';
 import { PrintNow } from 'src/stock/printing/print-popup';
+import { shownOpenLineIds } from 'src/stock/printing/utils/traceability-print-tree.util';
 import { type TraceabilityAnswer } from 'src/stock/reports/traceability/types/traceability-answer.type';
 import { type TraceabilityText } from 'src/stock/reports/traceability/types/traceability-text.type';
 import { TRACEABILITY_ROUTE_PATH } from 'src/stock/stock-reports-universal-identifiers.constant';
@@ -40,17 +41,6 @@ const formatQuantity = (row: TraceRow, digits: number, locale: string) => {
 // for translation in the widget; transfer and scrap names are shown as stored.
 const referenceText = (row: TraceRow, translate: (text: string) => string) =>
   row.referenceRecord?.objectNameSingular === 'stockMove' ? translate(row.reference) : row.reference;
-
-// The lines whose rows are unfolded and shown: a row under a folded one is not on screen.
-const shownOpenLineIds = (open: Record<string, boolean>) => {
-  const isShown = (key: string) => {
-    const parts = key.split('/').slice(1);
-
-    return parts.every((_, index) => open[`/${parts.slice(0, index + 1).join('/')}`] === true);
-  };
-
-  return [...new Set(Object.keys(open).filter(isShown).map((key) => key.slice(key.lastIndexOf('/') + 1)))];
-};
 
 const openRecord = (record: TraceRecordLink) =>
   void navigate(AppPath.RecordShowPage, { objectNameSingular: record.objectNameSingular, objectRecordId: record.recordId });
