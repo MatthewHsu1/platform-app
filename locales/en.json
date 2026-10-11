@@ -150,6 +150,7 @@
   "Insufficient quantity to scrap": "Insufficient quantity to scrap",
   "Internal Transfer": "Internal Transfer",
   "Invalid rule's configuration, the following rule causes an endless loop: {rule}": "Invalid rule's configuration, the following rule causes an endless loop: {rule}",
+  "Inventory Adjustment": "Inventory Adjustment",
   "Inventory adjustment reference": "Inventory adjustment reference",
   "Inventory adjustments reverted.": "Inventory adjustments reverted.",
   "Inventory at Date": "Inventory at Date",

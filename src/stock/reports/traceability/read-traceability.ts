@@ -100,13 +100,19 @@ const readDoneLotLinesOfPicking = async (pickingId: string) => {
 const productLabel = (product: StockProduct | undefined) =>
   product === undefined ? '' : product.defaultCode === null ? product.displayName : `[${product.defaultCode}] ${product.displayName}`;
 
+// The quantity in the product's unit and that unit's name. A line whose unit
+// cannot be converted keeps its own quantity and shows its own unit's name.
 const inProductUnit = (line: LineNode, product: StockProduct | undefined, uoms: Map<string, ResolvedUom>, digits: number) => {
   const quantity = line.quantity ?? 0;
+  const lineUomName = line.productUomId === null ? '' : (uoms.get(line.productUomId)?.name ?? '');
 
   if (product === undefined || line.productUomId === null || !uoms.has(line.productUomId) || !uoms.has(product.uomId)) {
-    return quantity;
+    return { quantity, uomName: lineUomName };
   }
-  return convertQuantity({ qty: quantity, fromUomId: line.productUomId, toUomId: product.uomId, uoms, digits, method: 'HALF-UP' });
+  return {
+    quantity: convertQuantity({ qty: quantity, fromUomId: line.productUomId, toUomId: product.uomId, uoms, digits, method: 'HALF-UP' }),
+    uomName: uoms.get(product.uomId)?.name ?? '',
+  };
 };
 
 // The lines as the report reads them, with their moves, transfers, products
@@ -133,6 +139,7 @@ const toTraceLines = async (lines: LineNode[], digits: number): Promise<TraceLin
     const picking = pickingId === null ? undefined : pickingById.get(pickingId);
     const product = products.get(line.productId);
     const contact = picking === undefined ? null : contactGroupValues(picking);
+    const amount = inProductUnit(line, product, uoms, digits);
 
     return {
       id: line.id,
@@ -144,8 +151,8 @@ const toTraceLines = async (lines: LineNode[], digits: number): Promise<TraceLin
       productName: productLabel(product),
       lotId: line.lotId,
       lotName: textOrNull(line.lot?.name) ?? textOrNull(line.lotName) ?? '',
-      quantityProductUom: inProductUnit(line, product, uoms, digits),
-      uomName: product === undefined ? '' : (uoms.get(product.uomId)?.name ?? ''),
+      quantityProductUom: amount.quantity,
+      uomName: amount.uomName,
       locationId: line.locationId,
       locationName: line.location?.completeName ?? '',
       locationUsage: line.location?.usage ?? '',
@@ -153,6 +160,7 @@ const toTraceLines = async (lines: LineNode[], digits: number): Promise<TraceLin
       locationDestName: line.locationDest?.completeName ?? '',
       locationDestUsage: line.locationDest?.usage ?? '',
       pickingId: picking === undefined ? null : picking.id,
+      pickingIsOwn: picking !== undefined && picking.id === line.pickingId,
       pickingName: picking === undefined ? null : textOrNull(picking.name),
       pickingTypeCode: picking === undefined ? null : (textOrNull(picking.pickingTypeCode) ?? picking.pickingType?.code ?? null),
       pickingDateDone: picking?.dateDone ?? null,
@@ -186,7 +194,7 @@ const deliveriesOf = (doneLines: TraceLine[]): TraceabilityAnswer['deliveries'] 
 
 // Unfolding a line shows the lines one step upstream of it, among the done
 // lines of its lot.
-const unfold = async (lineId: string, digits: number): Promise<TraceabilityAnswer> => {
+const unfold = async (lineId: string, digits: number): Promise<Omit<TraceabilityAnswer, 'digits'>> => {
   const line = await readLine(lineId);
 
   if (line === null) {
@@ -210,10 +218,7 @@ const readStart = async (model: 'stockPicking' | 'stockLot', recordId: string) =
   return model === 'stockLot' ? null : readDoneLotLinesOfPicking(recordId);
 };
 
-// A lot lists every done line of the lot. A done transfer lists its lines
-// that carry a lot, each one able to unfold upstream. A move line opens the
-// report of its lot.
-export const traceabilityReport = async (request: TraceabilityRequest, digits: number): Promise<TraceabilityAnswer> => {
+const buildReport = async (request: TraceabilityRequest, digits: number): Promise<Omit<TraceabilityAnswer, 'digits'>> => {
   if (request.kind === 'unfold') {
     return unfold(request.lineId, digits);
   }
@@ -244,3 +249,11 @@ export const traceabilityReport = async (request: TraceabilityRequest, digits: n
 
   return { rows: traceabilityLines({ model: 'stockPicking', startLines, doneLines, digits }), deliveries: null };
 };
+
+// A lot lists every done line of the lot. A done transfer lists its lines
+// that carry a lot, each one able to unfold upstream. A move line opens the
+// report of its lot.
+export const traceabilityReport = async (request: TraceabilityRequest, digits: number): Promise<TraceabilityAnswer> => ({
+  ...(await buildReport(request, digits)),
+  digits,
+});

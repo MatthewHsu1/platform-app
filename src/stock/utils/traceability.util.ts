@@ -5,7 +5,8 @@ import { type TraceRecordLink } from 'src/stock/utils/types/trace-record-link.ty
 import { type TraceRow } from 'src/stock/utils/types/trace-row.type';
 import { type TraceabilityModel } from 'src/stock/utils/types/traceability-model.type';
 
-const INVENTORY_ADJUSTMENT = 'Inventory Adjustment';
+// English source; the report view shows it translated.
+export const INVENTORY_ADJUSTMENT_REFERENCE = 'Inventory Adjustment';
 
 const isStockUsage = (usage: string) => usage === LOCATION_USAGE.INTERNAL || usage === LOCATION_USAGE.TRANSIT;
 
@@ -19,7 +20,7 @@ const reference = (line: TraceLine): { name: string; record: TraceRecordLink | n
     return { name: line.pickingName, record: link('stockPicking', line.pickingId) };
   }
   if (line.isInventory) {
-    return { name: INVENTORY_ADJUSTMENT, record: link('stockMove', line.moveId) };
+    return { name: INVENTORY_ADJUSTMENT_REFERENCE, record: link('stockMove', line.moveId) };
   }
   if (line.locationDestUsage === LOCATION_USAGE.INVENTORY && line.scrapName !== null) {
     return { name: line.scrapName, record: link('stockScrap', line.scrapId) };
@@ -35,16 +36,18 @@ const usage = (line: TraceLine): TraceRow['usage'] => {
 };
 
 // A receipt shows the vendor instead of its source location, a delivery the
-// customer instead of its destination.
+// customer instead of its destination. Only the line's own transfer counts:
+// a line that has none shows its locations.
 const fromTo = (line: TraceLine) => {
   const partner = { name: line.partnerName ?? '', record: line.partnerObject === null ? null : link(line.partnerObject, line.partnerId) };
   const source = { name: line.locationName, record: null };
   const destination = { name: line.locationDestName, record: null };
+  const code = line.pickingIsOwn ? line.pickingTypeCode : null;
 
-  if (line.pickingTypeCode === PICKING_TYPE_CODE.INCOMING) {
+  if (code === PICKING_TYPE_CODE.INCOMING) {
     return [partner, destination];
   }
-  return line.pickingTypeCode === PICKING_TYPE_CODE.OUTGOING ? [source, partner] : [source, destination];
+  return code === PICKING_TYPE_CODE.OUTGOING ? [source, partner] : [source, destination];
 };
 
 // The done lines of the same lot that fed this one: through the origin moves
@@ -133,8 +136,11 @@ export const traceabilityLines = ({
         to: to.name,
         toRecord: to.record,
         quantity: `${line.quantityProductUom.toFixed(digits)} ${line.uomName}`,
+        quantityValue: line.quantityProductUom,
+        uomName: line.uomName,
         usage: usage(line),
-        unfoldable: model !== 'stockLot' && line.lotId !== null && traceabilityUpstream(line, doneLines).length > 0,
+        // Something lies upstream exactly when the first step back finds a line.
+        unfoldable: model !== 'stockLot' && line.lotId !== null && traceabilityPrevious(line, doneLines).length > 0,
         pickingId: line.pickingId,
       };
     });

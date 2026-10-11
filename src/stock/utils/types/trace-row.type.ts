@@ -12,7 +12,10 @@ export type TraceRow = {
   fromRecord: TraceRecordLink | null;
   to: string;
   toRecord: TraceRecordLink | null;
+  // The quantity in the product's unit, as text with the unit's name.
   quantity: string;
+  quantityValue: number;
+  uomName: string;
   usage: 'in' | 'out' | 'internal';
   unfoldable: boolean;
   pickingId: string | null;

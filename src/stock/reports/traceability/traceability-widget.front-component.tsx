@@ -16,6 +16,7 @@ export const TRACEABILITY_ROUTE_TEXTS = [
   msg('Choose a lot, a transfer or a move line.'),
   msg('Record not found.'),
   msg('Move line not found.'),
+  msg('Inventory Adjustment'),
 ];
 
 export const TRACEABILITY_TEXT: TraceabilityText = {
@@ -52,6 +53,9 @@ const TraceabilityWidget = () => {
     }
     // An answer for a record the view has since moved past is dropped.
     let isCurrent = true;
+
+    setData(null);
+    setError(null);
 
     void postAppRoute<TraceabilityAnswer>(TRACEABILITY_ROUTE_PATH, { model, recordId })
       .then((next) => {

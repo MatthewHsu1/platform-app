@@ -24,6 +24,21 @@ const formatMoment = (isoValue: string, locale: string) => {
   }
 };
 
+const formatQuantity = (row: TraceRow, digits: number, locale: string) => {
+  try {
+    const amount = new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(row.quantityValue);
+
+    return `${amount} ${row.uomName}`;
+  } catch {
+    return row.quantity;
+  }
+};
+
+// The route sends the English source of an inventory adjustment's name, listed
+// for translation in the widget; transfer and scrap names are shown as stored.
+const referenceText = (row: TraceRow, translate: (text: string) => string) =>
+  row.referenceRecord?.objectNameSingular === 'stockMove' ? translate(row.reference) : row.reference;
+
 const openRecord = (record: TraceRecordLink) =>
   void navigate(AppPath.RecordShowPage, { objectNameSingular: record.objectNameSingular, objectRecordId: record.recordId });
 
@@ -40,7 +55,7 @@ export const TraceabilityView = ({
   recordId: string;
   data: TraceabilityAnswer;
   text: TraceabilityText;
-  onError: (message: string) => void;
+  onError: (message: string | null) => void;
 }) => {
   const { t } = useTranslate();
   const locale = useLocale();
@@ -58,6 +73,7 @@ export const TraceabilityView = ({
         const answer = await postAppRoute<TraceabilityAnswer>(TRACEABILITY_ROUTE_PATH, { model, recordId, unfoldLineId: lineId });
 
         setChildren((current) => ({ ...current, [key]: answer.rows }));
+        onError(null);
       } catch (caught) {
         onError(describeRouteError(caught, t(text.unfoldFailed)));
         return;
@@ -132,7 +148,7 @@ export const TraceabilityView = ({
                       {open[key] === true ? '▾' : '▸'}
                     </button>
                   ) : null}{' '}
-                  {linkOr(row.reference, row.referenceRecord)}
+                  {linkOr(referenceText(row, (source) => t(source)), row.referenceRecord)}
                 </span>
               ),
             },
@@ -145,7 +161,7 @@ export const TraceabilityView = ({
             },
             { key: 'from', title: t(text.from), render: ({ row }) => linkOr(row.from, row.fromRecord) },
             { key: 'to', title: t(text.to), render: ({ row }) => linkOr(row.to, row.toRecord) },
-            { key: 'quantity', title: t(text.quantity), render: ({ row }) => row.quantity },
+            { key: 'quantity', title: t(text.quantity), render: ({ row }) => formatQuantity(row, data.digits, locale) },
           ]}
         />
       )}

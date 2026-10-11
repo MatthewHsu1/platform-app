@@ -1,5 +1,6 @@
 // One done move line as the traceability report reads it. The transfer is the
-// line's own, else its move's; the partner is that transfer's contact.
+// line's own, else its move's (`pickingIsOwn` says which); the partner is
+// that transfer's contact.
 export type TraceLine = {
   id: string;
   moveId: string | null;
@@ -19,6 +20,7 @@ export type TraceLine = {
   locationDestName: string;
   locationDestUsage: string;
   pickingId: string | null;
+  pickingIsOwn: boolean;
   pickingName: string | null;
   pickingTypeCode: string | null;
   pickingDateDone: string | null;

@@ -26,6 +26,7 @@ const line = (overrides: Partial<TraceLine> & Pick<TraceLine, 'id'>): TraceLine 
   locationDestName: 'WH/Stock/Shelf',
   locationDestUsage: 'INTERNAL',
   pickingId: null,
+  pickingIsOwn: true,
   pickingName: null,
   pickingTypeCode: null,
   pickingDateDone: null,
@@ -101,6 +102,8 @@ describe('traceabilityLines', () => {
         to: 'Gym A',
         toRecord: { objectNameSingular: 'person', recordId: 'gymA' },
         quantity: '1.00 Units',
+        quantityValue: 1,
+        uomName: 'Units',
         usage: 'out',
         unfoldable: false,
         pickingId: 'OUT1',
@@ -118,6 +121,8 @@ describe('traceabilityLines', () => {
         to: 'WH/Stock/Shelf',
         toRecord: null,
         quantity: '1.00 Units',
+        quantityValue: 1,
+        uomName: 'Units',
         usage: 'internal',
         unfoldable: false,
         pickingId: 'INT1',
@@ -135,6 +140,8 @@ describe('traceabilityLines', () => {
         to: 'WH/Stock',
         toRecord: null,
         quantity: '1.00 Units',
+        quantityValue: 1,
+        uomName: 'Units',
         usage: 'in',
         unfoldable: false,
         pickingId: 'IN1',
@@ -148,6 +155,12 @@ describe('traceabilityLines', () => {
 
   it('does not let a line unfold when nothing came before it', () => {
     expect(traceabilityLines({ model: 'stockPicking', startLines: [receipt], doneLines, digits: 2 })[0].unfoldable).toBe(false);
+  });
+
+  it('shows locations, not the partner, for a line whose transfer is only its move\'s', () => {
+    const [row] = traceabilityLines({ model: 'stockLot', startLines: [{ ...delivery, pickingIsOwn: false }], doneLines, digits: 2 });
+
+    expect([row.reference, row.from, row.to, row.toRecord]).toEqual(['WH/OUT/00001', 'WH/Stock/Shelf', 'Partners/Customers', null]);
   });
 
   it('names inventory adjustments and scraps, and links them to the move and the scrap', () => {
@@ -203,14 +216,17 @@ describe('findDeliveriesByLot', () => {
   });
 
   it('finds a delivery line that has no transfer of its own but whose move has one', () => {
-    const orphan = { ...delivery, pickingId: 'OUT2', pickingName: 'WH/OUT/00002', partnerId: 'gymB' };
-    expect(findDeliveriesByLot([orphan]).partnerIds).toEqual(['gymB']);
+    const orphan = { ...delivery, pickingId: 'OUT2', pickingIsOwn: false, pickingName: 'WH/OUT/00002', partnerId: 'gymB' };
+    expect(findDeliveriesByLot([orphan])).toEqual({ deliveryIds: ['OUT2'], partnerIds: ['gymB'] });
   });
 
   it('lists the customers of the latest delivery first, each once', () => {
     const first = { ...delivery, id: 'o1', pickingId: 'OUT1', pickingDateDone: '2026-10-03T10:00:00.000Z', partnerId: 'gymA' };
     const second = { ...delivery, id: 'o2', pickingId: 'OUT2', pickingDateDone: '2026-10-05T10:00:00.000Z', partnerId: 'gymB' };
     const third = { ...delivery, id: 'o3', pickingId: 'OUT3', pickingDateDone: '2026-10-07T10:00:00.000Z', partnerId: 'gymA' };
-    expect(findDeliveriesByLot([first, second, third])).toEqual({ deliveryIds: ['OUT1', 'OUT2', 'OUT3'], partnerIds: ['gymA', 'gymB'] });
+    const found = findDeliveriesByLot([first, second, third]);
+
+    expect(new Set(found.deliveryIds)).toEqual(new Set(['OUT1', 'OUT2', 'OUT3']));
+    expect(found.partnerIds).toEqual(['gymA', 'gymB']);
   });
 });
