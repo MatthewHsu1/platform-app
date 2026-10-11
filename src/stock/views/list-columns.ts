@@ -46,6 +46,23 @@ export const listColumns = (viewUniversalIdentifier: string, visible: string[], 
   }));
 };
 
+// Columns a list had before its ids were derived keep their ids: a universal
+// id never changes once installed. Twenty checks a new label column against
+// the old columns before it moves them, so the label goes below position 0.
+export const keepColumnIds = <TColumn extends { universalIdentifier: string; fieldMetadataUniversalIdentifier: string; position: number }>(
+  columns: TColumn[],
+  idsByField: Map<string, string>,
+): TColumn[] =>
+  columns.map((column) => {
+    const keptId = idsByField.get(column.fieldMetadataUniversalIdentifier);
+
+    if (keptId !== undefined) {
+      return { ...column, universalIdentifier: keptId };
+    }
+
+    return column.position === 0 ? { ...column, position: -1 } : column;
+  });
+
 // A sort or filter of a view gets an id from the view, its kind and its field, like a column.
 export const viewPartId = (viewUniversalIdentifier: string, part: string, fieldUniversalIdentifier: string): string =>
   derivedId(`view-${part}`, viewUniversalIdentifier, fieldUniversalIdentifier);

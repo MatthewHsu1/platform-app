@@ -1,6 +1,8 @@
 import { STOCK_WAREHOUSE_ORDERPOINT_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS } from 'src/stock/stock-universal-identifiers.constant';
+import { keepColumnIds, listColumns } from 'src/stock/views/list-columns';
+import { STOCK_WAREHOUSE_ORDERPOINT_ALL_FIELDS } from 'src/stock/views/object-fields';
 
-const COLUMNS = [
+const COLUMN_PARTS = [
   ['fieldProduct', 'product'],
   ['fieldLocation', 'location'],
   ['fieldWarehouse', 'warehouse'],
@@ -15,14 +17,17 @@ const COLUMNS = [
   ['fieldDeadline', 'deadlineDate'],
 ] as const;
 
-type ColumnPartIds = Record<(typeof COLUMNS)[number][0], string>;
+type ColumnPartIds = Record<(typeof COLUMN_PARTS)[number][0], string>;
+type OrderpointField = keyof typeof FIELD_IDS;
 
-// The columns of both reordering rule lists, in order. Whether the app made a
-// row is not shown: nobody can change it.
-export const orderpointViewFields = (partIds: ColumnPartIds) =>
-  COLUMNS.map(([part, field], position) => ({
-    universalIdentifier: partIds[part],
-    fieldMetadataUniversalIdentifier: FIELD_IDS[field],
-    position,
-    isVisible: true,
-  }));
+// The visible columns of a reordering rule list after the rule's name, every
+// other field hidden.
+export const orderpointViewFields = (viewUniversalIdentifier: string, partIds: ColumnPartIds, visible: OrderpointField[]) =>
+  keepColumnIds(
+    listColumns(
+      viewUniversalIdentifier,
+      [FIELD_IDS.name, ...visible.map((field) => FIELD_IDS[field])],
+      STOCK_WAREHOUSE_ORDERPOINT_ALL_FIELDS,
+    ),
+    new Map(COLUMN_PARTS.map(([part, field]) => [FIELD_IDS[field], partIds[part]])),
+  );

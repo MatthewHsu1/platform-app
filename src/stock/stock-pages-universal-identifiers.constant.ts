@@ -143,3 +143,40 @@ export const STOCK_RECORD_PAGE_TAB_UNIVERSAL_IDENTIFIERS = {
     widgetRoutes: '0e7c85f6-62f6-49d3-bbc7-11b76ff65611',
   },
 } as const;
+
+// Saved lists of the Inventory module: one view each. Their filters, sorts and
+// columns get ids derived from the view id.
+export const STOCK_VIEW_UNIVERSAL_IDENTIFIERS = {
+  receipts: '317464c4-6b43-4a92-a470-9e1cc29edba2',
+  deliveries: 'c0e22b59-8516-4332-8787-88ecc14babc0',
+  internal: 'ee5501e2-5c30-4b99-9912-0736530de9e0',
+  ready: 'f0b7668f-5d14-41f0-9214-33c31ec4150e',
+  waiting: '6a32be16-d97e-44a9-8b1a-7a99d0aa64c1',
+  late: '51194025-2600-4b66-b76c-92b1c25fcd1b',
+  backorders: '24068fff-b295-4f5e-9fed-de0975cfbc00',
+  myTransfers: '76836f48-349a-4fd2-9eb5-17e0da0f938a',
+  productStock: 'c67c1c2e-6109-4670-ad0b-d5971de43a2e',
+  quantLocations: '5f210844-ee48-461f-939f-bb484a3e5e2b',
+  movesHistory: '54f54c8c-8fdb-42f1-95a7-6ff4134e27fe',
+  movesAnalysis: '176e0d4c-00b5-4ed4-b68c-e7d00ee0c665',
+  expirationAlerts: '6d4b772c-def2-48d5-adfa-d5070a51373d',
+  lotsByLocation: '931844e0-c03e-4b96-b3f0-3b668411891f',
+  physicalInventory: 'ff1579b2-1cd6-48f7-a0b7-caec0f6a9b29',
+  myCounts: '0384fb3b-c9b0-4c34-9f29-4f7638700a67',
+  batchTransfers: 'a8aaec13-6ba7-41f8-ba1c-6b5c7b30f6b0',
+  waveTransfers: '51edd5fd-358b-460f-98e0-4f7c39e10872',
+} as const;
+
+// Sidebar entries that open a saved list.
+export const INVENTORY_VIEW_NAVIGATION_UNIVERSAL_IDENTIFIERS = {
+  receipts: 'd6934ca6-1bf9-463d-9892-b49e48dfb1dd',
+  deliveries: '0814a96c-ee28-4f01-bf1c-8aad3f57a8f5',
+  internal: 'aec1deb0-5750-45f4-94a9-f2f0444f48e2',
+  batchTransfers: 'ace9b945-2c34-4393-9b0e-ac833e901423',
+  waveTransfers: 'f882f097-68a1-4c3f-9c51-2cd25aba90a7',
+  physicalInventory: '54416031-2640-4db2-b18c-0a4fc6774de8',
+  replenishment: '3678ca54-e6a7-4ba3-af63-d4fb88a8838c',
+  stock: '29c518cf-9e46-4c9b-badd-f563b3d2f793',
+  stockLocations: '8af69d3c-a909-4fe0-89eb-4289680deb47',
+  movesHistory: 'd9da7733-172c-4e42-84e6-7d05a7f8240e',
+} as const;
