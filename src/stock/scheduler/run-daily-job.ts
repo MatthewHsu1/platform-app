@@ -1,6 +1,7 @@
 import { sweepFinishedClaims } from 'src/shared/claims/claim';
 import { runLotExpiryStep } from 'src/product-expiry/daily/lot-expiry-step';
 import { dailyOrderpointStep } from 'src/stock/orderpoint/daily-orderpoint-step';
+import { clearPrintPasses } from 'src/stock/scheduler/steps/clear-print-passes';
 import { repairLotLocations } from 'src/stock/scheduler/steps/repair-lot-locations';
 import { reserveWaitingMoves } from 'src/stock/scheduler/steps/reserve-waiting-moves';
 import { runQuantTasks } from 'src/stock/scheduler/steps/quant-tasks';
@@ -17,6 +18,7 @@ export const DAILY_JOB_STEPS: DailyJobStep[] = [
   // After the resumes, so a lot a stopped run was moving is settled by that run first.
   { order: 6, name: 'lot locations', run: repairLotLocations },
   { order: 7, name: 'finished claims', run: sweepFinishedClaims },
+  { order: 8, name: 'print links', run: () => clearPrintPasses(new Date()) },
 ];
 
 // A failed step is reported and the later steps still run.
