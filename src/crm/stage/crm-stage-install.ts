@@ -64,8 +64,9 @@ export const CRM_STAGE_INSTALL: ModuleInstallSpec = {
       hideWhere: { fieldName: 'wonStatus', values: [WON_STATUS.LOST] },
       aggregate: { operation: 'SUM', fieldName: 'expectedRevenue' },
       // A sales card: the name, the expected revenue, the contact and customer
-      // (or the names typed while neither is linked), tags, priority, days
-      // rotting and the salesperson. The stage columns are drawn by the stage
+      // (or the names typed while neither is linked), priority, days rotting
+      // and the salesperson. Tags are staff-owned, and Twenty refuses a card
+      // field the app does not own. The stage columns are drawn by the stage
       // board sync, as for every board of leads grouped by stage.
       cardFields: [
         'name',
@@ -74,7 +75,6 @@ export const CRM_STAGE_INSTALL: ModuleInstallSpec = {
         'company',
         'contactName',
         'partnerName',
-        'tags',
         'priority',
         'rottingDays',
         'salesperson',
