@@ -67,16 +67,16 @@ export const keepColumnIds = <TColumn extends { universalIdentifier: string; fie
 export const viewPartId = (viewUniversalIdentifier: string, part: string, fieldUniversalIdentifier: string): string =>
   derivedId(`view-${part}`, viewUniversalIdentifier, fieldUniversalIdentifier);
 
-// The transfer list columns, shared by every list of transfers.
+// The transfer list columns, shared by every list of transfers. The company
+// column is for multi-company setups only, so it starts hidden.
 export const PICKING_LIST_COLUMNS: string[] = [
   PICKING_FIELDS.name,
   PICKING_FIELDS.priority,
   PICKING_FIELDS.location,
   PICKING_FIELDS.locationDest,
-  PICKING_FIELDS.company,
   PICKING_FIELDS.person,
   PICKING_FIELDS.scheduledDate,
   PICKING_FIELDS.origin,
-  PICKING_FIELDS.state,
   PICKING_FIELDS.batch,
+  PICKING_FIELDS.state,
 ];

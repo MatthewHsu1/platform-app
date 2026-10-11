@@ -1,5 +1,6 @@
-import { type defineView, ViewFilterOperand, type ViewSortDirection, ViewType } from 'twenty-sdk/define';
+import { type defineView, ViewFilterOperand, ViewSortDirection, ViewType } from 'twenty-sdk/define';
 
+import { PICKING_FIELDS } from 'src/stock/page-layouts/field-ids';
 import { PICKING_STATE } from 'src/stock/stock-options.constant';
 import { STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
 import { listColumns, PICKING_LIST_COLUMNS, viewPartId } from 'src/stock/views/list-columns';
@@ -48,12 +49,25 @@ export const numberIsNot = (view: string, field: string, value: number) => ({
   value: String(value),
 });
 
-// A filter on a field of the related record, e.g. the usage of a quant's location.
-export const relatedIs = (view: string, relationField: string, targetField: string, value: string[] | 'true' | 'false') => ({
-  ...filterBase(view, relationField, {}),
+// A filter on a field of the related record, e.g. the usage of a quant's
+// location. Its id names the target field too, so one view can test two
+// fields of the same related record.
+const relatedBase = (view: string, relationField: string, targetField: string) => ({
+  universalIdentifier: viewPartId(view, 'filter', `${relationField}>${targetField}`),
+  fieldMetadataUniversalIdentifier: relationField,
   relationTargetFieldMetadataUniversalIdentifier: targetField,
+});
+
+export const relatedIs = (view: string, relationField: string, targetField: string, value: string[] | 'true' | 'false') => ({
+  ...relatedBase(view, relationField, targetField),
   operand: ViewFilterOperand.IS,
   value,
+});
+
+export const relatedIsNotEmpty = (view: string, relationField: string, targetField: string) => ({
+  ...relatedBase(view, relationField, targetField),
+  operand: ViewFilterOperand.IS_NOT_EMPTY,
+  value: '',
 });
 
 export const sortBy = (view: string, field: string, direction: ViewSortDirection) => ({
@@ -64,9 +78,10 @@ export const sortBy = (view: string, field: string, direction: ViewSortDirection
 
 export const OPEN_PICKING_STATES: string[] = [PICKING_STATE.ASSIGNED, PICKING_STATE.WAITING, PICKING_STATE.CONFIRMED];
 
-// A saved list of transfers: the transfer list columns and the view's own filters.
 type ViewDefinition = Parameters<typeof defineView>[0];
 
+// A saved list of transfers: the transfer list columns, the view's own filters,
+// and the transfers' first sort key, most urgent first.
 export const transferView = ({
   universalIdentifier,
   name,
@@ -91,4 +106,5 @@ export const transferView = ({
   fields: listColumns(universalIdentifier, PICKING_LIST_COLUMNS, STOCK_PICKING_ALL_FIELDS),
   filters,
   ...(filterGroups === undefined ? {} : { filterGroups }),
+  sorts: [sortBy(universalIdentifier, PICKING_FIELDS.priority, ViewSortDirection.DESC)],
 });

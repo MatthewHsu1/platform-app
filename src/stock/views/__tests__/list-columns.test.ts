@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { listColumns } from 'src/stock/views/list-columns';
+import { keepColumnIds, listColumns } from 'src/stock/views/list-columns';
 
 const VIEW = '00000000-0000-4000-8000-000000000001';
 const field = (index: number) => `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`;
@@ -37,5 +37,28 @@ describe('listColumns', () => {
 
     expect(again.universalIdentifier).toBe(first.universalIdentifier);
     expect(otherView.universalIdentifier).not.toBe(first.universalIdentifier);
+  });
+});
+
+describe('keepColumnIds', () => {
+  // Twenty checks a new label column against the old columns before it moves
+  // them, and refuses it unless it sits strictly below them.
+  it('keeps the installed ids and puts a new first column below the old ones', () => {
+    const oldId = '00000000-0000-4000-8000-0000000000aa';
+    const columns = keepColumnIds(listColumns(VIEW, [field(1), field(2)], [field(3)]), new Map([[field(2), oldId]]));
+
+    expect(columns.map(({ fieldMetadataUniversalIdentifier, position }) => [fieldMetadataUniversalIdentifier, position])).toEqual([
+      [field(1), -1],
+      [field(2), 1],
+      [field(3), 2],
+    ]);
+    expect(columns[1].universalIdentifier).toBe(oldId);
+  });
+
+  it('leaves the first column at 0 when it was installed before', () => {
+    const oldId = '00000000-0000-4000-8000-0000000000bb';
+    const [first] = keepColumnIds(listColumns(VIEW, [field(1)], []), new Map([[field(1), oldId]]));
+
+    expect([first.universalIdentifier, first.position]).toEqual([oldId, 0]);
   });
 });

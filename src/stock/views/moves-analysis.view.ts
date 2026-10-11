@@ -10,6 +10,7 @@ import { selectIs, sortBy } from 'src/stock/views/view-helpers';
 
 const VIEW = VIEWS.movesAnalysis;
 
+// The company column is for multi-company setups only, so it starts hidden.
 export default defineView({
   universalIdentifier: VIEW,
   name: 'Moves Analysis',

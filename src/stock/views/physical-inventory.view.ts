@@ -8,8 +8,8 @@ import { listColumns } from 'src/stock/views/list-columns';
 import { STOCK_QUANT_ALL_FIELDS } from 'src/stock/views/object-fields';
 import { relatedIs, sortBy } from 'src/stock/views/view-helpers';
 
-// The owner column is left out to keep ten columns: the counted quantity and
-// the difference matter more when counting, and staff can show the owner.
+// Lot, package and owner columns are for setups that track them, so they
+// start hidden.
 export const PHYSICAL_INVENTORY_COLUMNS = (viewUniversalIdentifier: string) =>
   listColumns(
     viewUniversalIdentifier,
@@ -17,8 +17,6 @@ export const PHYSICAL_INVENTORY_COLUMNS = (viewUniversalIdentifier: string) =>
       F.name,
       F.location,
       F.product,
-      F.lot,
-      F.package,
       F.inventoryDate,
       F.assignedUser,
       F.quantity,

@@ -1,4 +1,4 @@
-import { defineView, ViewType } from 'twenty-sdk/define';
+import { defineView, ViewSortDirection, ViewType } from 'twenty-sdk/define';
 
 import {
   PRODUCT_PRODUCT_FIELD_UNIVERSAL_IDENTIFIERS as VARIANT,
@@ -8,7 +8,7 @@ import { PRODUCT_PRODUCT_STOCK_FIELDS as F, PRODUCT_TEMPLATE_STOCK_FIELDS } from
 import { STOCK_VIEW_UNIVERSAL_IDENTIFIERS as VIEWS } from 'src/stock/stock-pages-universal-identifiers.constant';
 import { listColumns } from 'src/stock/views/list-columns';
 import { PRODUCT_PRODUCT_ALL_FIELDS } from 'src/stock/views/object-fields';
-import { relatedIs } from 'src/stock/views/view-helpers';
+import { relatedIs, sortBy } from 'src/stock/views/view-helpers';
 
 const VIEW = VIEWS.productStock;
 
@@ -22,6 +22,8 @@ export default defineView({
   icon: 'IconBuildingWarehouse',
   position: 1,
   filters: [relatedIs(VIEW, VARIANT.productTmpl, PRODUCT_TEMPLATE_STOCK_FIELDS.isStorable, 'true')],
+  // Favourites live on the template, which a view cannot sort a variant by.
+  sorts: [sortBy(VIEW, VARIANT.defaultCode, ViewSortDirection.ASC)],
   fields: listColumns(
     VIEW,
     [VARIANT.name, F.qtyAvailable, F.freeQty, F.incomingQty, F.outgoingQty],
