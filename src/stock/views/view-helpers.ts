@@ -37,6 +37,14 @@ export const valueless = (
   inGroup: InGroup = {},
 ) => ({ ...filterBase(view, field, inGroup), operand, value: '' });
 
+// Before the start of today (UTC). A relative "past 36500 days" ends where
+// today begins; no transfer is old enough to meet its lower bound.
+export const beforeToday = (view: string, field: string, inGroup: InGroup = {}) => ({
+  ...filterBase(view, field, inGroup),
+  operand: ViewFilterOperand.IS_RELATIVE,
+  value: 'PAST_36500_DAY;;UTC;;',
+});
+
 export const isCurrentMember = (view: string, field: string) => ({
   ...filterBase(view, field, {}),
   operand: ViewFilterOperand.IS,

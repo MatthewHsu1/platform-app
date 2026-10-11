@@ -82,8 +82,9 @@ const typeChip = (typeId: string) => ({ pickingType: { IS: { selectedRecordIds: 
 // The query of the transfer list a card opens: every transfer of the type
 // (`count` null), or the transfers of one count. Twenty replaces a saved view's
 // filters with the ones in the URL, so every condition of the count is in the
-// URL; the view only gives the list its name, columns and sort.
-export const overviewListQuery = (count: OverviewCount | null, typeId: string, viewId: string | undefined) => {
+// URL; the view only gives the list its name, columns and sort. `today` is the
+// day the counts were made on, so the Late list cuts where the Late count did.
+export const overviewListQuery = (count: OverviewCount | null, typeId: string, viewId: string | undefined, today: string) => {
   const view = viewId === undefined ? {} : { viewId };
 
   if (count === null) {
@@ -102,8 +103,8 @@ export const overviewListQuery = (count: OverviewCount | null, typeId: string, v
         operator: 'OR',
         filters: [
           { field: 'hasDeadlineIssue', op: 'IS', value: 'true' },
-          { field: 'dateDeadline', op: 'IS_IN_PAST', value: '' },
-          { field: 'scheduledDate', op: 'IS_IN_PAST', value: '' },
+          { field: 'dateDeadline', op: 'IS_BEFORE', value: `${today}T00:00:00.000Z` },
+          { field: 'scheduledDate', op: 'IS_BEFORE', value: `${today}T00:00:00.000Z` },
         ],
       },
     };

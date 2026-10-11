@@ -105,39 +105,39 @@ const TYPE_CHIP = { pickingType: { IS: { selectedRecordIds: ['receipts'] } } };
 
 describe('overviewListQuery', () => {
   it('opens every transfer of the operation type from its name', () => {
-    expect(overviewListQuery(null, 'receipts', 'view-receipts')).toEqual({ viewId: 'view-receipts', filter: TYPE_CHIP });
+    expect(overviewListQuery(null, 'receipts', 'view-receipts', '2026-10-08')).toEqual({ viewId: 'view-receipts', filter: TYPE_CHIP });
   });
 
   it('opens the ready transfers of the type', () => {
-    expect(overviewListQuery('ready', 'receipts', 'view-ready')).toEqual({
+    expect(overviewListQuery('ready', 'receipts', 'view-ready', '2026-10-08')).toEqual({
       viewId: 'view-ready',
       filter: { state: { IS: ['ASSIGNED'] }, ...TYPE_CHIP },
     });
   });
 
   it('opens the open backorders of the type', () => {
-    expect(overviewListQuery('backorders', 'receipts', 'view-backorders')).toEqual({
+    expect(overviewListQuery('backorders', 'receipts', 'view-backorders', '2026-10-08')).toEqual({
       viewId: 'view-backorders',
       filter: { state: { IS: OPEN }, ...TYPE_CHIP, backorder: { IS_NOT_EMPTY: '' } },
     });
   });
 
-  it('opens the open transfers of the type with a deadline issue, a passed deadline or a passed scheduled date', () => {
-    expect(overviewListQuery('late', 'receipts', 'view-late')).toEqual({
+  it('opens the open transfers of the type with a deadline issue, or a deadline or scheduled date before today', () => {
+    expect(overviewListQuery('late', 'receipts', 'view-late', '2026-10-08')).toEqual({
       viewId: 'view-late',
       filter: { state: { IS: OPEN }, ...TYPE_CHIP },
       filterGroup: {
         operator: 'OR',
         filters: [
           { field: 'hasDeadlineIssue', op: 'IS', value: 'true' },
-          { field: 'dateDeadline', op: 'IS_IN_PAST', value: '' },
-          { field: 'scheduledDate', op: 'IS_IN_PAST', value: '' },
+          { field: 'dateDeadline', op: 'IS_BEFORE', value: '2026-10-08T00:00:00.000Z' },
+          { field: 'scheduledDate', op: 'IS_BEFORE', value: '2026-10-08T00:00:00.000Z' },
         ],
       },
     });
   });
 
   it('opens the list without a view when the saved list is not found', () => {
-    expect(overviewListQuery('draft', 'receipts', undefined)).toEqual({ filter: { state: { IS: ['DRAFT'] }, ...TYPE_CHIP } });
+    expect(overviewListQuery('draft', 'receipts', undefined, '2026-10-08')).toEqual({ filter: { state: { IS: ['DRAFT'] }, ...TYPE_CHIP } });
   });
 });

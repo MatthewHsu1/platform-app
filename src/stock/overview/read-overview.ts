@@ -110,5 +110,5 @@ export const readOverview = async (): Promise<OverviewAnswer> => {
     readViewIds(),
   ]);
 
-  return { ...viewIds, warehouses: overviewWarehouses(types, groups.flat()) };
+  return { today, ...viewIds, warehouses: overviewWarehouses(types, groups.flat()) };
 };

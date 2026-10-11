@@ -87,12 +87,16 @@ const Overview = () => {
       .finally(() => setLoading(false));
   });
 
-  const openList = async (card: OverviewTypeCard, count: OverviewCount | null) => {
+  const openList = async (shown: OverviewAnswer, card: OverviewTypeCard, count: OverviewCount | null) => {
     setError(null);
-    const viewId = count === null ? answer?.typeViewIds[card.code] : answer?.countViewIds[count];
+    const viewId = count === null ? shown.typeViewIds[card.code] : shown.countViewIds[count];
 
     try {
-      await navigate(AppPath.RecordIndexPage, { objectNamePlural: 'stockPickings' }, overviewListQuery(count, card.id, viewId));
+      await navigate(
+        AppPath.RecordIndexPage,
+        { objectNamePlural: 'stockPickings' },
+        overviewListQuery(count, card.id, viewId, shown.today),
+      );
     } catch (caught) {
       setError(describeRouteError(caught, t('Could not open the list.')));
     }
@@ -121,7 +125,7 @@ const Overview = () => {
       <ErrorText error={error} />
       {answer === null && loading ? <div style={styles.muted}>{t('Loading…')}</div> : null}
       {answer !== null && answer.warehouses.length === 0 ? <div style={styles.muted}>{t('No active operation types.')}</div> : null}
-      {(answer?.warehouses ?? []).map((warehouse) => (
+      {answer?.warehouses.map((warehouse) => (
         <div key={warehouse.warehouseId ?? ''} style={{ display: 'flex', flexDirection: 'column', gap: themeCssVariables.spacing[2] }}>
           <div style={styles.title}>{warehouse.warehouseName ?? t('No warehouse')}</div>
           <div style={styles.row}>
@@ -130,7 +134,7 @@ const Overview = () => {
                 key={card.id}
                 card={card}
                 busy={creating}
-                onOpen={(count) => void openList(card, count)}
+                onOpen={(count) => void openList(answer, card, count)}
                 onCreate={() => void createTransfer(card.id)}
               />
             ))}
