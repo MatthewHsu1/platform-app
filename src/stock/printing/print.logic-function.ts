@@ -2,10 +2,11 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { createPrintPass } from 'src/stock/printing/create-print-pass';
 import { PRINT_MESSAGES } from 'src/stock/printing/print-messages.constant';
-import { AFTER_PRINT, printOptionsParserOf } from 'src/stock/printing/printable-objects';
+import { AFTER_PRINT, OPTION_RECORDS, printOptionsParserOf } from 'src/stock/printing/printable-objects';
 import { type PrintReportKey } from 'src/stock/printing/types/print-report-key.type';
 import { isTimeZone } from 'src/stock/printing/utils/print-dates.util';
 import { isPrintOptionsSizeAllowed } from 'src/stock/printing/utils/print-options.util';
+import { filterReadableIds } from 'src/stock/stock-access';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';
 import { StockUserError } from 'src/stock/stock-errors';
 import {
@@ -41,6 +42,27 @@ const readTimeZone = (value: unknown) => {
   return value;
 };
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// An option that names a record (a pricelist) is kept only when the clicking user may read it: the
+// page reads it later without the user.
+const checkOptionRecords = async (report: PrintReportKey, options: Record<string, unknown>) => {
+  for (const [key, of] of Object.entries(OPTION_RECORDS[report] ?? {})) {
+    const value = options[key];
+
+    if (value === undefined) {
+      continue;
+    }
+    if (
+      typeof value !== 'string' ||
+      !UUID.test(value) ||
+      (await filterReadableIds(of.objectSingular, of.objectPlural, [value])).length === 0
+    ) {
+      throw new StockUserError(PRINT_MESSAGES.optionsNotValid);
+    }
+  }
+};
+
 // Answers a one-time link to the print page; the page itself is served by the public print view route.
 const handler = stockRouteHandler(async (body) => {
   const { report, objectSingular } = body;
@@ -56,6 +78,8 @@ const handler = stockRouteHandler(async (body) => {
     throw new StockUserError(PRINT_MESSAGES.optionsNotValid);
   }
   const reportKey = report as PrintReportKey;
+
+  await checkOptionRecords(reportKey, options);
   const created = await createPrintPass({
     report: reportKey,
     objectSingular: objectSingular as string,
