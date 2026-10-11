@@ -19,11 +19,11 @@ const runMemberTrigger = makeRunMemberTrigger({
   // Rows in the trash do not count.
   membershipsOfUsers: async (userIds) =>
     (
-      await members.find<{ id: string; crmTeamId: string | null; userId: string | null; active: boolean | null; createdAt: string }>(
-        { userId: { in: userIds } },
-        'id crmTeamId userId active createdAt',
+      await members.find<{ id: string; crmTeamId: string | null; salesUserId: string | null; active: boolean | null; createdAt: string }>(
+        { salesUserId: { in: userIds } },
+        'id crmTeamId salesUserId active createdAt',
       )
-    ).map((row) => ({ id: row.id, teamId: row.crmTeamId, userId: row.userId, active: row.active === true, createdAt: row.createdAt })),
+    ).map((row) => ({ id: row.id, teamId: row.crmTeamId, userId: row.salesUserId, active: row.active === true, createdAt: row.createdAt })),
   userNames: readUserNames,
   destroyMembers: async (memberIds) => {
     await members.destroyMany(memberIds);

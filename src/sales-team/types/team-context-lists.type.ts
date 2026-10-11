@@ -12,7 +12,7 @@ type TeamNode = Omit<TeamRow, 'sequence' | 'active' | 'useLeads' | 'useOpportuni
 type MemberNode = {
   id: string;
   crmTeamId: string | null;
-  userId: string | null;
+  salesUserId: string | null;
   active: boolean | null;
   assignmentMax: number | null;
   assignmentOptout: boolean | null;

@@ -67,7 +67,7 @@ describe('team member trigger', () => {
     await expect(
       makeRunMemberTrigger(api)({
         operation: 'created',
-        events: [{ recordId: 'm2', properties: { after: { crmTeamId: 'T', userId: 'U', active: true, name: null, updatedBy: STAFF } } }],
+        events: [{ recordId: 'm2', properties: { after: { crmTeamId: 'T', salesUserId: 'U', active: true, name: null, updatedBy: STAFF } } }],
       }),
     ).rejects.toThrow('The new team members were removed.');
 
@@ -80,7 +80,7 @@ describe('team member trigger', () => {
     const { api, writes } = makeApi(rows);
     const created = (recordId: string) => ({
       recordId,
-      properties: { after: { crmTeamId: 'T', userId: 'U', active: true, name: null, updatedBy: STAFF } },
+      properties: { after: { crmTeamId: 'T', salesUserId: 'U', active: true, name: null, updatedBy: STAFF } },
     });
 
     await expect(makeRunMemberTrigger(api)({ operation: 'created', events: [created('m1'), created('m2')] })).rejects.toThrow(
@@ -101,7 +101,7 @@ describe('team member trigger', () => {
     const { api, writes } = makeApi(rows, true);
     const created = (recordId: string, teamId: string, userId: string) => ({
       recordId,
-      properties: { after: { crmTeamId: teamId, userId, active: true, name: null, updatedBy: STAFF } },
+      properties: { after: { crmTeamId: teamId, salesUserId: userId, active: true, name: null, updatedBy: STAFF } },
     });
 
     await expect(
@@ -120,7 +120,7 @@ describe('team member trigger', () => {
     const { api, writes } = makeApi(rows);
     const created = (recordId: string, userId: string) => ({
       recordId,
-      properties: { after: { crmTeamId: 'NEW', userId, active: true, name: null, updatedBy: STAFF } },
+      properties: { after: { crmTeamId: 'NEW', salesUserId: userId, active: true, name: null, updatedBy: STAFF } },
     });
 
     await makeRunMemberTrigger(api)({ operation: 'created', events: [created('nt-u', 'U'), created('nt-m', 'M')] });
@@ -134,7 +134,7 @@ describe('team member trigger', () => {
 
     await makeRunMemberTrigger(api)({
       operation: 'created',
-      events: [{ recordId: 'nt', properties: { after: { crmTeamId: 'NEW', userId: 'U', active: true, name: null, updatedBy: STAFF } } }],
+      events: [{ recordId: 'nt', properties: { after: { crmTeamId: 'NEW', salesUserId: 'U', active: true, name: null, updatedBy: STAFF } } }],
     });
 
     expect(writes).toEqual(['archive st1', 'name nt Ann Lee']);
@@ -147,7 +147,7 @@ describe('team member trigger', () => {
 
     await makeRunMemberTrigger(api)({
       operation: 'created',
-      events: [{ recordId: 'nt', properties: { after: { crmTeamId: 'NEW', userId: 'U', active: true, name: 'Ann Lee', updatedBy: STAFF } } }],
+      events: [{ recordId: 'nt', properties: { after: { crmTeamId: 'NEW', salesUserId: 'U', active: true, name: 'Ann Lee', updatedBy: STAFF } } }],
     });
 
     expect(writes).toEqual([]);
@@ -163,8 +163,8 @@ describe('team member trigger', () => {
         {
           recordId: 'new',
           properties: {
-            before: { crmTeamId: 'T1', userId: 'U', active: false },
-            after: { crmTeamId: 'T1', userId: 'U', active: true, updatedBy: STAFF },
+            before: { crmTeamId: 'T1', salesUserId: 'U', active: false },
+            after: { crmTeamId: 'T1', salesUserId: 'U', active: true, updatedBy: STAFF },
             updatedFields: ['active'],
           },
         },
@@ -184,8 +184,8 @@ describe('team member trigger', () => {
         {
           recordId: 'nt',
           properties: {
-            before: { crmTeamId: 'NEW', userId: 'U', active: false },
-            after: { crmTeamId: 'NEW', userId: 'U', active: true, updatedBy: STAFF },
+            before: { crmTeamId: 'NEW', salesUserId: 'U', active: false },
+            after: { crmTeamId: 'NEW', salesUserId: 'U', active: true, updatedBy: STAFF },
             updatedFields: ['active'],
           },
         },
@@ -205,8 +205,8 @@ describe('team member trigger', () => {
         {
           recordId: 'm',
           properties: {
-            before: { crmTeamId: 'T2', userId: 'U', active: true },
-            after: { crmTeamId: 'T3', userId: 'U', active: true, updatedBy: STAFF },
+            before: { crmTeamId: 'T2', salesUserId: 'U', active: true },
+            after: { crmTeamId: 'T3', salesUserId: 'U', active: true, updatedBy: STAFF },
             updatedFields: ['crmTeam', 'crmTeamId'],
           },
         },
@@ -227,8 +227,8 @@ describe('team member trigger', () => {
         {
           recordId: 'st1',
           properties: {
-            before: { crmTeamId: 'T1', userId: 'U', active: true },
-            after: { crmTeamId: 'T1', userId: 'U', active: false, updatedBy: APP },
+            before: { crmTeamId: 'T1', salesUserId: 'U', active: true },
+            after: { crmTeamId: 'T1', salesUserId: 'U', active: false, updatedBy: APP },
             updatedFields: ['active'],
           },
         },

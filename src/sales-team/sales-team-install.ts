@@ -32,7 +32,7 @@ export const SALES_TEAM_INSTALL: ModuleInstallSpec = {
     {
       objectUniversalIdentifier: CRM_TEAM_MEMBER_OBJECT_UNIVERSAL_IDENTIFIER,
       name: 'platform-crm-team-member-team-and-user',
-      expression: 'isDefined(crmTeam) and isDefined(user)',
+      expression: 'isDefined(crmTeam) and isDefined(salesUser)',
       message: 'A team member needs a sales team and a salesperson.',
     },
     {

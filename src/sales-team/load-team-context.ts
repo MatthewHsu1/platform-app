@@ -4,7 +4,7 @@ import { type TeamContextLists } from 'src/sales-team/types/team-context-lists.t
 import { type FindSpec, findMany, records } from 'src/shared/triggers/records';
 
 export const MEMBER_SELECTION =
-  'id crmTeamId userId active assignmentMax assignmentOptout assignmentDomain assignmentDomainPreferred createdAt';
+  'id crmTeamId salesUserId active assignmentMax assignmentOptout assignmentDomain assignmentDomainPreferred createdAt';
 
 // Every team (archived ones too: a lead may sit in one), the active
 // memberships, and the teams each stage is limited to.
@@ -19,14 +19,14 @@ export const TEAM_CONTEXT_FINDS: { [TKey in keyof TeamContextLists]: FindSpec } 
 };
 
 export const toMembershipRows = (rows: TeamContextLists['memberRows']): MembershipRow[] =>
-  rows.flatMap(({ crmTeamId, userId, ...row }) =>
-    crmTeamId === null || userId === null
+  rows.flatMap(({ crmTeamId, salesUserId, ...row }) =>
+    crmTeamId === null || salesUserId === null
       ? []
       : [
           {
             ...row,
             teamId: crmTeamId,
-            userId,
+            userId: salesUserId,
             active: row.active === true,
             assignmentMax: row.assignmentMax ?? 0,
             assignmentOptout: row.assignmentOptout === true,

@@ -23,10 +23,10 @@ const handler = async (payload: DatabaseEventBatchPayload<ObjectRecordEvent<Reco
     if (userIds.length > 0) {
       await errors.run('names', async () => {
         const names = await readUserNames(userIds);
-        const rows = await members.find<{ id: string; userId: string | null; name: string | null }>({ userId: { in: userIds } }, 'id userId name');
+        const rows = await members.find<{ id: string; salesUserId: string | null; name: string | null }>({ salesUserId: { in: userIds } }, 'id salesUserId name');
 
         for (const row of rows) {
-          const name = names.get(row.userId ?? '') ?? null;
+          const name = names.get(row.salesUserId ?? '') ?? null;
 
           if (name !== row.name) {
             await members.update(row.id, { name });

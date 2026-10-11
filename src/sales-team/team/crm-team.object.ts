@@ -52,7 +52,7 @@ export default defineObject({
       icon: 'IconUsers',
       targetObjectUniversalIdentifier: CRM_TEAM_MEMBER_OBJECT_UNIVERSAL_IDENTIFIER,
       targetFieldUniversalIdentifier: CRM_TEAM_MEMBER_FIELD_UNIVERSAL_IDENTIFIERS.crmTeam,
-      junctionTargetFieldUniversalIdentifier: CRM_TEAM_MEMBER_FIELD_UNIVERSAL_IDENTIFIERS.user,
+      junctionTargetFieldUniversalIdentifier: CRM_TEAM_MEMBER_FIELD_UNIVERSAL_IDENTIFIERS.salesUser,
     }),
     oneToManyField({
       universalIdentifier: FIELD_IDS.stageLinks,

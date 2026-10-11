@@ -17,7 +17,7 @@ type MemberEvent = {
 };
 
 // A relation is listed under its name and its join column.
-const PAIR_FIELDS: Record<string, string> = { crmTeam: 'crmTeamId', crmTeamId: 'crmTeamId', user: 'userId', userId: 'userId', active: 'active' };
+const PAIR_FIELDS: Record<string, string> = { crmTeam: 'crmTeamId', crmTeamId: 'crmTeamId', salesUser: 'salesUserId', salesUserId: 'salesUserId', active: 'active' };
 const FILTER_FIELDS = ['assignmentDomain', 'assignmentDomainPreferred'] as const;
 const CAPACITY_FIELDS = ['assignmentMax', 'active', 'crmTeam', 'crmTeamId'];
 
@@ -52,7 +52,7 @@ export const makeRunMemberTrigger =
     let refused = new Set<string>();
 
     if (checked.length > 0) {
-      const rows = await api.membershipsOfUsers(distinctIds(checked.map((event) => textOf(sideOf(event, 'userId')))));
+      const rows = await api.membershipsOfUsers(distinctIds(checked.map((event) => textOf(sideOf(event, 'salesUserId')))));
       const checkedIds = new Set(checked.map((event) => event.recordId));
       // The stored row decides: one changed again since this save is checked as it is now.
       const candidates = rows.filter((row) => checkedIds.has(row.id) && row.active);
@@ -132,15 +132,15 @@ export const makeRunMemberTrigger =
       (event) =>
         event.properties.after !== undefined &&
         !refused.has(event.recordId) &&
-        (operation === 'created' || (operation === 'updated' && fieldsOf(event).some((field) => field === 'user' || field === 'userId'))),
+        (operation === 'created' || (operation === 'updated' && fieldsOf(event).some((field) => field === 'salesUser' || field === 'salesUserId'))),
     );
 
     if (renamed.length > 0) {
       await errors.run('names', async () => {
-        const names = await api.userNames(distinctIds(renamed.map((event) => textOf(event.properties.after?.userId))));
+        const names = await api.userNames(distinctIds(renamed.map((event) => textOf(event.properties.after?.salesUserId))));
 
         for (const event of renamed) {
-          const name = names.get(textOf(event.properties.after?.userId) ?? '') ?? null;
+          const name = names.get(textOf(event.properties.after?.salesUserId) ?? '') ?? null;
 
           if (name !== (textOf(event.properties.after?.name) ?? null)) {
             await api.renameMember(event.recordId, name);

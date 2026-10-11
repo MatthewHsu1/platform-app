@@ -14,7 +14,7 @@ export default defineField({
     label: 'Sales team memberships',
     icon: 'IconUsers',
     targetObjectUniversalIdentifier: CRM_TEAM_MEMBER_OBJECT_UNIVERSAL_IDENTIFIER,
-    targetFieldUniversalIdentifier: CRM_TEAM_MEMBER_FIELD_UNIVERSAL_IDENTIFIERS.user,
+    targetFieldUniversalIdentifier: CRM_TEAM_MEMBER_FIELD_UNIVERSAL_IDENTIFIERS.salesUser,
   }),
   objectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.workspaceMember.universalIdentifier,
 });

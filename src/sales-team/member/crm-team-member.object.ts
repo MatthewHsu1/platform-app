@@ -33,8 +33,8 @@ export default defineObject({
       targetFieldUniversalIdentifier: CRM_TEAM_FIELD_UNIVERSAL_IDENTIFIERS.members,
     }),
     manyToOneField({
-      universalIdentifier: FIELD_IDS.user,
-      name: 'user',
+      universalIdentifier: FIELD_IDS.salesUser,
+      name: 'salesUser',
       label: 'Salesperson',
       icon: 'IconUserCircle',
       onDelete: OnDeleteAction.CASCADE,

@@ -17,7 +17,7 @@ export const CRM_TEAM_FIELD_UNIVERSAL_IDENTIFIERS = {
 export const CRM_TEAM_MEMBER_FIELD_UNIVERSAL_IDENTIFIERS = {
   name: '3a38ae6f-cea7-4c88-80f4-8e50572a4a05',
   crmTeam: '3c901ed0-0c80-4c39-b274-b1ff3ca2ccef',
-  user: 'b4818f65-a740-4a30-be5b-c7d03f3821f6',
+  salesUser: 'b4818f65-a740-4a30-be5b-c7d03f3821f6',
   active: '2cca101c-f14c-45bc-bd02-10db09083b1d',
   assignmentMax: '2194faf3-a69c-4ceb-b677-12e8ef37de7b',
   assignmentOptout: '739ec29e-110b-437f-8290-8f218ea5b99f',
