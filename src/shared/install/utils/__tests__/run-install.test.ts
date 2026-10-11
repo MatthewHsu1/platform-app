@@ -54,6 +54,7 @@ const SPEC: ModuleInstallSpec = {
 type CreatedField = Parameters<InstallApi['createField']>[0];
 type CreatedBoard = Parameters<InstallApi['createBoard']>[0];
 type CreatedValidationRule = Parameters<InstallApi['createValidationRule']>[0];
+type CreatedViewSort = Parameters<InstallApi['createViewSort']>[0];
 
 const EMPTY_SPEC: ModuleInstallSpec = {
   firstVersion: '2.0.0',
@@ -71,6 +72,7 @@ const makeFakeApi = ({
   seedKeys = {},
   validationRuleNames = [],
   validationRulesEnabled = true,
+  indexSorts = [],
 }: {
   leadFields?: { id: string; name: string }[];
   reasonNames?: string[];
@@ -78,6 +80,7 @@ const makeFakeApi = ({
   seedKeys?: Record<string, Record<string, string>>;
   validationRuleNames?: string[];
   validationRulesEnabled?: boolean;
+  indexSorts?: string[];
 } = {}) => {
   const state = {
     leadFields: [...leadFields],
@@ -88,6 +91,7 @@ const makeFakeApi = ({
     createdBoards: [] as CreatedBoard[],
     createdSeedRows: [] as { object: string; values: Record<string, unknown> }[],
     createdValidationRules: [] as CreatedValidationRule[],
+    createdViewSorts: [] as CreatedViewSort[],
   };
 
   const objects = (): InstallObject[] => [
@@ -139,6 +143,17 @@ const makeFakeApi = ({
     listValidationRuleNames: async () => [...validationRuleNames],
     createValidationRule: async (input) => {
       state.createdValidationRules.push(input);
+    },
+    listViews: async () => [
+      { id: 'v-index', name: 'All Leads', key: 'INDEX' },
+      ...state.viewNames.map((name) => ({ id: `v-${name}`, name, key: null })),
+    ],
+    listViewSorts: async (viewId) => [
+      ...indexSorts.map((id) => ({ id })),
+      ...state.createdViewSorts.filter((sort) => sort.viewId === viewId).map((_sort, index) => ({ id: `sort-${index}` })),
+    ],
+    createViewSort: async (input) => {
+      state.createdViewSorts.push(input);
     },
   };
 
@@ -355,5 +370,120 @@ describe('validation rules', () => {
     const result = await runInstall({ api, specs: [spec], previousVersion: undefined });
     expect(api.createdValidationRules).toEqual([]);
     expect(result.validationRulesSkipped).toBe(true);
+  });
+});
+
+describe('boards with an aggregate and card fields', () => {
+  const spec: ModuleInstallSpec = {
+    ...EMPTY_SPEC,
+    firstVersion: '2.4.0',
+    boards: [
+      {
+        objectUniversalIdentifier: LEAD,
+        name: 'Pipeline',
+        icon: 'IconLayoutKanban',
+        groupByFieldName: 'stage',
+        hideWhere: { fieldName: 'wonStatus', values: ['LOST'] },
+        aggregate: { operation: 'SUM', fieldName: 'expectedRevenue' },
+        cardFields: ['name', 'expectedRevenue'],
+      },
+    ],
+  };
+  const fields = [
+    { id: 'f-won', name: 'wonStatus' },
+    { id: 'f-stage', name: 'stage' },
+    { id: 'f-revenue', name: 'expectedRevenue' },
+    { id: 'f-name', name: 'name' },
+  ];
+
+  it('makes the board with the revenue sum and the card fields in their order', async () => {
+    const { api, state } = makeFakeApi({ leadFields: fields });
+
+    await runInstall({ api, specs: [spec], previousVersion: undefined });
+
+    expect(state.createdBoards).toEqual([
+      {
+        objectMetadataId: 'o-lead',
+        name: 'Pipeline',
+        icon: 'IconLayoutKanban',
+        groupByFieldMetadataId: 'f-stage',
+        hideWhere: { fieldMetadataId: 'f-won', values: ['LOST'] },
+        aggregate: { operation: 'SUM', fieldMetadataId: 'f-revenue' },
+        cardFieldMetadataIds: ['f-name', 'f-revenue'],
+      },
+    ]);
+  });
+});
+
+describe('view sorts', () => {
+  const spec: ModuleInstallSpec = {
+    ...EMPTY_SPEC,
+    viewSorts: [
+      {
+        objectUniversalIdentifier: LEAD,
+        viewName: 'All',
+        sorts: [
+          { fieldName: 'priority', direction: 'DESC' },
+          { fieldName: 'createdAt', direction: 'DESC' },
+        ],
+      },
+    ],
+  };
+  const fields = [
+    { id: 'f-priority', name: 'priority' },
+    { id: 'f-created', name: 'createdAt' },
+  ];
+
+  it("sorts the object's main list when it has no sort yet", async () => {
+    const { api, state } = makeFakeApi({ leadFields: fields });
+
+    await runInstall({ api, specs: [spec], previousVersion: undefined });
+
+    expect(state.createdViewSorts).toEqual([
+      { viewId: 'v-index', fieldMetadataId: 'f-priority', direction: 'DESC' },
+      { viewId: 'v-index', fieldMetadataId: 'f-created', direction: 'DESC' },
+    ]);
+  });
+
+  it('leaves the main list unsorted on an upgrade after the module first arrived, as staff left it', async () => {
+    const { api, state } = makeFakeApi({ leadFields: fields });
+
+    await runInstall({ api, specs: [{ ...spec, firstVersion: '2.4.0' }], previousVersion: '2.4.0' });
+
+    expect(state.createdViewSorts).toEqual([]);
+  });
+
+  it('keeps a sort staff already chose', async () => {
+    const { api, state } = makeFakeApi({ leadFields: fields, indexSorts: ['staff-sort'] });
+
+    await runInstall({ api, specs: [spec], previousVersion: undefined });
+
+    expect(state.createdViewSorts).toEqual([]);
+  });
+
+  it('adds no board or sort on a second run', async () => {
+    const boardSpec: ModuleInstallSpec = {
+      ...spec,
+      firstVersion: '2.4.0',
+      boards: [
+        {
+          objectUniversalIdentifier: LEAD,
+          name: 'Pipeline',
+          icon: 'IconLayoutKanban',
+          groupByFieldName: 'stage',
+        },
+      ],
+    };
+    const { api, state } = makeFakeApi({
+      leadFields: [...fields, { id: 'f-stage', name: 'stage' }],
+    });
+    await runInstall({ api, specs: [boardSpec], previousVersion: '2.3.0' });
+    const boardsBefore = state.createdBoards.length;
+    const sortsBefore = state.createdViewSorts.length;
+
+    await runInstall({ api, specs: [boardSpec], previousVersion: '2.4.0' });
+
+    expect(state.createdBoards.slice(boardsBefore)).toEqual([]);
+    expect(state.createdViewSorts.slice(sortsBefore)).toEqual([]);
   });
 });

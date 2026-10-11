@@ -4,6 +4,7 @@ import {
   applyLeadUpdate,
   findLead,
   readLeadId,
+  withLeadRouteErrors,
 } from 'src/crm/lead/actions/lead-action-route';
 import {
   RESTORE_LEAD_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
@@ -33,7 +34,7 @@ export default defineLogicFunction({
   name: 'restore-lead',
   description: 'Puts a lost lead back into the pipeline.',
   timeoutSeconds: 30,
-  handler,
+  handler: withLeadRouteErrors(handler),
   httpRouteTriggerSettings: {
     path: RESTORE_LEAD_ROUTE_PATH,
     httpMethod: 'POST',

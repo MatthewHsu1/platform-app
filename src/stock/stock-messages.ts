@@ -5,6 +5,3 @@ export const RESTRICT_DELETE_MESSAGE =
 
 // Shown when a default removal strategy is deleted: reservation falls back on it.
 export const SEEDED_REMOVAL_KEPT_MESSAGE = 'This removal strategy is kept: stock reservation uses it.';
-
-// Shown when the user's role may not read or change what a button works on.
-export const NOT_ALLOWED_MESSAGE = 'Your role does not allow this.';

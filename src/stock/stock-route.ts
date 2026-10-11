@@ -3,10 +3,10 @@ import { type RoutePayload } from 'twenty-sdk/define';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
 import { jsonResponse, readBody } from 'src/shared/route-response';
+import { notAllowedResponse } from 'src/shared/not-allowed';
 import { GraphqlForbiddenError } from 'src/shared/twenty-graphql';
 import { ProcurementFailure } from 'src/stock/procurement/apply-procurement-plan';
 import { StockUserError } from 'src/stock/stock-errors';
-import { NOT_ALLOWED_MESSAGE } from 'src/stock/stock-messages';
 
 export const readIds = (body: Record<string, unknown>, name: string) => {
   const value = body[name];
@@ -30,12 +30,9 @@ export const makeStockRouteHandler =
           error: error.errors.map((item) => translate(locale, item.message, item.values)).join('\n'),
         });
       }
-      // A read or write the user's role does not allow: Twenty's own text is technical, so it goes
-      // in `detail` beside a plain sentence.
+      // A read or write the user's role does not allow.
       if (error instanceof GraphqlForbiddenError) {
-        const locale = await readLocale().catch(() => 'en');
-
-        return jsonResponse(409, { error: translate(locale, NOT_ALLOWED_MESSAGE), detail: error.message });
+        return notAllowedResponse(await readLocale().catch(() => 'en'), error);
       }
       if (error instanceof StockUserError) {
         const locale = await readLocale().catch(() => 'en');

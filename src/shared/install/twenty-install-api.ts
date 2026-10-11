@@ -86,7 +86,7 @@ export const twentyInstallApi: InstallApi = {
     return data.getViews.map((view) => view.name);
   },
 
-  createBoard: async ({ objectMetadataId, name, icon, groupByFieldMetadataId, hideWhere }) => {
+  createBoard: async ({ objectMetadataId, name, icon, groupByFieldMetadataId, hideWhere, aggregate, cardFieldMetadataIds }) => {
     const data = requireData(
       await twentyMetadata<{ createView: { id: string } }>(
         'application',
@@ -98,32 +98,74 @@ export const twentyInstallApi: InstallApi = {
             objectMetadataId,
             type: 'KANBAN',
             mainGroupByFieldMetadataId: groupByFieldMetadataId,
+            ...(aggregate === undefined
+              ? {}
+              : {
+                  kanbanAggregateOperation: aggregate.operation,
+                  kanbanAggregateOperationFieldMetadataId: aggregate.fieldMetadataId,
+                }),
           },
         },
       ),
       `Create view ${name}`,
     );
 
-    if (hideWhere === undefined) {
-      return;
+    if (hideWhere !== undefined) {
+      requireData(
+        await twentyMetadata(
+          'application',
+          `mutation HideOnBoard($input: CreateViewFilterInput!) {
+            createViewFilter(input: $input) { id }
+          }`,
+          {
+            input: {
+              viewId: data.createView.id,
+              fieldMetadataId: hideWhere.fieldMetadataId,
+              operand: 'IS_NOT',
+              value: JSON.stringify(hideWhere.values),
+            },
+          },
+        ),
+        `Filter view ${name}`,
+      );
     }
 
+    for (const [position, fieldMetadataId] of (cardFieldMetadataIds ?? []).entries()) {
+      requireData(
+        await twentyMetadata(
+          'application',
+          `mutation ShowOnCard($input: CreateViewFieldInput!) { createViewField(input: $input) { id } }`,
+          { input: { viewId: data.createView.id, fieldMetadataId, position, isVisible: true } },
+        ),
+        `Show a field on ${name}`,
+      );
+    }
+  },
+
+  listViews: async (objectMetadataId) =>
     requireData(
-      await twentyMetadata(
+      await twentyMetadata<{ getViews: { id: string; name: string; key: string | null }[] }>(
         'application',
-        `mutation HideOnBoard($input: CreateViewFilterInput!) {
-          createViewFilter(input: $input) { id }
-        }`,
-        {
-          input: {
-            viewId: data.createView.id,
-            fieldMetadataId: hideWhere.fieldMetadataId,
-            operand: 'IS_NOT',
-            value: JSON.stringify(hideWhere.values),
-          },
-        },
+        `query Views($objectMetadataId: String) { getViews(objectMetadataId: $objectMetadataId) { id name key } }`,
+        { objectMetadataId },
       ),
-      `Filter view ${name}`,
+      'List views',
+    ).getViews,
+
+  listViewSorts: async (viewId) =>
+    requireData(
+      await twentyMetadata<{ getViewSorts: { id: string }[] }>(
+        'application',
+        `query Sorts($viewId: String) { getViewSorts(viewId: $viewId) { id } }`,
+        { viewId },
+      ),
+      'List view sorts',
+    ).getViewSorts,
+
+  createViewSort: async (input) => {
+    requireData(
+      await twentyMetadata('application', `mutation Sort($input: CreateViewSortInput!) { createViewSort(input: $input) { id } }`, { input }),
+      'Sort view',
     );
   },
 

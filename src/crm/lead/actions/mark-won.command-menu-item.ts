@@ -1,7 +1,8 @@
 import {
   defineCommandMenuItem,
-  everyEquals,
+  noneEquals,
   numberOfSelectedRecords,
+  objectPermissions,
   selectedRecords,
 } from 'twenty-sdk/define';
 
@@ -11,7 +12,8 @@ import {
   MARK_WON_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
 
-// Hiding the button is a convenience; the logic function checks again.
+// Only the selection and the user's rights decide whether the button shows: a lead's type and status may be
+// hidden columns, which the condition cannot read. The logic function refuses a lead it cannot mark won.
 export default defineCommandMenuItem({
   universalIdentifier: MARK_WON_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIER,
   label: 'Mark won',
@@ -21,6 +23,8 @@ export default defineCommandMenuItem({
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
   conditionalAvailabilityExpression:
-    numberOfSelectedRecords === 1 && !everyEquals(selectedRecords, 'wonStatus', 'WON'),
+    numberOfSelectedRecords === 1 &&
+    objectPermissions.canUpdateObjectRecords &&
+    noneEquals(selectedRecords, 'recordPermissions.canUpdate', false),
   frontComponentUniversalIdentifier: MARK_WON_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

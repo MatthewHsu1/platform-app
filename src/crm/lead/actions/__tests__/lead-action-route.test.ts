@@ -1,0 +1,46 @@
+import { type RoutePayload } from 'twenty-sdk/define';
+import { describe, expect, it } from 'vitest';
+
+import { makeLeadRouteErrors } from 'src/crm/lead/actions/lead-action-route';
+import { jsonResponse } from 'src/shared/route-response';
+import { type GraphqlResponse, requireData } from 'src/shared/twenty-graphql';
+
+const payload = {} as RoutePayload;
+const withErrors = makeLeadRouteErrors(async () => 'en');
+
+// The answer Twenty gives the clicking user's token when their role lacks the right.
+const refusedForRole: GraphqlResponse<unknown> = {
+  data: null,
+  errors: [{ message: 'Permission denied on crmLead', extensions: { code: 'FORBIDDEN', subCode: 'PERMISSION_DENIED' } }],
+  caller: 'person',
+};
+
+describe('lead route errors', () => {
+  it("answers 409 with a plain sentence and Twenty's text as detail when the user's role refuses", async () => {
+    const response = await withErrors(async () => {
+      requireData(refusedForRole, 'Update the lead');
+      return jsonResponse(200, {});
+    })(payload);
+
+    expect(response.status).toBe(409);
+    expect(JSON.parse(String(response.body))).toEqual({
+      error: 'Your role does not allow this.',
+      detail: 'Update the lead: Permission denied on crmLead',
+    });
+  });
+
+  it('answers 500 with the message of any other failure', async () => {
+    const response = await withErrors(async () => {
+      throw new Error('Read the lead: connection reset');
+    })(payload);
+
+    expect(response.status).toBe(500);
+    expect(JSON.parse(String(response.body))).toEqual({ error: 'Read the lead: connection reset' });
+  });
+
+  it('passes the answer of the route through', async () => {
+    const response = await withErrors(async () => jsonResponse(404, { error: 'Lead not found.' }))(payload);
+
+    expect(response.status).toBe(404);
+  });
+});

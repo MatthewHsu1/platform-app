@@ -1,32 +1,45 @@
-import { WON_STAGE_VALUE, WON_STATUS } from 'src/crm/crm-options.constant';
+import { LEAD_TYPE, WON_STATUS } from 'src/crm/crm-options.constant';
 import { type LeadUpdatePlan } from 'src/crm/lead/actions/utils/types/lead-update-plan.type';
+import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
+import { type StageRow } from 'src/crm/lead/types/stage-row.type';
+import { findStage } from 'src/crm/lead/utils/find-stage.util';
 
-// Won from any state, probability 100, into the
-// won stage. Stage is a staff list here, so the move happens only while the
-// Won option exists.
+export const MARK_WON_NOT_OPPORTUNITY = 'Only an opportunity can be marked won. Convert the lead first.';
+export const MARK_WON_ALREADY_WON = 'This lead is already won.';
+export const MARK_WON_LOST = 'A lost lead must be restored before it is marked won.';
+export const MARK_WON_NO_STAGE = "No won stage fits this lead's sales team. Mark a stage as won first.";
+
+// The won stage after the lead's current stage, or else the last one before
+// it, among won stages for all teams or the lead's team. With won stages
+// spread through the pipeline, the lead lands in the one that closes its part.
+// The save rules then set the closed date and the won status.
 export const planMarkWon = ({
-  wonStatus,
-  stageOptionValues,
-  now,
+  lead,
+  stages,
 }: {
-  wonStatus: string | null;
-  stageOptionValues: string[];
-  now: string;
+  lead: Pick<LeadRow, 'leadType' | 'wonStatus' | 'stageId' | 'teamId'>;
+  stages: StageRow[];
 }): LeadUpdatePlan => {
-  if (wonStatus === WON_STATUS.WON) {
-    return { kind: 'refuse', reason: 'This lead is already won.' };
+  if (lead.leadType !== LEAD_TYPE.OPPORTUNITY) {
+    return { kind: 'refuse', reason: MARK_WON_NOT_OPPORTUNITY };
+  }
+  if (lead.wonStatus === WON_STATUS.WON) {
+    return { kind: 'refuse', reason: MARK_WON_ALREADY_WON };
+  }
+  if (lead.wonStatus === WON_STATUS.LOST) {
+    return { kind: 'refuse', reason: MARK_WON_LOST };
+  }
+  const wonStages = findStage({ stages, teamId: lead.teamId, onlyWon: true, foldFilter: false, limit: 'all' });
+  const currentSequence = stages.find((stage) => stage.id === lead.stageId)?.sequence ?? 0;
+  const target =
+    wonStages.find((stage) => stage.sequence > currentSequence) ??
+    [...wonStages].reverse().find((stage) => stage.sequence <= currentSequence);
+
+  if (target === undefined) {
+    return { kind: 'refuse', reason: MARK_WON_NO_STAGE };
   }
 
-  return {
-    kind: 'update',
-    data: {
-      wonStatus: WON_STATUS.WON,
-      probability: 100,
-      dateClosed: now,
-      lostReasonId: null,
-      ...(stageOptionValues.includes(WON_STAGE_VALUE) && { stage: WON_STAGE_VALUE }),
-    },
-  };
+  return { kind: 'update', data: { stageId: target.id, probability: 100 } };
 };
 
 // Probability 0 and an optional reason. The lead is not archived: Twenty has

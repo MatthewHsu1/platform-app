@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { CLAIM_HELD_MESSAGE } from 'src/shared/claims/claim';
 import { ORDERPOINT_ROUTE_TEXTS, SHARED_ROUTE_TEXTS } from 'src/stock/orderpoint/actions/replenishment-info.front-component';
 import { ORDERPOINT_MESSAGES } from 'src/stock/orderpoint/orderpoint-messages.constant';
-import { NOT_ALLOWED_MESSAGE } from 'src/stock/stock-messages';
+import { NOT_ALLOWED_MESSAGE } from 'src/shared/not-allowed';
 import {
   LOOP_MESSAGE,
   NO_PRODUCT_MESSAGE,

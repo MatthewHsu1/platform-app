@@ -1,75 +1,46 @@
 import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
 
-import {
-  applyLeadUpdate,
-  findLead,
-  readLeadId,
-} from 'src/crm/lead/actions/lead-action-route';
+import { applyLeadUpdate, findLead, readLeadId, withLeadRouteErrors } from 'src/crm/lead/actions/lead-action-route';
 import {
   MARK_WON_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   MARK_WON_ROUTE_PATH,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
-import { STAGE_FIELD_NAME } from 'src/crm/crm-options.constant';
-import { CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/crm/crm-universal-identifiers.constant';
 import { planMarkWon } from 'src/crm/lead/actions/utils/plan-won-lost.util';
+import { readLeadRow } from 'src/crm/lead/lead-selection';
+import { loadLeadContext } from 'src/crm/lead/load-lead-context';
+import { LEAD_SELECTION } from 'src/crm/lead/twenty-lead-api';
+import { readUserLocale } from 'src/shared/i18n/read-user-locale';
+import { translate } from 'src/shared/i18n/translate';
 import { jsonResponse, readBody } from 'src/shared/route-response';
-import { twentyMetadata } from 'src/shared/twenty-graphql';
 
-// Stage is a staff list, so its options are read at click time from the
-// metadata API; no Stage field means no options. GraphQL introspection does
-// not work here: an app token's schema leaves out workspace-owned fields.
-const readStageOptionValues = async () => {
-  const found = await twentyMetadata<{
-    objects: {
-      edges: {
-        node: { fieldsList: { name: string; options: { value: string }[] | null }[] };
-      }[];
-    };
-  }>(
-    'person',
-    `query LeadStageOptions($objectUniversalIdentifier: UUID!) {
-      objects(filter: { universalIdentifier: { eq: $objectUniversalIdentifier } }, paging: { first: 1 }) {
-        edges { node { fieldsList { name options } } }
-      }
-    }`,
-    { objectUniversalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER },
-  );
-  const stage = found.data?.objects.edges[0]?.node.fieldsList.find(
-    (field) => field.name === STAGE_FIELD_NAME,
-  );
-
-  return (stage?.options ?? []).map((option) => option.value);
-};
-
+// Reads the lead as the clicking user and writes with their token, so the
+// lead's save rules run in the trigger as for a board drag. The stages are
+// read with the app token: every user may pick any stage.
 const handler = async (payload: RoutePayload) => {
+  const locale = await readUserLocale();
   const leadId = readLeadId(readBody(payload));
 
   if (leadId === null) {
-    return jsonResponse(400, { error: 'leadId is required.' });
+    return jsonResponse(400, { error: translate(locale, 'leadId is required.') });
   }
+  const found = await findLead<Record<string, unknown>>(leadId, LEAD_SELECTION);
 
-  const lead = await findLead<{ wonStatus: string | null }>(leadId, 'wonStatus');
-
-  if (lead === null) {
-    return jsonResponse(404, { error: 'Lead not found.' });
+  if (found === null) {
+    return jsonResponse(404, { error: translate(locale, 'Lead not found.') });
   }
+  const lead = readLeadRow(found);
+  const { stages } = await loadLeadContext([lead]);
+  const plan = planMarkWon({ lead, stages });
 
-  return applyLeadUpdate(
-    leadId,
-    planMarkWon({
-      wonStatus: lead.wonStatus,
-      stageOptionValues: await readStageOptionValues(),
-      now: new Date().toISOString(),
-    }),
-  );
+  return applyLeadUpdate(leadId, plan.kind === 'refuse' ? { ...plan, reason: translate(locale, plan.reason) } : plan);
 };
 
 export default defineLogicFunction({
   universalIdentifier: MARK_WON_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   name: 'mark-lead-won',
-  description: 'Marks a lead won, at 100 %, in the Won stage.',
-  timeoutSeconds: 30,
-  handler,
+  description: 'Marks an opportunity won: moves it to the won stage that fits its sales team, at 100 %.',
+  timeoutSeconds: 60,
+  handler: withLeadRouteErrors(handler),
   httpRouteTriggerSettings: {
     path: MARK_WON_ROUTE_PATH,
     httpMethod: 'POST',

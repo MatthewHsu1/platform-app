@@ -24,7 +24,12 @@ export type InstallApi = {
     icon: string;
     groupByFieldMetadataId: string;
     hideWhere?: { fieldMetadataId: string; values: string[] };
+    aggregate?: { operation: 'SUM'; fieldMetadataId: string };
+    cardFieldMetadataIds?: string[];
   }) => Promise<void>;
+  listViews: (objectMetadataId: string) => Promise<{ id: string; name: string; key: string | null }[]>;
+  listViewSorts: (viewId: string) => Promise<{ id: string }[]>;
+  createViewSort: (input: { viewId: string; fieldMetadataId: string; direction: 'ASC' | 'DESC' }) => Promise<void>;
   listSeedKeys: (object: InstallObject) => Promise<Map<string, string>>;
   createSeedRow: (object: InstallObject, values: Record<string, unknown>) => Promise<string>;
   areValidationRulesEnabled: () => Promise<boolean>;
@@ -182,12 +187,19 @@ export const runInstall = async ({
           };
 
     try {
+      const aggregate =
+        board.aggregate === undefined
+          ? undefined
+          : { operation: board.aggregate.operation, fieldMetadataId: findFieldId(object, board.aggregate.fieldName) };
+
       await api.createBoard({
         objectMetadataId: object.id,
         name: board.name,
         icon: board.icon,
         groupByFieldMetadataId,
         hideWhere,
+        aggregate,
+        cardFieldMetadataIds: board.cardFields?.map((fieldName) => findFieldId(object, fieldName)),
       });
     } catch (error) {
       skippedBoards.push({
@@ -220,5 +232,34 @@ export const runInstall = async ({
     }
   }
 
-  return { skippedBoards, validationRulesSkipped };
+  // The object's main list is sorted once, when its module first arrives, and
+  // only while staff have set no sort: a sort staff remove stays removed.
+  const skippedViewSorts: { objectUniversalIdentifier: string; reason: string }[] = [];
+  const newViewSorts = specs.filter((spec) => isNewModule(previousVersion, spec.firstVersion)).flatMap((spec) => spec.viewSorts ?? []);
+
+  for (const viewSort of newViewSorts) {
+    const object = findObject(objects, viewSort.objectUniversalIdentifier);
+
+    try {
+      const index = (await api.listViews(object.id)).find((view) => view.key === 'INDEX');
+
+      if (index === undefined) {
+        skippedViewSorts.push({ objectUniversalIdentifier: viewSort.objectUniversalIdentifier, reason: 'no main list' });
+        continue;
+      }
+      if ((await api.listViewSorts(index.id)).length > 0) {
+        continue;
+      }
+      for (const sort of viewSort.sorts) {
+        await api.createViewSort({ viewId: index.id, fieldMetadataId: findFieldId(object, sort.fieldName), direction: sort.direction });
+      }
+    } catch (error) {
+      skippedViewSorts.push({
+        objectUniversalIdentifier: viewSort.objectUniversalIdentifier,
+        reason: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return { skippedBoards, validationRulesSkipped, skippedViewSorts };
 };

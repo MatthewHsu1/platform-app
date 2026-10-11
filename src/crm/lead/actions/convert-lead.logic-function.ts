@@ -3,6 +3,7 @@ import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
 import {
   findLead,
   readLeadId,
+  withLeadRouteErrors,
 } from 'src/crm/lead/actions/lead-action-route';
 import {
   CONVERT_LEAD_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
@@ -140,7 +141,7 @@ export default defineLogicFunction({
   description:
     'Turns a lead into an opportunity and links or makes its contact and customer.',
   timeoutSeconds: 30,
-  handler,
+  handler: withLeadRouteErrors(handler),
   httpRouteTriggerSettings: {
     path: CONVERT_LEAD_ROUTE_PATH,
     httpMethod: 'POST',

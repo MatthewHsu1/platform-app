@@ -3,6 +3,9 @@ import { definePostInstallLogicFunction, type InstallPayload } from 'twenty-sdk/
 import { POST_INSTALL_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER } from 'src/constants/universal-identifiers';
 import { BASE_INSTALL } from 'src/base/base-install';
 import { CRM_INSTALL } from 'src/crm/crm-install';
+import { finishCrmInstall } from 'src/crm/finish-crm-install';
+import { CRM_STAGE_INSTALL } from 'src/crm/stage/crm-stage-install';
+import { syncStageBoardGroups } from 'src/crm/stage/stage-board-groups';
 import { PRODUCT_INSTALL } from 'src/product/product-install';
 import { ROUTING_INSTALL } from 'src/stock/routing-install';
 import { STOCK_INSTALL } from 'src/stock/stock-install';
@@ -22,9 +25,9 @@ const TRIM_STOP_AFTER_MS = 180_000;
 
 const handler = async ({ previousVersion }: InstallPayload) => {
   const startedAt = Date.now();
-  const { skippedBoards, validationRulesSkipped } = await runInstall({
+  const { skippedBoards, validationRulesSkipped, skippedViewSorts } = await runInstall({
     api: twentyInstallApi,
-    specs: [UTM_INSTALL, CRM_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL],
+    specs: [UTM_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL],
     previousVersion,
   });
   await finishStockInstall(previousVersion);
@@ -35,6 +38,8 @@ const handler = async ({ previousVersion }: InstallPayload) => {
   const upkeep: [string, () => Promise<unknown>][] = [
     ['filling the type of operation on transfers', fillPickingTypeCodes],
     ['filling the full names of operation types', () => recomputePickingTypeNames({})],
+    ['drawing the stage columns of the lead boards', syncStageBoardGroups],
+    ['finishing the CRM', () => finishCrmInstall(previousVersion)],
     [
       'trimming the columns of the "All" lists',
       async () => {
@@ -61,6 +66,10 @@ const handler = async ({ previousVersion }: InstallPayload) => {
     warnings.push(`Install: board "${name}" was not made (${reason}). Make it by hand.`);
   }
 
+  for (const { objectUniversalIdentifier, reason } of skippedViewSorts) {
+    warnings.push(`Install: the main list of ${objectUniversalIdentifier} was not sorted (${reason}).`);
+  }
+
   if (validationRulesSkipped) {
     warnings.push(
       'Install: validation rules were not made; turn on IS_VALIDATION_RULES_ENABLED for this workspace and reinstall.',
@@ -71,14 +80,14 @@ const handler = async ({ previousVersion }: InstallPayload) => {
     console.warn(warning);
   }
 
-  return { skippedBoards, validationRulesSkipped, warnings };
+  return { skippedBoards, validationRulesSkipped, skippedViewSorts, warnings };
 };
 
 export default definePostInstallLogicFunction({
   universalIdentifier: POST_INSTALL_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   name: 'platform-post-install',
   description:
-    'Makes the staff lists, default rows and boards each module needs, fills fields that older rows lack, and trims the columns of the "All" lists once. Adds only what is missing.',
+    'Makes the staff lists, default rows, boards, validation rules and list sorts each module needs, sets the default type of new leads, fills fields that older rows lack, and trims the columns of the "All" lists once. Adds only what is missing.',
   timeoutSeconds: 300,
   handler,
   shouldRunOnVersionUpgrade: true,

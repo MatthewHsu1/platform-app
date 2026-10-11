@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  MARK_WON_ALREADY_WON,
+  MARK_WON_LOST,
+  MARK_WON_NO_STAGE,
+  MARK_WON_NOT_OPPORTUNITY,
   planMarkLost,
   planMarkWon,
   planRestore,
@@ -9,42 +13,52 @@ import {
 const NOW = '2026-10-06T15:00:00.000Z';
 
 describe('planMarkWon', () => {
-  it('sets won, 100 %, the closed date, clears the lost reason and moves to the Won stage', () => {
-    expect(
-      planMarkWon({ wonStatus: 'PENDING', stageOptionValues: ['NEW', 'WON'], now: NOW }),
-    ).toEqual({
-      kind: 'update',
-      data: {
-        wonStatus: 'WON',
-        probability: 100,
-        dateClosed: NOW,
-        lostReasonId: null,
-        stage: 'WON',
-      },
-    });
+  const stage = (id: string, sequence: number, isWon: boolean, teamIds: string[] = []) => ({
+    id,
+    name: id,
+    sequence,
+    isWon,
+    fold: false,
+    rottingThresholdDays: 0,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    teamIds,
+  });
+  const STAGES = [stage('new', 1, false), stage('won5', 5, true), stage('mid', 10, false), stage('won70', 70, true)];
+  const opportunity = (stageId: string | null) => ({ leadType: 'OPPORTUNITY', wonStatus: 'PENDING', stageId, teamId: null });
+
+  it('moves to the first won stage after the current one, at 100 %', () => {
+    expect(planMarkWon({ lead: opportunity('mid'), stages: STAGES })).toEqual({ kind: 'update', data: { stageId: 'won70', probability: 100 } });
+    expect(planMarkWon({ lead: opportunity('new'), stages: STAGES })).toEqual({ kind: 'update', data: { stageId: 'won5', probability: 100 } });
   });
 
-  it('keeps the stage when staff removed the Won option', () => {
-    const plan = planMarkWon({ wonStatus: 'PENDING', stageOptionValues: ['NEW', 'SIGNED'], now: NOW });
-
-    expect(plan).toEqual({
-      kind: 'update',
-      data: { wonStatus: 'WON', probability: 100, dateClosed: NOW, lostReasonId: null },
-    });
+  it('falls back to the last won stage at or before the current one', () => {
+    expect(planMarkWon({ lead: opportunity('won70'), stages: STAGES })).toMatchObject({ data: { stageId: 'won70' } });
   });
 
-  it('wins a lost lead straight away', () => {
-    expect(planMarkWon({ wonStatus: 'LOST', stageOptionValues: [], now: NOW })).toMatchObject({
-      kind: 'update',
-      data: { wonStatus: 'WON', lostReasonId: null },
-    });
+  it('counts a lead without a stage as sequence 0', () => {
+    expect(planMarkWon({ lead: opportunity(null), stages: STAGES })).toMatchObject({ data: { stageId: 'won5' } });
   });
 
-  it('refuses a lead that is already won', () => {
-    expect(planMarkWon({ wonStatus: 'WON', stageOptionValues: ['WON'], now: NOW })).toEqual({
+  it("picks among won stages for all teams and for the lead's team, by sequence", () => {
+    const stages = [stage('team1New', 1, false, ['T1']), stage('genericWon', 30, true), stage('team1Won', 70, true, ['T1'])];
+
+    expect(planMarkWon({ lead: { ...opportunity('team1New'), teamId: 'T1' }, stages })).toMatchObject({ data: { stageId: 'genericWon' } });
+  });
+
+  it('refuses when no won stage fits the lead', () => {
+    expect(planMarkWon({ lead: opportunity('new'), stages: [stage('new', 1, false)] })).toEqual({ kind: 'refuse', reason: MARK_WON_NO_STAGE });
+  });
+
+  it('refuses a lead that is not an opportunity, is already won or is lost', () => {
+    expect(planMarkWon({ lead: { ...opportunity('new'), leadType: 'LEAD' }, stages: STAGES })).toEqual({
       kind: 'refuse',
-      reason: 'This lead is already won.',
+      reason: MARK_WON_NOT_OPPORTUNITY,
     });
+    expect(planMarkWon({ lead: { ...opportunity('won5'), wonStatus: 'WON' }, stages: STAGES })).toEqual({
+      kind: 'refuse',
+      reason: MARK_WON_ALREADY_WON,
+    });
+    expect(planMarkWon({ lead: { ...opportunity('new'), wonStatus: 'LOST' }, stages: STAGES })).toEqual({ kind: 'refuse', reason: MARK_WON_LOST });
   });
 });
 

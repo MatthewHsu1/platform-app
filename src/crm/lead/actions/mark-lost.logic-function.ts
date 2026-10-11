@@ -4,6 +4,7 @@ import {
   applyLeadUpdate,
   findLead,
   readLeadId,
+  withLeadRouteErrors,
 } from 'src/crm/lead/actions/lead-action-route';
 import {
   MARK_LOST_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
@@ -41,7 +42,7 @@ export default defineLogicFunction({
   name: 'mark-lead-lost',
   description: 'Marks a lead lost, at 0 %, with an optional reason.',
   timeoutSeconds: 30,
-  handler,
+  handler: withLeadRouteErrors(handler),
   httpRouteTriggerSettings: {
     path: MARK_LOST_ROUTE_PATH,
     httpMethod: 'POST',

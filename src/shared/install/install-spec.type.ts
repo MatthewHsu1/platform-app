@@ -29,6 +29,17 @@ export type BoardSpec = {
   icon: string;
   groupByFieldName: string;
   hideWhere?: { fieldName: string; values: string[] };
+  aggregate?: { operation: 'SUM'; fieldName: string };
+  // The fields a card shows, in order, the label field first. A board the
+  // hook makes has none until it gets them.
+  cardFields?: string[];
+};
+
+// 'All' is the object's main list, the view Twenty keys INDEX.
+export type ViewSortSpec = {
+  objectUniversalIdentifier: string;
+  viewName: 'All';
+  sorts: { fieldName: string; direction: 'ASC' | 'DESC' }[];
 };
 
 export type SeedRow = {
@@ -54,6 +65,7 @@ export type ModuleInstallSpec = {
   seedRows: SeedRowsSpec[];
   boards: BoardSpec[];
   validationRules: ValidationRuleSpec[];
+  viewSorts?: ViewSortSpec[];
 };
 
 export type InstallObject = {

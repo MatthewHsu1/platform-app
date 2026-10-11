@@ -128,3 +128,15 @@ export const restoreWithNote = async ({
   await records(objectSingular, objectPlural).restore(recordId);
   await addNote({ objectSingular, recordId, title: 'Delete undone', body: reason });
 };
+
+// A rerun of the same delete batch finds the record already back and writes nothing.
+export const restoreIfStillDeleted = async (input: { objectSingular: string; objectPlural: string; recordId: string; reason: string }) => {
+  const [stored] = await records(input.objectSingular, input.objectPlural).findIncludingDeleted<{ id: string; deletedAt: string | null }>(
+    { id: { eq: input.recordId } },
+    'id deletedAt',
+  );
+
+  if (stored?.deletedAt !== null && stored?.deletedAt !== undefined) {
+    await restoreWithNote(input);
+  }
+};

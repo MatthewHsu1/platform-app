@@ -1,6 +1,6 @@
 import { requireData, twentyGraphql, twentyMetadata } from 'src/shared/twenty-graphql';
 import { StockUserError } from 'src/stock/stock-errors';
-import { NOT_ALLOWED_MESSAGE } from 'src/stock/stock-messages';
+import { NOT_ALLOWED_MESSAGE } from 'src/shared/not-allowed';
 import { STOCK_WAREHOUSE_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
 
 const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
