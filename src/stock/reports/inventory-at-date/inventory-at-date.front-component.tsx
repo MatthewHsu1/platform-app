@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
-import { msg, useTranslate } from 'twenty-sdk/front-component';
+import { msg, useLocale, useTranslate } from 'twenty-sdk/front-component';
 import { Button, Input } from 'twenty-ui/primitives/input';
 
 import { DataTable } from 'src/shared/front-components/data-table';
@@ -12,18 +12,27 @@ import {
   INVENTORY_AT_DATE_UNIVERSAL_IDENTIFIERS,
 } from 'src/stock/stock-reports-universal-identifiers.constant';
 import { type InventoryAtDateRow } from 'src/stock/types/inventory-at-date-row.type';
+import { INVENTORY_AT_DATE_PAGE_SIZE } from 'src/stock/utils/inventory-at-date.util';
 
 // The texts the route answers, listed here so the extractor puts them in the catalog.
 export const INVENTORY_AT_DATE_ROUTE_TEXTS = [msg('Choose a date.')];
 
-const PAGE_SIZE = 80;
-
 type InventoryAtDatePage = { at: string; offset: number; hasMore: boolean; rows: InventoryAtDateRow[] };
+
+// The date the table is for, written the way the person's language writes dates, in the browser's time zone.
+const formatMoment = (isoValue: string, locale: string) => {
+  try {
+    return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(isoValue));
+  } catch {
+    return new Date(isoValue).toLocaleString();
+  }
+};
 
 const productLabel = (row: InventoryAtDateRow) => (row.defaultCode === null ? row.name : `[${row.defaultCode}] ${row.name}`);
 
 const InventoryAtDate = () => {
   const { t } = useTranslate();
+  const locale = useLocale();
   const styles = readPopUpStyles();
   const { busy, error, call } = usePopUpCall(t('Could not compute the inventory at that date.'));
   const [at, setAt] = useState(() => toLocalDateTime(new Date().toISOString()));
@@ -62,7 +71,7 @@ const InventoryAtDate = () => {
       <ErrorText error={error} />
       {page === null || shown === null ? null : (
         <>
-          <div style={styles.muted}>{t('On hand at {date}', { date: new Date(page.at).toLocaleString() })}</div>
+          <div style={styles.muted}>{t('On hand at {date}', { date: formatMoment(page.at, locale) })}</div>
           <DataTable<InventoryAtDateRow>
             rowKey={(row) => row.productId}
             rows={page.rows}
@@ -77,11 +86,11 @@ const InventoryAtDate = () => {
               size="sm"
               variant="outline"
               disabled={busy || offset === 0}
-              onClick={() => void load(shown, Math.max(offset - PAGE_SIZE, 0))}
+              onClick={() => void load(shown, Math.max(offset - INVENTORY_AT_DATE_PAGE_SIZE, 0))}
             >
               {t('Previous')}
             </Button>
-            <Button size="sm" variant="outline" disabled={busy || !page.hasMore} onClick={() => void load(shown, offset + PAGE_SIZE)}>
+            <Button size="sm" variant="outline" disabled={busy || !page.hasMore} onClick={() => void load(shown, offset + INVENTORY_AT_DATE_PAGE_SIZE)}>
               {t('Next')}
             </Button>
           </div>

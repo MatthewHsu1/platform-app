@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  compareInventoryProducts,
+  containsPattern,
   doneMovesAfter,
+  doneMovesAfterInProductUnit,
   inventoryAtDate,
-  inventoryAtDatePage,
-  matchesProductSearch,
 } from 'src/stock/utils/inventory-at-date.util';
+import { computeQuantity, resolveUoms } from 'src/uom/utils/uom.util';
 
 // 100 arrive from transit into stock, a pick moves 60 inside the warehouse,
 // then 25 leave to the customer; on hand today is 75. Transit is outside the warehouse.
@@ -35,48 +35,50 @@ describe('inventory at date', () => {
   });
 });
 
-describe('inventory at date list order', () => {
-  it('orders by internal reference, then name, then id, with no reference last', () => {
-    const rows = [
-      { id: '3', defaultCode: null, name: 'A' },
-      { id: '2', defaultCode: 'B1', name: 'Z' },
-      { id: '1', defaultCode: 'A1', name: 'Y' },
+describe('inventory at date in the product unit', () => {
+  const units = resolveUoms([
+    { id: 'unit', name: 'Units', relativeUomId: null, relativeFactor: 1, seedKey: null },
+    { id: 'dozen', name: 'Dozens', relativeUomId: 'unit', relativeFactor: 12, seedKey: null },
+  ]).resolved;
+  const toDozens = (quantity: number, fromUomId: string) => {
+    const from = units.get(fromUomId);
+    const to = units.get('dozen');
+
+    return from === undefined || to === undefined
+      ? Number.NaN
+      : computeQuantity({ qty: quantity, from, to, digits: 2, method: 'UP' });
+  };
+  const receipt = (date: string, quantity: number, productUomId: string) => ({
+    productId: 'P',
+    date,
+    quantity,
+    productUomId,
+    locationId: 'vendors',
+    locationDestId: 'stock',
+  });
+
+  it('converts the sum of the moves in one unit, not each move', () => {
+    const moves = [
+      receipt('2026-10-02T10:00:00.000Z', 1, 'unit'),
+      receipt('2026-10-03T10:00:00.000Z', 1, 'unit'),
+      receipt('2026-10-04T10:00:00.000Z', 1, 'unit'),
     ];
+    const after = doneMovesAfterInProductUnit({ moves, scopeLocationIds: scope, at: '2026-10-01T00:00:00.000Z', toProductUnit: toDozens });
 
-    expect([...rows].sort(compareInventoryProducts).map((row) => row.id)).toEqual(['1', '2', '3']);
+    expect(after.get('P')).toEqual({ in: 0.25, out: 0 });
+    expect(inventoryAtDate(0.25, 0.25, 0)).toBe(0);
+  });
+
+  it('rounds each unit sum up into the product unit', () => {
+    const moves = [receipt('2026-10-02T10:00:00.000Z', 1, 'dozen'), receipt('2026-10-03T10:00:00.000Z', 1, 'unit')];
+    const after = doneMovesAfterInProductUnit({ moves, scopeLocationIds: scope, at: '2026-10-01T00:00:00.000Z', toProductUnit: toDozens });
+
+    expect(after.get('P')).toEqual({ in: 1.09, out: 0 });
   });
 });
 
-describe('inventory at date search', () => {
-  it('finds a product by part of its name, whatever the case', () => {
-    expect(matchesProductSearch({ name: 'Treadmill T1', defaultCode: null }, 'trEAD')).toBe(true);
-  });
-
-  it('finds a product by part of its internal reference', () => {
-    expect(matchesProductSearch({ name: 'Bike', defaultCode: 'SF-100' }, 'sf-1')).toBe(true);
-  });
-
-  it('leaves out a product whose name and reference miss the text', () => {
-    expect(matchesProductSearch({ name: 'Bike', defaultCode: null }, 'x')).toBe(false);
-  });
-
-  it('keeps every product when the search is blank', () => {
-    expect(matchesProductSearch({ name: 'Bike', defaultCode: null }, '   ')).toBe(true);
-  });
-});
-
-describe('inventory at date pages', () => {
-  const rows = Array.from({ length: 161 }, (_, index) => index);
-
-  it('answers 80 rows from the offset and says more follow', () => {
-    expect(inventoryAtDatePage(rows, 80)).toEqual({ rows: rows.slice(80, 160), offset: 80, hasMore: true });
-  });
-
-  it('answers the last row alone on the last page', () => {
-    expect(inventoryAtDatePage(rows, 160)).toEqual({ rows: [160], offset: 160, hasMore: false });
-  });
-
-  it('starts at the first row for a negative offset', () => {
-    expect(inventoryAtDatePage(rows, -5)).toEqual({ rows: rows.slice(0, 80), offset: 0, hasMore: true });
+describe('inventory at date search pattern', () => {
+  it('finds the text anywhere and takes %, _ and \\ literally', () => {
+    expect(containsPattern('50%_off\\')).toBe('%50\\%\\_off\\\\%');
   });
 });

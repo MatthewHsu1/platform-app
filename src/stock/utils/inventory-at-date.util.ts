@@ -1,4 +1,6 @@
-const PAGE_SIZE = 80;
+import { groupBy } from 'src/shared/utils/group-by.util';
+
+export const INVENTORY_AT_DATE_PAGE_SIZE = 80;
 
 export const inventoryAtDate = (onHandNow: number, doneInAfter: number, doneOutAfter: number) =>
   onHandNow - doneInAfter + doneOutAfter;
@@ -39,42 +41,40 @@ export const doneMovesAfter = ({
   return totals;
 };
 
-const compareText = (a: string, b: string) => a.localeCompare(b, 'en');
+// The same totals in each product's unit. The quantities are summed per move
+// unit first and each sum is converted once, so rounding a conversion up adds
+// at most one step per unit, not one per move.
+export const doneMovesAfterInProductUnit = ({
+  moves,
+  scopeLocationIds,
+  at,
+  toProductUnit,
+}: {
+  moves: { productId: string; date: string; quantity: number; productUomId: string; locationId: string; locationDestId: string }[];
+  scopeLocationIds: Set<string>;
+  at: string;
+  toProductUnit: (quantity: number, fromUomId: string, productId: string) => number;
+}) => {
+  const totals = new Map<string, { in: number; out: number }>();
 
-// The product list order: internal reference, then name, then id; a product with no reference comes last.
-export const compareInventoryProducts = (
-  a: { id: string; name: string; defaultCode: string | null },
-  b: { id: string; name: string; defaultCode: string | null },
-) => {
-  if (a.defaultCode !== b.defaultCode) {
-    if (a.defaultCode === null) {
-      return 1;
-    }
-    if (b.defaultCode === null) {
-      return -1;
-    }
-    const byCode = compareText(a.defaultCode, b.defaultCode);
+  for (const [uomId, unitMoves] of groupBy(moves, (move) => move.productUomId)) {
+    const inUnit = doneMovesAfter({
+      moves: unitMoves.map((move) => ({ ...move, quantityProductUom: move.quantity })),
+      scopeLocationIds,
+      at,
+    });
 
-    if (byCode !== 0) {
-      return byCode;
+    for (const [productId, moved] of inUnit) {
+      const total = totals.get(productId) ?? { in: 0, out: 0 };
+
+      total.in += toProductUnit(moved.in, uomId, productId);
+      total.out += toProductUnit(moved.out, uomId, productId);
+      totals.set(productId, total);
     }
   }
 
-  return compareText(a.name, b.name) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  return totals;
 };
 
-export const matchesProductSearch = (row: { name: string; defaultCode: string | null }, search: string) => {
-  const needle = search.trim().toLowerCase();
-
-  return (
-    needle.length === 0 ||
-    row.name.toLowerCase().includes(needle) ||
-    (row.defaultCode ?? '').toLowerCase().includes(needle)
-  );
-};
-
-export const inventoryAtDatePage = <TRow>(rows: TRow[], offset: number, pageSize = PAGE_SIZE) => {
-  const start = Number.isInteger(offset) && offset > 0 ? offset : 0;
-
-  return { rows: rows.slice(start, start + pageSize), offset: start, hasMore: start + pageSize < rows.length };
-};
+// A search text matched anywhere in a value with ilike: the pattern's own wildcards and escape are taken literally.
+export const containsPattern = (search: string) => `%${search.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;

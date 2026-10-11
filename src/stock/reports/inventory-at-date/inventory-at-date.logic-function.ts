@@ -1,7 +1,7 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
+import { requireData, twentyGraphql } from 'src/shared/twenty-graphql';
 import { floatRound } from 'src/shared/utils/float-round.util';
-import { readInChunks } from 'src/shared/utils/read-in-chunks.util';
 import { textOrNull } from 'src/shared/utils/text-or-null.util';
 import { readScopeLocationIds } from 'src/stock/product/recompute-product-quantities';
 import { INVENTORY_AT_DATE_MESSAGES } from 'src/stock/reports/inventory-at-date/inventory-at-date-messages.constant';
@@ -16,19 +16,18 @@ import { stockRouteHandler } from 'src/stock/stock-route';
 import { readStockSettings } from 'src/stock/stock-settings';
 import { readResolvedUoms } from 'src/stock/stock-uoms';
 import { type InventoryAtDateRow } from 'src/stock/types/inventory-at-date-row.type';
+import { convertQuantity } from 'src/stock/utils/stock-uom.util';
 import {
-  compareInventoryProducts,
-  doneMovesAfter,
+  containsPattern,
+  doneMovesAfterInProductUnit,
+  INVENTORY_AT_DATE_PAGE_SIZE,
   inventoryAtDate,
-  inventoryAtDatePage,
-  matchesProductSearch,
 } from 'src/stock/utils/inventory-at-date.util';
-import { computeQuantity } from 'src/uom/utils/uom.util';
-
-type ListedVariant = { id: string; name: string | null; defaultCode: string | null };
 
 type PageVariant = {
   id: string;
+  name: string | null;
+  defaultCode: string | null;
   qtyAvailable: number | null;
   productTmpl: { uomId: string; uom: { name: string | null } | null } | null;
 };
@@ -42,32 +41,40 @@ type DoneMove = {
   locationDestId: string | null;
 };
 
-// Active variants of storable products, as the clicking user may read them. A
-// filter on the product's storable flag through the relation is refused, so
-// the storable products are read first.
-const readStorableVariants = async () => {
-  const templates = await findAsPerson<{ id: string }>(
-    'productTemplates',
-    'ProductTemplateFilterInput',
-    { isStorable: { eq: true } },
-    'id',
-  );
-  const variants = await readInChunks(
-    templates.map(({ id }) => id),
-    (part) =>
-      findAsPerson<ListedVariant>(
-        'productProducts',
-        'ProductProductFilterInput',
-        { productTmplId: { in: part }, active: { eq: true } },
-        'id name defaultCode',
-      ),
+// The product list order. An empty internal reference is stored as NULL, so
+// products without one come last.
+const ORDER_BY = [{ defaultCode: 'AscNullsLast' }, { name: 'AscNullsLast' }, { id: 'AscNullsFirst' }];
+
+// One page of the active variants of storable products the clicking user can read.
+const readVariantPage = async (search: string, offset: number) => {
+  const text = search.trim();
+  const filter = {
+    active: { eq: true },
+    productTmpl: { isStorable: { eq: true } },
+    ...(text.length === 0
+      ? {}
+      : { or: [{ name: { ilike: containsPattern(text) } }, { defaultCode: { ilike: containsPattern(text) } }] }),
+  };
+  const data = requireData(
+    await twentyGraphql<{
+      productProducts: { edges: { node: PageVariant }[]; pageInfo: { hasNextPage: boolean } };
+    }>(
+      'person',
+      `query InventoryAtDatePage($filter: ProductProductFilterInput, $orderBy: [ProductProductOrderByInput], $offset: Int, $first: Int) {
+        productProducts(filter: $filter, orderBy: $orderBy, offset: $offset, first: $first) {
+          edges { node { id name defaultCode qtyAvailable productTmpl { deletedAt uomId uom { deletedAt name } } } }
+          pageInfo { hasNextPage }
+        }
+      }`,
+      { filter, orderBy: ORDER_BY, offset, first: INVENTORY_AT_DATE_PAGE_SIZE },
+    ),
+    'Read productProducts',
   );
 
-  return variants.map((variant) => ({
-    id: variant.id,
-    name: textOrNull(variant.name) ?? '',
-    defaultCode: textOrNull(variant.defaultCode),
-  }));
+  return {
+    variants: data.productProducts.edges.map(({ node }) => node),
+    hasMore: data.productProducts.pageInfo.hasNextPage,
+  };
 };
 
 const handler = stockRouteHandler(async (body) => {
@@ -77,68 +84,52 @@ const handler = stockRouteHandler(async (body) => {
     throw new StockUserError(INVENTORY_AT_DATE_MESSAGES.noDate);
   }
   const at = new Date(atTime).toISOString();
-  const search = typeof body.search === 'string' ? body.search : '';
-  const listed = (await readStorableVariants())
-    .filter((variant) => matchesProductSearch(variant, search))
-    .sort(compareInventoryProducts);
-  const page = inventoryAtDatePage(listed, typeof body.offset === 'number' ? body.offset : 0);
-  const pageIds = page.rows.map(({ id }) => id);
+  const offset = typeof body.offset === 'number' && Number.isInteger(body.offset) && body.offset > 0 ? body.offset : 0;
+  const { variants, hasMore } = await readVariantPage(typeof body.search === 'string' ? body.search : '', offset);
 
-  if (pageIds.length === 0) {
-    return { at, offset: page.offset, hasMore: page.hasMore, rows: [] };
+  if (variants.length === 0) {
+    return { at, offset, hasMore, rows: [] };
   }
 
   const digits = readStockSettings().productUnitDigits;
-  const [variants, moves, scopeLocationIds, units] = await Promise.all([
-    findAsPerson<PageVariant>(
-      'productProducts',
-      'ProductProductFilterInput',
-      { id: { in: pageIds } },
-      'id qtyAvailable productTmpl { deletedAt uomId uom { deletedAt name } }',
-    ),
+  const [moves, scopeLocationIds, units] = await Promise.all([
     findAsPerson<DoneMove>(
       'stockMoves',
       'StockMoveFilterInput',
-      { state: { eq: MOVE_STATE.DONE }, date: { gt: at }, productId: { in: pageIds } },
+      { state: { eq: MOVE_STATE.DONE }, date: { gt: at }, productId: { in: variants.map(({ id }) => id) } },
       'productId date quantity productUomId locationId locationDestId',
     ),
     readScopeLocationIds(),
     readResolvedUoms(),
   ]);
-  const variantById = new Map(variants.map((variant) => [variant.id, variant]));
-  const after = doneMovesAfter({
-    moves: moves.map((move) => {
-      const quantity = move.quantity ?? 0;
-      const from = units.get(move.productUomId);
-      const to = units.get(variantById.get(move.productId)?.productTmpl?.uomId ?? move.productUomId);
-
-      return {
-        productId: move.productId,
-        date: move.date,
-        locationId: move.locationId ?? '',
-        locationDestId: move.locationDestId ?? '',
-        // Each done quantity converts to the product unit rounding up; only the final total rounds half-up.
-        quantityProductUom:
-          from !== undefined && to !== undefined ? computeQuantity({ qty: quantity, from, to, digits, method: 'UP' }) : quantity,
-      };
-    }),
+  const productUnit = new Map(variants.map((variant) => [variant.id, variant.productTmpl?.uomId ?? '']));
+  const after = doneMovesAfterInProductUnit({
+    moves: moves.map((move) => ({
+      productId: move.productId,
+      date: move.date,
+      quantity: move.quantity ?? 0,
+      productUomId: move.productUomId,
+      locationId: move.locationId ?? '',
+      locationDestId: move.locationDestId ?? '',
+    })),
     scopeLocationIds,
     at,
+    toProductUnit: (quantity, fromUomId, productId) =>
+      convertQuantity({ qty: quantity, fromUomId, toUomId: productUnit.get(productId) ?? '', uoms: units, digits, method: 'UP' }),
   });
-  const rows: InventoryAtDateRow[] = page.rows.map((listedVariant) => {
-    const variant = variantById.get(listedVariant.id);
-    const moved = after.get(listedVariant.id) ?? { in: 0, out: 0 };
+  const rows: InventoryAtDateRow[] = variants.map((variant) => {
+    const moved = after.get(variant.id) ?? { in: 0, out: 0 };
 
     return {
-      productId: listedVariant.id,
-      name: listedVariant.name,
-      defaultCode: listedVariant.defaultCode,
-      uomName: variant?.productTmpl?.uom?.name ?? '',
-      quantity: floatRound(inventoryAtDate(variant?.qtyAvailable ?? 0, moved.in, moved.out), 10 ** -digits, 'HALF-UP'),
+      productId: variant.id,
+      name: textOrNull(variant.name) ?? '',
+      defaultCode: textOrNull(variant.defaultCode),
+      uomName: variant.productTmpl?.uom?.name ?? '',
+      quantity: floatRound(inventoryAtDate(variant.qtyAvailable ?? 0, moved.in, moved.out), 10 ** -digits, 'HALF-UP'),
     };
   });
 
-  return { at, offset: page.offset, hasMore: page.hasMore, rows };
+  return { at, offset, hasMore, rows };
 });
 
 export default defineLogicFunction({
