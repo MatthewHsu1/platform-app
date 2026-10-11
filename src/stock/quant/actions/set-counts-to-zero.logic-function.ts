@@ -1,6 +1,6 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
-import { readQuantIdsToChange, setCountsToZero } from 'src/stock/quant/actions/count-actions';
+import { readQuantIdsForManager, setCountsToZero } from 'src/stock/quant/actions/count-actions';
 import { stockRouteHandler } from 'src/stock/stock-route';
 import {
   SET_COUNTS_TO_ZERO_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
@@ -12,6 +12,6 @@ export default defineLogicFunction({
   name: 'stock-quant-set-counts-to-zero',
   description: 'Counts 0 on the selected stock rows and assigns them to the clicking user.',
   timeoutSeconds: 60,
-  handler: stockRouteHandler(async (body) => setCountsToZero(await readQuantIdsToChange(body))),
+  handler: stockRouteHandler(async (body) => setCountsToZero(await readQuantIdsForManager(body))),
   httpRouteTriggerSettings: { path: SET_COUNTS_TO_ZERO_ROUTE_PATH, httpMethod: 'POST', isAuthRequired: true },
 });

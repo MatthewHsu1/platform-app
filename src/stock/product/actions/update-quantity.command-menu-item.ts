@@ -22,6 +22,7 @@ export default defineCommandMenuItem({
   conditionalAvailabilityExpression:
     numberOfSelectedRecords === 1 &&
     everyEquals(selectedRecords, 'isStorable', true) &&
-    targetObjectWritePermissions.stockQuant,
+    targetObjectWritePermissions.stockQuant &&
+    targetObjectWritePermissions.stockWarehouse,
   frontComponentUniversalIdentifier: UPDATE_QUANTITY_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

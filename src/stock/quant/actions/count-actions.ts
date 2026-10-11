@@ -1,7 +1,7 @@
 import { applyInventory } from 'src/stock/quant/actions/apply-inventory';
 import { readCountQuantViews } from 'src/stock/quant/actions/read-count-quant-views';
 import { writeQuantCounts } from 'src/stock/quant/write-quant-counts';
-import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
+import { filterReadableIds, requireStockManagerRight, requireUpdateRights } from 'src/stock/stock-access';
 import { readCurrentMemberId } from 'src/stock/stock-current-member';
 import { StockUserError } from 'src/stock/stock-errors';
 import { stockQuants } from 'src/stock/stock-records';
@@ -35,6 +35,15 @@ export const readQuantIdsToChange = async (body: Record<string, unknown>) => {
   return readable;
 };
 
+// The same, for the count buttons kept for the inventory manager.
+export const readQuantIdsForManager = async (body: Record<string, unknown>) => {
+  const quantIds = await readQuantIdsToChange(body);
+
+  await requireStockManagerRight();
+
+  return quantIds;
+};
+
 export const readConflictAnswer = (value: unknown): ConflictAnswer | null =>
   value === 'keepCounted' || value === 'keepDifference' ? value : null;
 
@@ -53,6 +62,11 @@ export const setCounts = async (quantIds: string[], onlyUnset: boolean) => {
   const quants = await readQuants(quantIds);
   const memberId = await readCurrentMemberId();
   const plan = planSetCounts({ quants, memberId, onlyUnset });
+
+  // Rows counted already raise the manager's warning, whether it is asked now or answered.
+  if (quants.some((quant) => quant.inventoryQuantitySet)) {
+    await requireStockManagerRight();
+  }
 
   if (plan.kind === 'needsAnswer') {
     return {
@@ -125,6 +139,8 @@ export const applyCounts = async ({
   const outdated = targets.filter((quant) => isOutdatedCount(quant, digits));
 
   if (outdated.length > 0) {
+    // Settling a count conflict is the manager's.
+    await requireStockManagerRight();
     if (conflictAnswer === null) {
       return { kind: 'needsAnswer', question: 'conflict', quants: await readCountQuantViews(outdated) };
     }

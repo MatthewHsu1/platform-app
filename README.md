@@ -11,7 +11,7 @@ Our generic business app for Twenty, with a CRM, units of measure and a product 
 | `src/product/` | Products (`productTemplate`), variants (`productProduct`), categories, tags, attributes and values, attribute lines, exclusions, packaging barcodes, vendor prices, pricelists and rules, combos |
 | `src/row-access/` | Row access: the settings tab that picks the owner-only objects, their owner field and the roles that see every row. The rules are the `ROW_ACCESS_CONFIG` variable |
 | `src/shared/install/` | The post-install hook |
-| `src/roles/` | The role the logic functions and the settings page run with |
+| `src/roles/` | The role the logic functions and the settings page run with, and three roles for staff, assigned to nobody: Inventory User, Inventory Administrator, Products: Create (`inventory-role-table.ts` lists their rights per object) |
 
 Later modules, each with its own design: Stock and parts orders, Work cases, Field
 service.

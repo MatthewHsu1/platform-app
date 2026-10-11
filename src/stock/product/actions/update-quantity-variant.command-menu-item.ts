@@ -17,6 +17,7 @@ export default defineCommandMenuItem({
   availabilityObjectUniversalIdentifier: PRODUCT_PRODUCT_OBJECT_UNIVERSAL_IDENTIFIER,
   conditionalAvailabilityExpression:
     numberOfSelectedRecords === 1 &&
-    targetObjectWritePermissions.stockQuant,
+    targetObjectWritePermissions.stockQuant &&
+    targetObjectWritePermissions.stockWarehouse,
   frontComponentUniversalIdentifier: UPDATE_QUANTITY_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

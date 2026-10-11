@@ -5,9 +5,11 @@ export type GraphqlError = {
   extensions?: Record<string, unknown>;
 };
 
+// `caller` is the token the call was made with; responses built by hand leave it out.
 export type GraphqlResponse<TData> = {
   data?: TData | null;
   errors?: GraphqlError[];
+  caller?: GraphqlCaller;
 };
 
 const TOKEN_ENV_NAME_BY_CALLER: Record<GraphqlCaller, string> = {
@@ -42,7 +44,7 @@ const post = async <TData>(
     const result = (await response.json()) as GraphqlResponse<TData>;
 
     if (!isRateLimited(result)) {
-      return result;
+      return { ...result, caller };
     }
     if (attempt >= RATE_LIMIT_ATTEMPTS) {
       throw new Error(
@@ -70,7 +72,7 @@ export const twentyMetadata = <TData>(
 export const describeGraphqlErrors = (errors: GraphqlError[] | undefined) =>
   (errors ?? []).map((error) => error.message).join('; ') || 'no data';
 
-// Twenty refused the call because the caller's role lacks the right.
+// Twenty refused a call made with the clicking user's token because their role lacks the right.
 export class GraphqlForbiddenError extends Error {
   constructor(message: string) {
     super(message);
@@ -78,7 +80,13 @@ export class GraphqlForbiddenError extends Error {
   }
 }
 
-const FORBIDDEN_CODE = 'FORBIDDEN';
+// Twenty answers other errors with the same FORBIDDEN code (a unique key clash, too many rows);
+// the sub-code names the cause.
+const PERMISSION_DENIED_SUB_CODE = 'PERMISSION_DENIED';
+
+const isPersonRefused = (response: GraphqlResponse<unknown>) =>
+  response.caller === 'person' &&
+  (response.errors ?? []).some((error) => error.extensions?.subCode === PERMISSION_DENIED_SUB_CODE);
 
 export const requireData = <TData>(
   response: GraphqlResponse<TData>,
@@ -87,9 +95,7 @@ export const requireData = <TData>(
   if (response.data === undefined || response.data === null || response.errors !== undefined) {
     const message = `${what}: ${describeGraphqlErrors(response.errors)}`;
 
-    throw (response.errors ?? []).some((error) => error.extensions?.code === FORBIDDEN_CODE)
-      ? new GraphqlForbiddenError(message)
-      : new Error(message);
+    throw isPersonRefused(response) ? new GraphqlForbiddenError(message) : new Error(message);
   }
 
   return response.data;

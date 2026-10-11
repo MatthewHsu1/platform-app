@@ -4,6 +4,7 @@ import {
   numberOfSelectedRecords,
   objectPermissions,
   selectedRecords,
+  targetObjectWritePermissions,
 } from 'twenty-sdk/define';
 
 import {
@@ -24,6 +25,7 @@ export default defineCommandMenuItem({
   conditionalAvailabilityExpression:
     numberOfSelectedRecords === 1 &&
     objectPermissions.canUpdateObjectRecords &&
-    noneEquals(selectedRecords, 'recordPermissions.canUpdate', false),
+    noneEquals(selectedRecords, 'recordPermissions.canUpdate', false) &&
+    targetObjectWritePermissions.stockWarehouse,
   frontComponentUniversalIdentifier: TOGGLE_LOCK_PICKING_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

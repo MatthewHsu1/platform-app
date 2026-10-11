@@ -11,11 +11,13 @@ import { type ForecastHeading } from 'src/stock/reports/forecast/types/forecast-
 import { type ForecastMoveNode } from 'src/stock/reports/forecast/types/forecast-move-node.type';
 import { type ForecastProduct } from 'src/stock/reports/forecast/types/forecast-product.type';
 import { type ForecastRequest } from 'src/stock/reports/forecast/types/forecast-request.type';
+import { hasUpdateRights } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
 import { MOVE_STATE, PICKING_TYPE_CODE } from 'src/stock/stock-options.constant';
 import { findReadableAsPerson } from 'src/stock/stock-person-writes';
 import { stockLocations, stockPickingTypes, stockWarehouses } from 'src/stock/stock-records';
 import { readStockSettings, todayUtc } from 'src/stock/stock-settings';
+import { STOCK_MOVE_OBJECT_UNIVERSAL_IDENTIFIER, STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
 import { readResolvedUoms } from 'src/stock/stock-uoms';
 import { forecastDraftQuantities, forecastLines } from 'src/stock/utils/forecast-lines.util';
 import { planProductQuantities } from 'src/stock/utils/plan-product-quantities.util';
@@ -338,6 +340,7 @@ export const readForecastData = async (request: ForecastRequest): Promise<Foreca
     digits,
     useExpirationDate,
     truncated,
+    canReserve: await hasUpdateRights([STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER, STOCK_MOVE_OBJECT_UNIVERSAL_IDENTIFIER]),
   };
 };
 

@@ -1,6 +1,6 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
-import { readOptionalText, readQuantIdsToChange } from 'src/stock/quant/actions/count-actions';
+import { readOptionalText, readQuantIdsForManager } from 'src/stock/quant/actions/count-actions';
 import { relocateQuants } from 'src/stock/quant/actions/relocate-quants';
 import { stockRouteHandler } from 'src/stock/stock-route';
 import {
@@ -15,7 +15,7 @@ export default defineLogicFunction({
   timeoutSeconds: 300,
   handler: stockRouteHandler(async (body) =>
     relocateQuants(
-      await readQuantIdsToChange(body),
+      await readQuantIdsForManager(body),
       readOptionalText(body.destinationId),
       readOptionalText(body.reason),
     ),

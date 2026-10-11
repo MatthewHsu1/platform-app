@@ -5,7 +5,8 @@ import { INVENTORY_ROLE_UNIVERSAL_IDENTIFIERS } from 'src/roles/inventory-roles-
 import { rightsToPermission } from 'src/roles/utils/role-rights.util';
 
 // Shipped with the app and assigned to nobody: an admin assigns it in Settings → Roles. Objects
-// outside the inventory table keep the member defaults: read, edit and delete, never destroy.
+// outside the inventory table may be read, edited and deleted as by a member, never destroyed; every
+// tool (uploads, views, import and export) stays open as for a member.
 export default defineRole({
   universalIdentifier: INVENTORY_ROLE_UNIVERSAL_IDENTIFIERS.user,
   label: 'Inventory User',
@@ -16,7 +17,7 @@ export default defineRole({
   canSoftDeleteAllObjectRecords: true,
   canDestroyAllObjectRecords: false,
   canUpdateAllSettings: false,
-  canAccessAllTools: false,
+  canAccessAllTools: true,
   canBeAssignedToUsers: true,
   canBeAssignedToAgents: false,
   canBeAssignedToApiKeys: false,

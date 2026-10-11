@@ -1,6 +1,6 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
-import { readOptionalText, requestCount, readQuantIdsToChange } from 'src/stock/quant/actions/count-actions';
+import { readOptionalText, requestCount, readQuantIdsForManager } from 'src/stock/quant/actions/count-actions';
 import { stockRouteHandler } from 'src/stock/stock-route';
 import { todayUtc } from 'src/stock/stock-settings';
 import {
@@ -19,7 +19,7 @@ export default defineLogicFunction({
     const inventoryDate = readOptionalText(body.inventoryDate);
 
     return requestCount(
-      await readQuantIdsToChange(body),
+      await readQuantIdsForManager(body),
       inventoryDate !== null && DATE_PATTERN.test(inventoryDate) ? inventoryDate : todayUtc(),
       readOptionalText(body.assignedUserId),
     );

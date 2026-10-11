@@ -1,6 +1,7 @@
 import { requireData, twentyGraphql, twentyMetadata } from 'src/shared/twenty-graphql';
 import { StockUserError } from 'src/stock/stock-errors';
 import { NOT_ALLOWED_MESSAGE } from 'src/stock/stock-messages';
+import { STOCK_WAREHOUSE_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
 
 const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
 const PAGE_SIZE = 200;
@@ -48,7 +49,7 @@ const readObjectRights = async () => {
         objects(paging: { first: 1000 }) { edges { node { id universalIdentifier } } }
       }`,
     ),
-    'Read update rights',
+    'Read object rights',
   );
   const universalIdentifierOf = new Map(data.objects.edges.map(({ node }) => [node.id, node.universalIdentifier]));
   const rights = new Map<string, ObjectRights>();
@@ -67,13 +68,21 @@ const readObjectRights = async () => {
   return rights;
 };
 
-const requireRight = async (right: keyof ObjectRights, objectUniversalIdentifiers: string[], message: string) => {
+const hasRight = async (right: keyof ObjectRights, objectUniversalIdentifiers: string[]) => {
   const rights = await readObjectRights();
 
-  if (objectUniversalIdentifiers.some((id) => rights.get(id)?.[right] !== true)) {
+  return objectUniversalIdentifiers.every((id) => rights.get(id)?.[right] === true);
+};
+
+const requireRight = async (right: keyof ObjectRights, objectUniversalIdentifiers: string[], message: string) => {
+  if (!(await hasRight(right, objectUniversalIdentifiers))) {
     throw new StockUserError(message);
   }
 };
+
+// Whether a report should offer its buttons that change records.
+export const hasUpdateRights = (objectUniversalIdentifiers: string[]) =>
+  hasRight('canUpdateObjectRecords', objectUniversalIdentifiers);
 
 // A button whose writes run with the app token checks the clicking user's role before its first
 // write, so it does nothing the user could not do by hand.
@@ -82,3 +91,7 @@ export const requireUpdateRights = (objectUniversalIdentifiers: string[], messag
 
 export const requireDeleteRights = (objectUniversalIdentifiers: string[], message: string = NOT_ALLOWED_MESSAGE) =>
   requireRight('canSoftDeleteObjectRecords', objectUniversalIdentifiers, message);
+
+// Some buttons belong to the inventory manager. Only a manager may edit warehouses, so that right
+// tells a manager from a stock user.
+export const requireStockManagerRight = () => requireUpdateRights([STOCK_WAREHOUSE_OBJECT_UNIVERSAL_IDENTIFIER]);

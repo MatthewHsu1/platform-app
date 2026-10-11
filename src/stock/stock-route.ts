@@ -30,11 +30,12 @@ export const makeStockRouteHandler =
           error: error.errors.map((item) => translate(locale, item.message, item.values)).join('\n'),
         });
       }
-      // A read or write the user's role does not allow: Twenty's own refusal is technical text.
+      // A read or write the user's role does not allow: Twenty's own text is technical, so it goes
+      // in `detail` beside a plain sentence.
       if (error instanceof GraphqlForbiddenError) {
         const locale = await readLocale().catch(() => 'en');
 
-        return jsonResponse(409, { error: translate(locale, NOT_ALLOWED_MESSAGE) });
+        return jsonResponse(409, { error: translate(locale, NOT_ALLOWED_MESSAGE), detail: error.message });
       }
       if (error instanceof StockUserError) {
         const locale = await readLocale().catch(() => 'en');

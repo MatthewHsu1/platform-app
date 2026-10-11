@@ -14,6 +14,7 @@ export default defineFrontComponent({
   component: makeStockCommand({
     routePath: CLEAR_COUNTS_ROUTE_PATH,
     idsName: 'quantIds',
+    extraBody: { row: true },
     successMessage: msg('Count cleared.'),
     fallbackError: msg('The count could not be cleared.'),
   }),

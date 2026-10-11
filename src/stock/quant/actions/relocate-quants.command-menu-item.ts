@@ -1,9 +1,8 @@
 import {
   defineCommandMenuItem,
-  noneEquals,
   numberOfSelectedRecords,
   objectPermissions,
-  selectedRecords,
+  targetObjectWritePermissions,
 } from 'twenty-sdk/define';
 
 import {
@@ -23,6 +22,6 @@ export default defineCommandMenuItem({
   conditionalAvailabilityExpression:
     numberOfSelectedRecords > 0 &&
     objectPermissions.canUpdateObjectRecords &&
-    noneEquals(selectedRecords, 'recordPermissions.canUpdate', false),
+    targetObjectWritePermissions.stockWarehouse,
   frontComponentUniversalIdentifier: RELOCATE_QUANTS_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

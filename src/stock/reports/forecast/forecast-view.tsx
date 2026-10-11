@@ -162,7 +162,7 @@ export const ForecastView = ({
   const actionCell = (row: ForecastRow) => {
     const moveId = row.line.moveOutId;
 
-    if (row.action === null || moveId === null) {
+    if (row.action === null || moveId === null || !data.canReserve) {
       return null;
     }
     if (row.action.kind === 'unreserve') {

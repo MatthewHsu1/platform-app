@@ -3,7 +3,7 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 import { NO_STOCK_ROW_SELECTED_MESSAGE } from 'src/stock/quant/actions/count-actions';
 import { updateQuantity } from 'src/stock/quant/actions/update-quantity';
 import { type QuantityUpdateRow } from 'src/stock/quant/types/quantity-update-row.type';
-import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
+import { filterReadableIds, requireStockManagerRight, requireUpdateRights } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
 import { stockRouteHandler } from 'src/stock/stock-route';
 import {
@@ -59,6 +59,8 @@ export default defineLogicFunction({
     }
 
     await requireUpdateRights([STOCK_QUANT_OBJECT_UNIVERSAL_IDENTIFIER]);
+    // Editing on-hand quantities from the product is the inventory manager's.
+    await requireStockManagerRight();
 
     return updateQuantity(rows);
   }),

@@ -1,10 +1,12 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { readReceptionData } from 'src/stock/reports/reception/read-reception-data';
+import { hasUpdateRights } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
 import { RECEPTION_ROUTE_PATH, RECEPTION_UNIVERSAL_IDENTIFIERS } from 'src/stock/stock-reports-universal-identifiers.constant';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';
 import { readStockSettings } from 'src/stock/stock-settings';
+import { STOCK_MOVE_OBJECT_UNIVERSAL_IDENTIFIER, STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
 import { showAllocation } from 'src/stock/utils/plan-allocation.util';
 import { receptionReportLines } from 'src/stock/utils/reception-report-lines.util';
 
@@ -26,12 +28,14 @@ const handler = stockRouteHandler(async (body) => {
 
   return {
     sources: result.sources,
-    canAllocate: showAllocation({
-      docs: data.docs,
-      docMoves: data.moves.filter(isOfDocs),
-      otherMoves: data.moves.filter((move) => !isOfDocs(move)),
-      warehouseLocationIds: data.warehouseLocationIds,
-    }),
+    // Allocating changes moves: the buttons show only to someone whose role may do it.
+    canAllocate:
+      showAllocation({
+        docs: data.docs,
+        docMoves: data.moves.filter(isOfDocs),
+        otherMoves: data.moves.filter((move) => !isOfDocs(move)),
+        warehouseLocationIds: data.warehouseLocationIds,
+      }) && (await hasUpdateRights([STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER, STOCK_MOVE_OBJECT_UNIVERSAL_IDENTIFIER])),
     products: data.products,
     urgentPickingIds: data.urgentPickingIds,
     digits,
