@@ -37,6 +37,9 @@
     "vitest": "^4.0.0"
   },
   "dependencies": {
+    "@resvg/resvg-wasm": "2.6.2",
+    "bwip-js": "4.11.4",
+    "pdf-lib": "1.17.1",
     "react-querybuilder": "8.24.3"
   }
 }
