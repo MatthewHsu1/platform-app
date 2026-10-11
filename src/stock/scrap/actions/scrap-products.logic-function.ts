@@ -2,12 +2,13 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { readOptionalText } from 'src/stock/quant/actions/count-actions';
 import { createScrapFromPicking } from 'src/stock/scrap/actions/scrap-choices';
-import { filterReadableIds } from 'src/stock/stock-access';
+import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';
 import {
   SCRAP_PRODUCTS_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   SCRAP_PRODUCTS_ROUTE_PATH,
+  STOCK_SCRAP_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/stock/stock-universal-identifiers.constant';
 
 const TRANSFER_NOT_FOUND_MESSAGE = 'Open a transfer you can see first.';
@@ -25,6 +26,8 @@ export default defineLogicFunction({
     if (readable === undefined) {
       throw new StockUserError(TRANSFER_NOT_FOUND_MESSAGE);
     }
+    await requireUpdateRights([STOCK_SCRAP_OBJECT_UNIVERSAL_IDENTIFIER]);
+
     const productId = readOptionalText(body.productId);
     const productUomId = readOptionalText(body.productUomId);
     const locationId = readOptionalText(body.locationId);

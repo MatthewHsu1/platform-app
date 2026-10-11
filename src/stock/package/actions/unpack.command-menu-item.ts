@@ -1,4 +1,10 @@
-import { defineCommandMenuItem, numberOfSelectedRecords } from 'twenty-sdk/define';
+import {
+  defineCommandMenuItem,
+  noneEquals,
+  numberOfSelectedRecords,
+  objectPermissions,
+  selectedRecords,
+} from 'twenty-sdk/define';
 
 import {
   UNPACK_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIER,
@@ -15,6 +21,9 @@ export default defineCommandMenuItem({
   isPinned: false,
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: STOCK_PACKAGE_OBJECT_UNIVERSAL_IDENTIFIER,
-  conditionalAvailabilityExpression: numberOfSelectedRecords > 0,
+  conditionalAvailabilityExpression:
+    numberOfSelectedRecords > 0 &&
+    objectPermissions.canUpdateObjectRecords &&
+    noneEquals(selectedRecords, 'recordPermissions.canUpdate', false),
   frontComponentUniversalIdentifier: UNPACK_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

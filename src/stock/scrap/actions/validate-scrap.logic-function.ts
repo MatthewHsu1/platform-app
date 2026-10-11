@@ -1,10 +1,11 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { validateScrap } from 'src/stock/scrap/actions/validate-scrap';
-import { filterReadableIds } from 'src/stock/stock-access';
+import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';
 import {
+  STOCK_SCRAP_OBJECT_UNIVERSAL_IDENTIFIER,
   VALIDATE_SCRAP_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   VALIDATE_SCRAP_ROUTE_PATH,
 } from 'src/stock/stock-universal-identifiers.constant';
@@ -24,6 +25,8 @@ export default defineLogicFunction({
     if (scrapIds.length !== 1 || readable.length !== 1) {
       throw new StockUserError(SCRAP_NOT_FOUND_MESSAGE);
     }
+
+    await requireUpdateRights([STOCK_SCRAP_OBJECT_UNIVERSAL_IDENTIFIER]);
 
     return validateScrap(readable[0], { confirmInsufficient: body.confirmInsufficient === true });
   }),

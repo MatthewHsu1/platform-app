@@ -4,6 +4,7 @@ import { CLAIM_HELD_MESSAGE } from 'src/shared/claims/claim';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
 import { readText } from 'src/shared/utils/read-text.util';
+import { requireBatchUpdateRights } from 'src/stock-picking-batch/actions/batch-action-route';
 import { addToWave } from 'src/stock-picking-batch/add-to-wave';
 import { BATCH_MESSAGES } from 'src/stock-picking-batch/stock-picking-batch-messages.constant';
 import {
@@ -25,6 +26,8 @@ const handler = stockRouteHandler(async (body) => {
   if ((await filterReadableIds('stockMoveLine', 'stockMoveLines', lineIds)).length !== lineIds.length) {
     throw new StockUserError(BATCH_MESSAGES.lineNotFound);
   }
+  await requireBatchUpdateRights();
+
   const mode = body.mode === 'NEW' ? 'NEW' : 'EXISTING';
   const waveId = mode === 'NEW' ? null : readText(body.waveId);
 

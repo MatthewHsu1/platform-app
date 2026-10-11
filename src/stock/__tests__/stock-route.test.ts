@@ -1,6 +1,7 @@
 import { type RoutePayload } from 'twenty-sdk/define';
 import { describe, expect, it } from 'vitest';
 
+import { requireData } from 'src/shared/twenty-graphql';
 import { ProcurementFailure } from 'src/stock/procurement/apply-procurement-plan';
 import { StockUserError } from 'src/stock/stock-errors';
 import { makeStockRouteHandler, readIds } from 'src/stock/stock-route';
@@ -53,6 +54,22 @@ describe('stockRouteHandler', () => {
       error:
         'No source location defined on stock rule: WH: Stock → Customers!\nNo rule has been found to replenish "Desk Combination" in "WH/Stock".\nVerify the routes configuration on the product.',
     });
+  });
+
+  it('answers 409 with a plain sentence when Twenty refuses a step the role of the user does not allow', async () => {
+    // The answer Twenty gives a role without the right, as its permission handler builds it.
+    const refused = {
+      data: null,
+      errors: [
+        {
+          message: 'Entity performing the request does not have permission',
+          extensions: { code: 'FORBIDDEN', subCode: 'PERMISSION_DENIED', userFriendlyMessage: 'User does not have permission.' },
+        },
+      ],
+    };
+    const response = await handler(async () => requireData<Record<string, unknown>>(refused, 'Update stockWarehouseOrderpoint'))(payload({}));
+    expect(response.status).toBe(409);
+    expect(JSON.parse(String(response.body))).toEqual({ error: 'Your role does not allow this.' });
   });
 
   it('answers 500 with the message of any other error', async () => {

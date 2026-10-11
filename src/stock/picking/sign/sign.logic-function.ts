@@ -18,7 +18,7 @@ import { savePrintout } from 'src/stock/printing/save-printout';
 import { buildDeliverySlip } from 'src/stock/printing/utils/picking-documents.util';
 import { isTimeZone } from 'src/stock/printing/utils/print-dates.util';
 import { renderPdf } from 'src/stock/printing/utils/render-pdf.util';
-import { canUpdateRecordsOf, filterReadableIds } from 'src/stock/stock-access';
+import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
 import { PICKING_TYPE_CODE } from 'src/stock/stock-options.constant';
 import { findAs } from 'src/stock/stock-person-writes';
@@ -81,9 +81,8 @@ const checkSignable = async (pickingId: unknown) => {
   if (readableId === undefined) {
     throw new StockUserError(SIGN_MESSAGES.notFound);
   }
-  if (!(await canUpdateRecordsOf(STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER))) {
-    throw new StockUserError(SIGN_MESSAGES.notAllowed);
-  }
+  await requireUpdateRights([STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER], SIGN_MESSAGES.notAllowed);
+
   const [state] = await pickings.find<SignState>(
     { id: { eq: readableId } },
     'pickingTypeCode pickingType { deletedAt code } signature { fileId }',

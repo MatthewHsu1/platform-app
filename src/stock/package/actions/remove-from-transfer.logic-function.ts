@@ -5,9 +5,10 @@ import {
   REMOVE_FROM_TRANSFER_ROUTE_PATH,
 } from 'src/stock/package/actions/package-actions-universal-identifiers.constant';
 import { removePackagesFromTransfers } from 'src/stock/package/remove-from-transfer';
-import { filterReadableIds } from 'src/stock/stock-access';
+import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';
+import { STOCK_MOVE_LINE_OBJECT_UNIVERSAL_IDENTIFIER, STOCK_PACKAGE_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
 
 const PACKAGE_NOT_FOUND_MESSAGE = 'Package not found.';
 
@@ -23,6 +24,8 @@ export default defineLogicFunction({
     if (asked.length === 0 || readable.length !== asked.length) {
       throw new StockUserError(PACKAGE_NOT_FOUND_MESSAGE);
     }
+    await requireUpdateRights([STOCK_MOVE_LINE_OBJECT_UNIVERSAL_IDENTIFIER, STOCK_PACKAGE_OBJECT_UNIVERSAL_IDENTIFIER]);
+
     const plan = await removePackagesFromTransfers(asked);
 
     return { packageIds: asked, removedLineIds: plan.deleteLineIds };

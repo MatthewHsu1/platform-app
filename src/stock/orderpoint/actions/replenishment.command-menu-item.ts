@@ -1,4 +1,4 @@
-import { defineCommandMenuItem } from 'twenty-sdk/define';
+import { defineCommandMenuItem, targetObjectWritePermissions } from 'twenty-sdk/define';
 
 import {
   ORDERPOINT_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIERS,
@@ -13,5 +13,7 @@ export default defineCommandMenuItem({
   icon: 'IconRefresh',
   isPinned: false,
   availabilityType: 'GLOBAL',
+  conditionalAvailabilityExpression:
+    targetObjectWritePermissions.stockWarehouseOrderpoint,
   frontComponentUniversalIdentifier: ORDERPOINT_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS.replenishment,
 });

@@ -66,15 +66,16 @@ export const ORDERPOINT_ROUTE_TEXTS = [
   msg('+ {days} day(s)'),
 ];
 
-// Texts many stock routes answer: a record another run holds, and a supply
-// chain that cannot be planned. Listed here for the same reason; each must
-// match its source text exactly.
+// Texts many stock routes answer: a record another run holds, a supply chain
+// that cannot be planned, and a step the user's role does not allow. Listed
+// here for the same reason; each must match its source text exactly.
 export const SHARED_ROUTE_TEXTS = [
   msg('This record is being processed. Try again in a moment.'),
   msg('No rule has been found to replenish "{product}" in "{location}".\nVerify the routes configuration on the product.'),
   msg("Invalid rule's configuration, the following rule causes an endless loop: {rule}"),
   msg('No source location defined on stock rule: {rule}!'),
   msg('Product {product} was not found.'),
+  msg('Your role does not allow this.'),
 ];
 
 // The graph is read again this long after the last change, not on every keystroke.

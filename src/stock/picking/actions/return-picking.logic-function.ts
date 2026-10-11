@@ -1,7 +1,7 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
-import { readRequestedPickingIds } from 'src/stock/picking/actions/read-requested-picking-ids';
+import { readPickingIdsToChange } from 'src/stock/picking/actions/read-requested-picking-ids';
 import { returnPicking } from 'src/stock/picking/actions/return-picking';
 import { type ReturnAction } from 'src/stock/picking/types/return-action.type';
 import { StockUserError } from 'src/stock/stock-errors';
@@ -25,7 +25,7 @@ const readRows = (value: unknown) =>
     : [];
 
 const handler = stockRouteHandler(async (body) => {
-  const pickingIds = await readRequestedPickingIds(body);
+  const pickingIds = await readPickingIdsToChange(body);
   const action = ACTIONS.find((candidate) => candidate === body.action);
 
   if (action === undefined) {

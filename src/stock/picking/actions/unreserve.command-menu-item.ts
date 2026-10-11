@@ -1,4 +1,4 @@
-import { defineCommandMenuItem } from 'twenty-sdk/define';
+import { defineCommandMenuItem, noneEquals, objectPermissions, selectedRecords } from 'twenty-sdk/define';
 
 import {
   STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -14,5 +14,8 @@ export default defineCommandMenuItem({
   isPinned: false,
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER,
+  conditionalAvailabilityExpression:
+    objectPermissions.canUpdateObjectRecords &&
+    noneEquals(selectedRecords, 'recordPermissions.canUpdate', false),
   frontComponentUniversalIdentifier: UNRESERVE_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

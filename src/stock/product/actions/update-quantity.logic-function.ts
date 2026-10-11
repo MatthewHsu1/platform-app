@@ -3,10 +3,11 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 import { NO_STOCK_ROW_SELECTED_MESSAGE } from 'src/stock/quant/actions/count-actions';
 import { updateQuantity } from 'src/stock/quant/actions/update-quantity';
 import { type QuantityUpdateRow } from 'src/stock/quant/types/quantity-update-row.type';
-import { filterReadableIds } from 'src/stock/stock-access';
+import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
 import { stockRouteHandler } from 'src/stock/stock-route';
 import {
+  STOCK_QUANT_OBJECT_UNIVERSAL_IDENTIFIER,
   UPDATE_QUANTITY_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   UPDATE_QUANTITY_ROUTE_PATH,
 } from 'src/stock/stock-universal-identifiers.constant';
@@ -56,6 +57,8 @@ export default defineLogicFunction({
     if (readableQuants.length !== quantIds.length) {
       throw new StockUserError(NO_STOCK_ROW_SELECTED_MESSAGE);
     }
+
+    await requireUpdateRights([STOCK_QUANT_OBJECT_UNIVERSAL_IDENTIFIER]);
 
     return updateQuantity(rows);
   }),

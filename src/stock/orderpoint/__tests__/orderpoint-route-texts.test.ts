@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { CLAIM_HELD_MESSAGE } from 'src/shared/claims/claim';
 import { ORDERPOINT_ROUTE_TEXTS, SHARED_ROUTE_TEXTS } from 'src/stock/orderpoint/actions/replenishment-info.front-component';
 import { ORDERPOINT_MESSAGES } from 'src/stock/orderpoint/orderpoint-messages.constant';
+import { NOT_ALLOWED_MESSAGE } from 'src/stock/stock-messages';
 import {
   LOOP_MESSAGE,
   NO_PRODUCT_MESSAGE,
@@ -25,8 +26,8 @@ describe('reordering rule route texts', () => {
     expect(listed.filter((text) => text === undefined || !(text in CATALOG))).toEqual([]);
   });
 
-  it('the held-record and supply-chain texts are listed as their sources write them, and are in the catalog', () => {
-    const sources = [CLAIM_HELD_MESSAGE, NO_RULE_MESSAGE, LOOP_MESSAGE, NO_SOURCE_MESSAGE, NO_PRODUCT_MESSAGE];
+  it('the held-record, supply-chain and not-allowed texts are listed as their sources write them, and are in the catalog', () => {
+    const sources = [CLAIM_HELD_MESSAGE, NO_RULE_MESSAGE, LOOP_MESSAGE, NO_SOURCE_MESSAGE, NO_PRODUCT_MESSAGE, NOT_ALLOWED_MESSAGE];
 
     expect(SHARED_ROUTE_TEXTS.map((descriptor) => descriptor.message)).toEqual(sources);
     expect(sources.filter((text) => !(text in CATALOG))).toEqual([]);

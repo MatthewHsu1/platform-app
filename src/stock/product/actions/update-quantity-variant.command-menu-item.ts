@@ -1,4 +1,4 @@
-import { defineCommandMenuItem, numberOfSelectedRecords } from 'twenty-sdk/define';
+import { defineCommandMenuItem, numberOfSelectedRecords, targetObjectWritePermissions } from 'twenty-sdk/define';
 
 import { PRODUCT_PRODUCT_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/product/product-universal-identifiers.constant';
 import {
@@ -15,6 +15,8 @@ export default defineCommandMenuItem({
   isPinned: false,
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: PRODUCT_PRODUCT_OBJECT_UNIVERSAL_IDENTIFIER,
-  conditionalAvailabilityExpression: numberOfSelectedRecords === 1,
+  conditionalAvailabilityExpression:
+    numberOfSelectedRecords === 1 &&
+    targetObjectWritePermissions.stockQuant,
   frontComponentUniversalIdentifier: UPDATE_QUANTITY_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

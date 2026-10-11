@@ -3,6 +3,7 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
 import { readText } from 'src/shared/utils/read-text.util';
+import { requireOrderpointUpdateRight } from 'src/stock/orderpoint/actions/orderpoint-action-route';
 import { ORDERPOINT_MESSAGES } from 'src/stock/orderpoint/orderpoint-messages.constant';
 import { readOrderpointForPerson, readResupplyOptions } from 'src/stock/orderpoint/read-replenishment-info';
 import { readRoutingData } from 'src/stock/procurement/read-routing-data';
@@ -22,6 +23,9 @@ const handler = stockRouteHandler(async (body) => {
     readText(body.orderpointId) ?? '',
     'id productId warehouseId qtyToOrder',
   );
+
+  await requireOrderpointUpdateRight();
+
   const routeId = readText(body.routeId);
   const routing = row.productId === null ? null : await readRoutingData([row.productId]);
   const product = row.productId === null ? undefined : routing?.products.get(row.productId);

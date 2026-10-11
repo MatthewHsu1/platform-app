@@ -4,6 +4,7 @@ import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
 import { readText } from 'src/shared/utils/read-text.util';
 import { addToBatch } from 'src/stock-picking-batch/actions/add-to-batch';
+import { requireBatchUpdateRights } from 'src/stock-picking-batch/actions/batch-action-route';
 import { BATCH_MESSAGES } from 'src/stock-picking-batch/stock-picking-batch-messages.constant';
 import {
   STOCK_PICKING_BATCH_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS,
@@ -14,8 +15,12 @@ import { readRequestedPickingIds } from 'src/stock/picking/actions/read-requeste
 import { stockRouteHandler } from 'src/stock/stock-route';
 
 const handler = stockRouteHandler(async (body) => {
+  const pickingIds = await readRequestedPickingIds(body);
+
+  await requireBatchUpdateRights();
+
   const result = await addToBatch({
-    pickingIds: await readRequestedPickingIds(body),
+    pickingIds,
     mode: body.mode === 'EXISTING' ? 'EXISTING' : 'NEW',
     batchId: readText(body.batchId),
     responsibleId: readText(body.responsibleId),

@@ -3,14 +3,14 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
 import { stockRouteHandler } from 'src/stock/stock-route';
-import { readRequestedOrderpointIds } from 'src/stock/orderpoint/actions/orderpoint-action-route';
+import { readOrderpointIdsToChange } from 'src/stock/orderpoint/actions/orderpoint-action-route';
 import { ORDERPOINT_MESSAGES } from 'src/stock/orderpoint/orderpoint-messages.constant';
 import { stockWarehouseOrderpoints } from 'src/stock/orderpoint/orderpoint-records';
 import { recomputeOrderpoint } from 'src/stock/orderpoint/recompute-orderpoint';
 import { ORDERPOINT_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS, ORDERPOINT_ROUTE_PATHS } from 'src/stock/stock-universal-identifiers.constant';
 
 const handler = stockRouteHandler(async (body) => {
-  const orderpointIds = await readRequestedOrderpointIds(body);
+  const orderpointIds = await readOrderpointIdsToChange(body);
   const typed = await stockWarehouseOrderpoints.find<{ id: string; qtyToOrderManual: number | null }>(
     { id: { in: orderpointIds } },
     'id qtyToOrderManual',

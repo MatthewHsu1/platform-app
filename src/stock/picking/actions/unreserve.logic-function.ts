@@ -1,6 +1,6 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
-import { readRequestedPickingIds } from 'src/stock/picking/actions/read-requested-picking-ids';
+import { readPickingIdsToChange } from 'src/stock/picking/actions/read-requested-picking-ids';
 import { unreservePickings } from 'src/stock/picking/actions/unreserve-pickings';
 import { stockRouteHandler } from 'src/stock/stock-route';
 import {
@@ -9,7 +9,7 @@ import {
 } from 'src/stock/stock-universal-identifiers.constant';
 
 const handler = stockRouteHandler(async (body) => {
-  const pickingIds = await readRequestedPickingIds(body);
+  const pickingIds = await readPickingIdsToChange(body);
 
   await unreservePickings(pickingIds);
 

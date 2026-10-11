@@ -5,7 +5,7 @@ import {
   readConflictAnswer,
   readOptionalDateTime,
   readOptionalText,
-  requireReadableQuantIds,
+  readQuantIdsToChange,
 } from 'src/stock/quant/actions/count-actions';
 import { stockRouteHandler } from 'src/stock/stock-route';
 import {
@@ -20,7 +20,7 @@ export default defineLogicFunction({
   timeoutSeconds: 300,
   handler: stockRouteHandler(async (body) =>
     applyCounts({
-      quantIds: await requireReadableQuantIds(body),
+      quantIds: await readQuantIdsToChange(body),
       onlySet: body.onlySet === true,
       inventoryName: readOptionalText(body.inventoryName),
       accountingDate: readOptionalDateTime(body.date),

@@ -1,7 +1,7 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { assignPickings } from 'src/stock/picking/actions/assign-pickings';
-import { readRequestedPickingIds } from 'src/stock/picking/actions/read-requested-picking-ids';
+import { readPickingIdsToChange } from 'src/stock/picking/actions/read-requested-picking-ids';
 import { holdTransfers } from 'src/stock/reports/reception/allocation-holds';
 import { StockUserError } from 'src/stock/stock-errors';
 import { PICKING_STATE } from 'src/stock/stock-options.constant';
@@ -18,7 +18,7 @@ import { type MoveRow } from 'src/stock/types/move-row.type';
 import { type PickingRow } from 'src/stock/types/picking-row.type';
 
 const handler = stockRouteHandler(async (body) => {
-  const pickingIds = await readRequestedPickingIds(body);
+  const pickingIds = await readPickingIdsToChange(body);
   const { productUnitDigits: digits } = readStockSettings();
   // Read and reserved while no allocation changes these transfers.
   return holdTransfers(pickingIds, async () => {

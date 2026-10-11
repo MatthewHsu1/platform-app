@@ -1,4 +1,4 @@
-import { defineCommandMenuItem, numberOfSelectedRecords } from 'twenty-sdk/define';
+import { defineCommandMenuItem, numberOfSelectedRecords, targetObjectWritePermissions } from 'twenty-sdk/define';
 
 import {
   STOCK_PICKING_BATCH_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIERS,
@@ -15,6 +15,9 @@ export default defineCommandMenuItem({
   isPinned: false,
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: STOCK_MOVE_LINE_OBJECT_UNIVERSAL_IDENTIFIER,
-  conditionalAvailabilityExpression: numberOfSelectedRecords >= 1,
+  conditionalAvailabilityExpression:
+    numberOfSelectedRecords >= 1 &&
+    targetObjectWritePermissions.stockPickingBatch &&
+    targetObjectWritePermissions.stockPicking,
   frontComponentUniversalIdentifier: STOCK_PICKING_BATCH_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS.addToWave,
 });

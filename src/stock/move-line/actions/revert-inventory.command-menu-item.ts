@@ -1,4 +1,4 @@
-import { defineCommandMenuItem, numberOfSelectedRecords } from 'twenty-sdk/define';
+import { defineCommandMenuItem, numberOfSelectedRecords, targetObjectWritePermissions } from 'twenty-sdk/define';
 
 import {
   REVERT_INVENTORY_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIER,
@@ -13,6 +13,8 @@ export default defineCommandMenuItem({
   isPinned: false,
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: STOCK_MOVE_LINE_OBJECT_UNIVERSAL_IDENTIFIER,
-  conditionalAvailabilityExpression: numberOfSelectedRecords > 0,
+  conditionalAvailabilityExpression:
+    numberOfSelectedRecords > 0 &&
+    targetObjectWritePermissions.stockMove,
   frontComponentUniversalIdentifier: REVERT_INVENTORY_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

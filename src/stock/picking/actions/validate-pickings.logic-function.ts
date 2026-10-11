@@ -2,7 +2,7 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { afterValidateBatch } from 'src/stock-picking-batch/after-validate-batch';
 import { expiredLotsToConfirm } from 'src/stock/lot/validate-tracking-checks';
-import { readRequestedPickingIds } from 'src/stock/picking/actions/read-requested-picking-ids';
+import { readPickingIdsToChange } from 'src/stock/picking/actions/read-requested-picking-ids';
 import { validatePickings } from 'src/stock/picking/actions/validate-pickings';
 import { makeValidateRoute } from 'src/stock/picking/actions/validate-route';
 import { autoprint, receptionReportToShow } from 'src/stock/printing/autoprint';
@@ -14,7 +14,7 @@ import {
 
 const handler = stockRouteHandler(
   makeValidateRoute({
-    readPickingIds: readRequestedPickingIds,
+    readPickingIds: readPickingIdsToChange,
     validatePickings,
     expiredLotsToConfirm,
     afterValidateBatch,

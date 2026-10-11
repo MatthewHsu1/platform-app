@@ -2,7 +2,7 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
-import { readRequestedBatchIds } from 'src/stock-picking-batch/actions/batch-action-route';
+import { readBatchIdsToChange } from 'src/stock-picking-batch/actions/batch-action-route';
 import { unreserveBatches } from 'src/stock-picking-batch/actions/batch-buttons';
 import { BATCH_MESSAGES } from 'src/stock-picking-batch/stock-picking-batch-messages.constant';
 import {
@@ -12,7 +12,7 @@ import {
 import { stockRouteHandler } from 'src/stock/stock-route';
 
 const handler = stockRouteHandler(async (body) => {
-  await unreserveBatches(await readRequestedBatchIds(body));
+  await unreserveBatches(await readBatchIdsToChange(body));
 
   return { message: translate(await readUserLocale(), BATCH_MESSAGES.unreserved) };
 });

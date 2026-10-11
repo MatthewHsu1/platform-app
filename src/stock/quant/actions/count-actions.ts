@@ -1,13 +1,14 @@
 import { applyInventory } from 'src/stock/quant/actions/apply-inventory';
 import { readCountQuantViews } from 'src/stock/quant/actions/read-count-quant-views';
 import { writeQuantCounts } from 'src/stock/quant/write-quant-counts';
-import { filterReadableIds } from 'src/stock/stock-access';
+import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
 import { readCurrentMemberId } from 'src/stock/stock-current-member';
 import { StockUserError } from 'src/stock/stock-errors';
 import { stockQuants } from 'src/stock/stock-records';
 import { QUANT_ROW } from 'src/stock/stock-rows';
 import { readIds } from 'src/stock/stock-route';
 import { readStockSettings } from 'src/stock/stock-settings';
+import { STOCK_QUANT_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
 import {
   isOutdatedCount,
   planClearCounts,
@@ -21,13 +22,15 @@ import { type QuantRow } from 'src/stock/types/quant-row.type';
 
 export const NO_STOCK_ROW_SELECTED_MESSAGE = 'Select at least one stock row you can see.';
 
-export const requireReadableQuantIds = async (body: Record<string, unknown>) => {
+// The count buttons change the stock rows: the user must read every one and may edit stock rows.
+export const readQuantIdsToChange = async (body: Record<string, unknown>) => {
   const ids = readIds(body, 'quantIds');
   const readable = await filterReadableIds('stockQuant', 'stockQuants', ids);
 
   if (ids.length === 0 || readable.length !== ids.length) {
     throw new StockUserError(NO_STOCK_ROW_SELECTED_MESSAGE);
   }
+  await requireUpdateRights([STOCK_QUANT_OBJECT_UNIVERSAL_IDENTIFIER]);
 
   return readable;
 };

@@ -1,8 +1,10 @@
 import { readHeadedPackages, readOpenLinesInto, unpackLines } from 'src/stock/package/pack-into';
 import { applyPutawayStrategy } from 'src/stock/putaway/apply-putaway-strategy';
+import { requireDeleteRights } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
 import { deleteAsUser, updateAsUser } from 'src/stock/stock-person-writes';
 import { stockMoveLines, stockMoves } from 'src/stock/stock-records';
+import { STOCK_MOVE_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
 import { destinationChains, planRemovePackage } from 'src/stock/utils/plan-entire-pack.util';
 import { packageDestinationDescendants } from 'src/stock/utils/plan-package-rules.util';
 
@@ -45,6 +47,11 @@ export const removePackagesFromTransfers = async (packageIds: string[]) => {
     })),
   });
 
+  // A user who may not delete moves cannot remove a package whose move would go with it: refused
+  // before any line is removed, so nothing is half done.
+  if (plan.deleteMoveIds.length > 0) {
+    await requireDeleteRights([STOCK_MOVE_OBJECT_UNIVERSAL_IDENTIFIER]);
+  }
   await deleteAsUser('stockMoveLine', plan.deleteLineIds);
   await unpackLines(plan.clearResultLineIds);
   await deleteAsUser('stockMove', plan.deleteMoveIds);

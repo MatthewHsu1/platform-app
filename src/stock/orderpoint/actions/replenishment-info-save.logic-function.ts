@@ -3,6 +3,7 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
 import { readText } from 'src/shared/utils/read-text.util';
+import { requireOrderpointUpdateRight } from 'src/stock/orderpoint/actions/orderpoint-action-route';
 import { ORDERPOINT_MESSAGES } from 'src/stock/orderpoint/orderpoint-messages.constant';
 import { readOrderpointForPerson, readQuantity } from 'src/stock/orderpoint/read-replenishment-info';
 import { planMinMaxSave } from 'src/stock/orderpoint/utils/replenishment-info.util';
@@ -13,6 +14,9 @@ import { ORDERPOINT_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS, ORDERPOINT_ROUTE_PATHS
 
 const handler = stockRouteHandler(async (body) => {
   const row = await readOrderpointForPerson<{ id: string }>(readText(body.orderpointId) ?? '', 'id');
+
+  await requireOrderpointUpdateRight();
+
   const productMinQty = readQuantity(body.productMinQty);
   const productMaxQty = readQuantity(body.productMaxQty);
 

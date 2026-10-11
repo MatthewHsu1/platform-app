@@ -1,4 +1,11 @@
-import { defineCommandMenuItem, everyEquals, numberOfSelectedRecords, selectedRecords } from 'twenty-sdk/define';
+import {
+  defineCommandMenuItem,
+  everyEquals,
+  noneEquals,
+  numberOfSelectedRecords,
+  objectPermissions,
+  selectedRecords,
+} from 'twenty-sdk/define';
 
 import {
   STOCK_SCRAP_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -15,6 +22,10 @@ export default defineCommandMenuItem({
   isPinned: true,
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: STOCK_SCRAP_OBJECT_UNIVERSAL_IDENTIFIER,
-  conditionalAvailabilityExpression: numberOfSelectedRecords === 1 && everyEquals(selectedRecords, 'state', 'DRAFT'),
+  conditionalAvailabilityExpression:
+    numberOfSelectedRecords === 1 &&
+    everyEquals(selectedRecords, 'state', 'DRAFT') &&
+    objectPermissions.canUpdateObjectRecords &&
+    noneEquals(selectedRecords, 'recordPermissions.canUpdate', false),
   frontComponentUniversalIdentifier: VALIDATE_SCRAP_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

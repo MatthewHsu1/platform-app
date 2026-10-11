@@ -1,4 +1,12 @@
-import { defineCommandMenuItem, everyEquals, numberOfSelectedRecords, selectedRecords } from 'twenty-sdk/define';
+import {
+  defineCommandMenuItem,
+  everyEquals,
+  noneEquals,
+  numberOfSelectedRecords,
+  objectPermissions,
+  selectedRecords,
+  targetObjectWritePermissions,
+} from 'twenty-sdk/define';
 
 import {
   STOCK_PICKING_BATCH_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIERS,
@@ -15,6 +23,11 @@ export default defineCommandMenuItem({
   isPinned: true,
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: STOCK_PICKING_BATCH_OBJECT_UNIVERSAL_IDENTIFIER,
-  conditionalAvailabilityExpression: numberOfSelectedRecords === 1 && everyEquals(selectedRecords, 'state', 'IN_PROGRESS'),
+  conditionalAvailabilityExpression:
+    numberOfSelectedRecords === 1 &&
+    everyEquals(selectedRecords, 'state', 'IN_PROGRESS') &&
+    objectPermissions.canUpdateObjectRecords &&
+    noneEquals(selectedRecords, 'recordPermissions.canUpdate', false) &&
+    targetObjectWritePermissions.stockPicking,
   frontComponentUniversalIdentifier: STOCK_PICKING_BATCH_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS.validate,
 });

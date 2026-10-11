@@ -2,7 +2,7 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
-import { readRequestedOrderpointIds } from 'src/stock/orderpoint/actions/orderpoint-action-route';
+import { readOrderpointIdsToChange } from 'src/stock/orderpoint/actions/orderpoint-action-route';
 import { ORDERPOINT_MESSAGES } from 'src/stock/orderpoint/orderpoint-messages.constant';
 import { stockWarehouseOrderpoints } from 'src/stock/orderpoint/orderpoint-records';
 import { snoozeRefusal } from 'src/stock/orderpoint/utils/snooze-refusal.util';
@@ -24,7 +24,7 @@ const readDay = (value: unknown) => {
 };
 
 const handler = stockRouteHandler(async (body) => {
-  const orderpointIds = await readRequestedOrderpointIds(body);
+  const orderpointIds = await readOrderpointIdsToChange(body);
   const snoozedUntil = readDay(body.snoozedUntil);
 
   if (snoozedUntil === null) {

@@ -70,12 +70,26 @@ export const twentyMetadata = <TData>(
 export const describeGraphqlErrors = (errors: GraphqlError[] | undefined) =>
   (errors ?? []).map((error) => error.message).join('; ') || 'no data';
 
+// Twenty refused the call because the caller's role lacks the right.
+export class GraphqlForbiddenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GraphqlForbiddenError';
+  }
+}
+
+const FORBIDDEN_CODE = 'FORBIDDEN';
+
 export const requireData = <TData>(
   response: GraphqlResponse<TData>,
   what: string,
 ): TData => {
   if (response.data === undefined || response.data === null || response.errors !== undefined) {
-    throw new Error(`${what}: ${describeGraphqlErrors(response.errors)}`);
+    const message = `${what}: ${describeGraphqlErrors(response.errors)}`;
+
+    throw (response.errors ?? []).some((error) => error.extensions?.code === FORBIDDEN_CODE)
+      ? new GraphqlForbiddenError(message)
+      : new Error(message);
   }
 
   return response.data;

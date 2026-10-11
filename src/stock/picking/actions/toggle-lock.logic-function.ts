@@ -1,6 +1,6 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
-import { readRequestedPickingIds } from 'src/stock/picking/actions/read-requested-picking-ids';
+import { readPickingIdsToChange } from 'src/stock/picking/actions/read-requested-picking-ids';
 import { toggleLock } from 'src/stock/picking/actions/toggle-lock';
 import { stockRouteHandler } from 'src/stock/stock-route';
 import {
@@ -8,7 +8,7 @@ import {
   TOGGLE_LOCK_PICKING_ROUTE_PATH,
 } from 'src/stock/stock-universal-identifiers.constant';
 
-const handler = stockRouteHandler(async (body) => toggleLock(await readRequestedPickingIds(body)));
+const handler = stockRouteHandler(async (body) => toggleLock(await readPickingIdsToChange(body)));
 
 export default defineLogicFunction({
   universalIdentifier: TOGGLE_LOCK_PICKING_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,

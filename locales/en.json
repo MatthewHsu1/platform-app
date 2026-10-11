@@ -567,6 +567,7 @@
   "You cannot unreserve a stock move that has been set to 'Done'.": "You cannot unreserve a stock move that has been set to 'Done'.",
   "You have processed less products than the initial demand.": "You have processed less products than the initial demand.",
   "You have to set some pickings to batch.": "You have to set some pickings to batch.",
+  "Your role does not allow this.": "Your role does not allow this.",
   "Your time zone is not known. Check the time zone in your settings and print again.": "Your time zone is not known. Check the time zone in your settings and print again.",
   "Your time zone is not known. Check the time zone in your settings and sign again.": "Your time zone is not known. Check the time zone in your settings and sign again.",
   "ZPL Labels": "ZPL Labels",

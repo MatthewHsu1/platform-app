@@ -12,7 +12,10 @@ import { stockRouteHandler } from 'src/stock/stock-route';
 import {
   ORDERPOINT_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS,
   ORDERPOINT_ROUTE_PATHS,
+  STOCK_MOVE_OBJECT_UNIVERSAL_IDENTIFIER,
+  STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/stock/stock-universal-identifiers.constant';
+import { requireUpdateRights } from 'src/stock/stock-access';
 
 const readDateTime = (value: unknown) => {
   const parsed = typeof value === 'string' ? new Date(value) : null;
@@ -56,6 +59,9 @@ const handler = stockRouteHandler(async (body) => {
   ) {
     throw new StockUserError(ORDERPOINT_MESSAGES.replenishChoiceRefused);
   }
+  // Replenishing makes transfers and moves: a stock user's work.
+  await requireUpdateRights([STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER, STOCK_MOVE_OBJECT_UNIVERSAL_IDENTIFIER]);
+
   // The source document of the moves is record data, kept in one language.
   const origin = translate('en', ORDERPOINT_MESSAGES.manualReplenishment);
   const outcome = await replenishProduct({

@@ -1,4 +1,10 @@
-import { defineCommandMenuItem, noneEquals, numberOfSelectedRecords, selectedRecords } from 'twenty-sdk/define';
+import {
+  defineCommandMenuItem,
+  noneEquals,
+  numberOfSelectedRecords,
+  objectPermissions,
+  selectedRecords,
+} from 'twenty-sdk/define';
 
 import {
   ORDERPOINT_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIERS,
@@ -15,6 +21,10 @@ export default defineCommandMenuItem({
   isPinned: false,
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: STOCK_WAREHOUSE_ORDERPOINT_OBJECT_UNIVERSAL_IDENTIFIER,
-  conditionalAvailabilityExpression: numberOfSelectedRecords >= 1 && noneEquals(selectedRecords, 'trigger', 'AUTO'),
+  conditionalAvailabilityExpression:
+    numberOfSelectedRecords >= 1 &&
+    noneEquals(selectedRecords, 'trigger', 'AUTO') &&
+    objectPermissions.canUpdateObjectRecords &&
+    noneEquals(selectedRecords, 'recordPermissions.canUpdate', false),
   frontComponentUniversalIdentifier: ORDERPOINT_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS.automate,
 });

@@ -1,6 +1,6 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
-import { readRequestedBatchId } from 'src/stock-picking-batch/actions/batch-action-route';
+import { readBatchIdToChange } from 'src/stock-picking-batch/actions/batch-action-route';
 import {
   STOCK_PICKING_BATCH_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS,
   STOCK_PICKING_BATCH_ROUTE_PATHS,
@@ -11,7 +11,7 @@ import { stockRouteHandler } from 'src/stock/stock-route';
 import { printTimeZoneOf } from 'src/stock/printing/utils/print-dates.util';
 
 const handler = stockRouteHandler(async (body) =>
-  validateBatch(await readRequestedBatchId(body), readBatchValidateAnswer(body), printTimeZoneOf(body.timeZone)),
+  validateBatch(await readBatchIdToChange(body), readBatchValidateAnswer(body), printTimeZoneOf(body.timeZone)),
 );
 
 export default defineLogicFunction({

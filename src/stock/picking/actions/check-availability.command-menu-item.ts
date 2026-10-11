@@ -1,4 +1,4 @@
-import { defineCommandMenuItem, noneEquals, selectedRecords } from 'twenty-sdk/define';
+import { defineCommandMenuItem, noneEquals, objectPermissions, selectedRecords } from 'twenty-sdk/define';
 
 import {
   CHECK_AVAILABILITY_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIER,
@@ -19,6 +19,8 @@ export default defineCommandMenuItem({
   conditionalAvailabilityExpression:
     noneEquals(selectedRecords, 'state', 'DRAFT') &&
     noneEquals(selectedRecords, 'state', 'DONE') &&
-    noneEquals(selectedRecords, 'state', 'CANCEL'),
+    noneEquals(selectedRecords, 'state', 'CANCEL') &&
+    objectPermissions.canUpdateObjectRecords &&
+    noneEquals(selectedRecords, 'recordPermissions.canUpdate', false),
   frontComponentUniversalIdentifier: CHECK_AVAILABILITY_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

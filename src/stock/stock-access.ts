@@ -1,4 +1,6 @@
 import { requireData, twentyGraphql, twentyMetadata } from 'src/shared/twenty-graphql';
+import { StockUserError } from 'src/stock/stock-errors';
+import { NOT_ALLOWED_MESSAGE } from 'src/stock/stock-messages';
 
 const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
 const PAGE_SIZE = 200;
@@ -27,29 +29,56 @@ export const filterReadableIds = async (objectSingular: string, objectPlural: st
   return wanted.filter((id) => readable.has(id));
 };
 
-type UpdateRights = {
+type ObjectRights = { canUpdateObjectRecords: boolean; canSoftDeleteObjectRecords: boolean };
+
+type RightsAnswer = {
   currentUser: {
-    currentUserWorkspace: { objectsPermissions: { objectMetadataId: string; canUpdateObjectRecords: boolean }[] } | null;
+    currentUserWorkspace: { objectsPermissions: ({ objectMetadataId: string } & Partial<ObjectRights>)[] } | null;
   } | null;
   objects: { edges: { node: { id: string; universalIdentifier: string } }[] };
 };
 
-// Whether the clicking user's role may change records of the object. A button whose writes run
-// with the app token checks this first, so it does nothing the user could not do by hand.
-export const canUpdateRecordsOf = async (objectUniversalIdentifier: string) => {
+// The clicking user's role rights, by object universal id.
+const readObjectRights = async () => {
   const data = requireData(
-    await twentyMetadata<UpdateRights>(
+    await twentyMetadata<RightsAnswer>(
       'person',
       `{
-        currentUser { currentUserWorkspace { objectsPermissions { objectMetadataId canUpdateObjectRecords } } }
+        currentUser { currentUserWorkspace { objectsPermissions { objectMetadataId canUpdateObjectRecords canSoftDeleteObjectRecords } } }
         objects(paging: { first: 1000 }) { edges { node { id universalIdentifier } } }
       }`,
     ),
     'Read update rights',
   );
-  const objectId = data.objects.edges.find(({ node }) => node.universalIdentifier === objectUniversalIdentifier)?.node.id;
+  const universalIdentifierOf = new Map(data.objects.edges.map(({ node }) => [node.id, node.universalIdentifier]));
+  const rights = new Map<string, ObjectRights>();
 
-  return (data.currentUser?.currentUserWorkspace?.objectsPermissions ?? []).some(
-    (permission) => permission.objectMetadataId === objectId && permission.canUpdateObjectRecords,
-  );
+  for (const permission of data.currentUser?.currentUserWorkspace?.objectsPermissions ?? []) {
+    const universalIdentifier = universalIdentifierOf.get(permission.objectMetadataId);
+
+    if (universalIdentifier !== undefined) {
+      rights.set(universalIdentifier, {
+        canUpdateObjectRecords: permission.canUpdateObjectRecords === true,
+        canSoftDeleteObjectRecords: permission.canSoftDeleteObjectRecords === true,
+      });
+    }
+  }
+
+  return rights;
 };
+
+const requireRight = async (right: keyof ObjectRights, objectUniversalIdentifiers: string[], message: string) => {
+  const rights = await readObjectRights();
+
+  if (objectUniversalIdentifiers.some((id) => rights.get(id)?.[right] !== true)) {
+    throw new StockUserError(message);
+  }
+};
+
+// A button whose writes run with the app token checks the clicking user's role before its first
+// write, so it does nothing the user could not do by hand.
+export const requireUpdateRights = (objectUniversalIdentifiers: string[], message: string = NOT_ALLOWED_MESSAGE) =>
+  requireRight('canUpdateObjectRecords', objectUniversalIdentifiers, message);
+
+export const requireDeleteRights = (objectUniversalIdentifiers: string[], message: string = NOT_ALLOWED_MESSAGE) =>
+  requireRight('canSoftDeleteObjectRecords', objectUniversalIdentifiers, message);

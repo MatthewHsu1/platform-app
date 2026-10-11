@@ -7,9 +7,15 @@ import {
   RECEPTION_UNIVERSAL_IDENTIFIERS,
 } from 'src/stock/stock-reports-universal-identifiers.constant';
 import { stockRouteHandler } from 'src/stock/stock-route';
+import { requireUpdateRights } from 'src/stock/stock-access';
+import { STOCK_MOVE_OBJECT_UNIVERSAL_IDENTIFIER, STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
 
 const handler = stockRouteHandler(async (body) => {
-  const run = await allocate(await readAllocateRequest(body));
+  const request = await readAllocateRequest(body);
+
+  await requireUpdateRights([STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER, STOCK_MOVE_OBJECT_UNIVERSAL_IDENTIFIER]);
+
+  const run = await allocate(request);
 
   return { linked: run.kind === 'allocate' ? run.plan.links.length : 0 };
 });

@@ -1,4 +1,4 @@
-import { defineCommandMenuItem, numberOfSelectedRecords } from 'twenty-sdk/define';
+import { defineCommandMenuItem, numberOfSelectedRecords, targetObjectWritePermissions } from 'twenty-sdk/define';
 
 import {
   SCRAP_PRODUCTS_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIER,
@@ -13,6 +13,8 @@ export default defineCommandMenuItem({
   isPinned: false,
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER,
-  conditionalAvailabilityExpression: numberOfSelectedRecords === 1,
+  conditionalAvailabilityExpression:
+    numberOfSelectedRecords === 1 &&
+    targetObjectWritePermissions.stockScrap,
   frontComponentUniversalIdentifier: SCRAP_PRODUCTS_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });
