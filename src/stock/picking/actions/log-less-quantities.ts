@@ -1,4 +1,5 @@
 import { translate } from 'src/shared/i18n/translate';
+import { dayOf } from 'src/stock/orderpoint/utils/day.util';
 import { readStockProducts } from 'src/stock/product/read-stock-products';
 import { MOVE_STATE } from 'src/stock/stock-options.constant';
 import {
@@ -103,6 +104,7 @@ export const logLessQuantities = async (pickingIds: string[], locale: string | n
 
   const tasks = planLessQuantityTasks({
     digits,
+    today: dayOf(new Date().toISOString()),
     origins: moves.map((move) => {
       const product = products.get(move.productId);
       const moveUomId = move.productUomId ?? product?.uomId ?? '';
@@ -174,6 +176,7 @@ export const logLessQuantities = async (pickingIds: string[], locale: string | n
       title: translate(locale, 'Less quantities than expected on {name}', { name: task.originPickingName }),
       body,
       assigneeId: task.assigneeId,
+      dueAt: task.dueAt,
     });
   }
 };

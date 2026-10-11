@@ -1,3 +1,4 @@
+import { startOfDay } from 'src/stock/orderpoint/utils/day.util';
 import { compareAtDigits } from 'src/stock/utils/stock-uom.util';
 
 type LessQuantityOrigin = {
@@ -11,6 +12,7 @@ type LessQuantityOrigin = {
 type LessQuantityTask = {
   pickingId: string;
   assigneeId: string | null;
+  dueAt: string;
   originPickingName: string;
   exceptions: { productName: string; uomName: string; newQuantity: number; oldQuantity: number }[];
   impactedPickingNames: string[];
@@ -21,9 +23,11 @@ type LessQuantityTask = {
 export const planLessQuantityTasks = ({
   origins,
   digits,
+  today,
 }: {
   origins: LessQuantityOrigin[];
   digits: number;
+  today: string;
 }): LessQuantityTask[] => {
   const tasks = new Map<string, LessQuantityTask & { downstream: Set<string> }>();
 
@@ -36,6 +40,7 @@ export const planLessQuantityTasks = ({
       const task = tasks.get(groupKey) ?? {
         pickingId: destination.pickingId,
         assigneeId: destination.responsibleId,
+        dueAt: startOfDay(today),
         originPickingName: origin.pickingName,
         exceptions: [],
         impactedPickingNames: [],
