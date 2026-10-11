@@ -2,6 +2,7 @@ import { type makeClaims } from 'src/shared/claims/claim';
 import { type MoveSplitPlan } from 'src/stock/move/types/move-split-plan.type';
 import { type AllocationInputs } from 'src/stock/reports/reception/types/allocation-inputs.type';
 import { type AllocationRequest } from 'src/stock/reports/reception/types/allocation-request.type';
+import { type MoveState } from 'src/stock/types/move-state.type';
 import { type ProcureMethod } from 'src/stock/types/procure-method.type';
 import { type AllocationLineWrite } from 'src/stock/utils/types/allocation-line-write.type';
 import { type ResolvedUom } from 'src/uom/utils/types/resolved-uom.type';
@@ -19,6 +20,9 @@ export type AllocationPort = {
   uoms: () => Promise<Map<string, ResolvedUom>>;
   readMovePickingIds: (moveIds: string[]) => Promise<Map<string, string | null>>;
   readInputs: (request: AllocationRequest) => Promise<AllocationInputs>;
+  // The state of each move or line that still exists; one removed is not in the map.
+  readMoveStates: (moveIds: string[]) => Promise<Map<string, MoveState>>;
+  readLineStates: (lineIds: string[]) => Promise<Map<string, MoveState>>;
   planMoveSplit: (moveId: string, quantity: number, target: { newMoveId: string }) => Promise<MoveSplitPlan>;
   applyMoveSplit: (plan: MoveSplitPlan) => Promise<unknown>;
   writeLines: (writes: AllocationLineWrite[]) => Promise<void>;

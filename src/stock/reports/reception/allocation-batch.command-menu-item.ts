@@ -8,7 +8,6 @@ export default defineCommandMenuItem({
   universalIdentifier: RECEPTION_UNIVERSAL_IDENTIFIERS.batchCommand,
   label: 'Allocation',
   shortLabel: 'Allocation',
-  icon: 'IconList',
   isPinned: false,
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: STOCK_PICKING_BATCH_OBJECT_UNIVERSAL_IDENTIFIER,

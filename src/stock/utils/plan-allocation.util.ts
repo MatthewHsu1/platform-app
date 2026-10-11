@@ -18,7 +18,10 @@ const OPEN_OUT_STATES: MoveState[] = [MOVE_STATE.CONFIRMED, MOVE_STATE.PARTIALLY
 const moveQuantityOf = (move: { productQty: number; quantity: number }) => move.productQty || move.quantity;
 
 // Linking the two moves shares each side's references with the other side's transfer.
-const referencesBetween = (incoming: AllocationIn, out: AllocationOut) => [
+const referencesBetween = (
+  incoming: { pickingId: string | null; referenceIds: string[] },
+  out: { pickingId: string | null; referenceIds: string[] },
+) => [
   ...(out.referenceIds.length > 0 && incoming.pickingId !== null
     ? [{ pickingId: incoming.pickingId, referenceIds: out.referenceIds }]
     : []),
@@ -68,6 +71,13 @@ export const planAllocate = ({
 }): AllocatePlan => {
   const plan: AllocatePlan = { splits: [], lineSplits: [], links: [], makeToOrder: [], references: [], assignMoveIds: [] };
   const destDemand = new Map<string, number>();
+  // A reference shared with a transfer reaches every move of it at once, so a
+  // later link in the same run shares it again.
+  const shared = new Map<string, string[]>();
+  const referencesOf = (move: { pickingId: string | null; referenceIds: string[] }) => ({
+    pickingId: move.pickingId,
+    referenceIds: [...new Set([...move.referenceIds, ...(move.pickingId === null ? [] : (shared.get(move.pickingId) ?? []))])],
+  });
 
   for (const { out, quantity, ins } of allocations) {
     if (compareAtDigits(out.productQty, quantity, digits) === 1) {
@@ -104,7 +114,10 @@ export const planAllocate = ({
         continue;
       }
       plan.links.push({ inId: incoming.id, outId: out.id });
-      plan.references.push(...referencesBetween(incoming, out));
+      for (const entry of referencesBetween(referencesOf(incoming), referencesOf(out))) {
+        plan.references.push(entry);
+        shared.set(entry.pickingId, [...new Set([...(shared.get(entry.pickingId) ?? []), ...entry.referenceIds])]);
+      }
       if (!incoming.isLinkedToOut) {
         destDemand.set(incoming.id, fed + Math.min(quantity, out.productQty));
       }
@@ -212,10 +225,14 @@ export const planAllocationLineWrites = ({
     if (split.outQuantity === 0) {
       return [{ kind: 'move', lineId: split.lineId, moveId: split.otherMoveId }];
     }
+    if (split.otherQuantity === 0) {
+      return [];
+    }
     const line = lines.get(split.lineId);
 
-    if (split.otherQuantity === 0 || line === undefined) {
-      return [];
+    // Dropping the write would leave the delivery more reserved than planned.
+    if (line === undefined) {
+      throw new Error(`Move line ${split.lineId} has no quantity or unit to split.`);
     }
     const converted = convertQuantity({
       qty: convertedSide === 'out' ? split.outQuantity : split.otherQuantity,

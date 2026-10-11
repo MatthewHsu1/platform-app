@@ -29,6 +29,8 @@ export const readAllocateRequest = async (body: Record<string, unknown>) => {
     !Array.isArray(inIds) ||
     quantities.length !== moveIds.length ||
     inIds.length !== moveIds.length ||
+    // One entry per delivery move: two would split the same demand twice.
+    new Set(moveIds).size !== moveIds.length ||
     !quantities.every(isQuantity) ||
     !inIds.every(isIdList)
   ) {

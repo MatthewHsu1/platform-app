@@ -100,6 +100,33 @@ describe('planAllocate', () => {
       { pickingId: 'DELIVERY', referenceIds: ['PO1'] },
     ]);
   });
+
+  it('gives the second receipt linked in one run the references the first one shared with the delivery', () => {
+    const plan = planAllocate({
+      allocations: [
+        {
+          out: out({ productQty: 7, referenceIds: ['SO1'] }),
+          quantity: 7,
+          ins: [
+            incoming({ id: 'in1', pickingId: 'R1', productQty: 4, referenceIds: ['PO1'] }),
+            incoming({ id: 'in2', pickingId: 'R2', productQty: 3, referenceIds: ['PO2'] }),
+          ],
+        },
+      ],
+      digits: 2,
+    });
+
+    expect(plan.links).toEqual([
+      { inId: 'in2', outId: 'delivery-move' },
+      { inId: 'in1', outId: 'delivery-move' },
+    ]);
+    expect(plan.references).toEqual([
+      { pickingId: 'R2', referenceIds: ['SO1'] },
+      { pickingId: 'DELIVERY', referenceIds: ['PO2'] },
+      { pickingId: 'R1', referenceIds: ['SO1', 'PO2'] },
+      { pickingId: 'DELIVERY', referenceIds: ['PO1'] },
+    ]);
+  });
 });
 
 describe('planUnallocate', () => {

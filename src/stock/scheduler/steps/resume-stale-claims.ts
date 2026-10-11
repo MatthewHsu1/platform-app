@@ -77,7 +77,11 @@ export const resumeStaleClaims = async () => {
 
   const errors = errorCollector();
 
-  for (const { key, action, recordId } of resume) {
+  // Stopped allocations first: until they finish, Validate, Unreserve and
+  // Check Availability of their transfers answer "try again".
+  const ordered = [...resume.filter((claim) => claim.action === 'allocate'), ...resume.filter((claim) => claim.action !== 'allocate')];
+
+  for (const { key, action, recordId } of ordered) {
     await errors.run(key, () => STALE_CLAIM_RESUMERS[action](recordId));
   }
   // Reported, not removed: the claim keeps its record held until its action resumes it.

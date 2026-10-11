@@ -9,7 +9,6 @@ export default defineCommandMenuItem({
   universalIdentifier: RECEPTION_UNIVERSAL_IDENTIFIERS.pickingCommand,
   label: 'Allocation',
   shortLabel: 'Allocation',
-  icon: 'IconList',
   isPinned: false,
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER,

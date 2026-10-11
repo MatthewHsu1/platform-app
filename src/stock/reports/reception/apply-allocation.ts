@@ -1,39 +1,15 @@
-import {
-  CLAIM_HELD_MESSAGE,
-  claimKey,
-  heldClaimKeys,
-  openJournal,
-  releaseClaims,
-  settleOwnedClaim,
-  takeClaims,
-  withClaim,
-} from 'src/shared/claims/claim';
-import { createMissingRows } from 'src/shared/claims/create-missing-rows';
+import { CLAIM_HELD_MESSAGE, claimKey } from 'src/shared/claims/claim';
 import { type ClaimJournal } from 'src/shared/claims/types/claim-journal.type';
 import { type TranslationValues } from 'src/shared/i18n/types/translation-values.type';
 import { derivedId } from 'src/shared/utils/derived-id.util';
-import { assignMoves } from 'src/stock/move/actions/assign-moves';
-import { applyMoveSplit, planMoveSplit } from 'src/stock/move/actions/split-move';
-import { unreserveMoves } from 'src/stock/move/actions/unreserve-moves';
-import { linkMoves, readMoveReferences, unlinkMoves } from 'src/stock/move/move-links';
-import { recomputeMove } from 'src/stock/move/recompute-move';
 import { type MoveSplitPlan } from 'src/stock/move/types/move-split-plan.type';
-import { recomputePickingState } from 'src/stock/picking/recompute-picking-state';
-import { readStockProducts } from 'src/stock/product/read-stock-products';
-import { sourceKeyOf } from 'src/stock/quant/quant-key';
-import { recomputeReserved } from 'src/stock/quant/recompute-reserved';
-import { readAllocationInputs, readMovePickingIds } from 'src/stock/reports/reception/read-reception-data';
+import { graphqlAllocationPort } from 'src/stock/reports/reception/graphql-allocation-port';
 import { RECEPTION_MESSAGES } from 'src/stock/reports/reception/reception-messages.constant';
 import { type AllocationPort } from 'src/stock/reports/reception/types/allocation-port.type';
 import { type AllocationRequest } from 'src/stock/reports/reception/types/allocation-request.type';
 import { type AllocationRun } from 'src/stock/reports/reception/types/allocation-run.type';
 import { StockUserError } from 'src/stock/stock-errors';
 import { MOVE_STATE, PROCURE_METHOD } from 'src/stock/stock-options.constant';
-import { stockMoveLines, stockMoves, stockReferenceMoveRels } from 'src/stock/stock-records';
-import { MOVE_LINE_ROW } from 'src/stock/stock-rows';
-import { readStockSettings } from 'src/stock/stock-settings';
-import { readResolvedUoms } from 'src/stock/stock-uoms';
-import { type MoveLineRow } from 'src/stock/types/move-line-row.type';
 import { compareAtDigits } from 'src/stock/utils/stock-uom.util';
 import { planAllocate, planAllocationLineWrites, planUnallocate } from 'src/stock/utils/plan-allocation.util';
 import { type AllocationLineWrite } from 'src/stock/utils/types/allocation-line-write.type';
@@ -187,25 +163,70 @@ export const makeAllocation = (port: AllocationPort) => {
     };
   };
 
+  const readOpenness = async (moveIds: string[]) => {
+    const states = await port.readMoveStates(distinct(moveIds));
+
+    return {
+      exists: (moveId: string) => states.has(moveId),
+      isOpen: (moveId: string) => {
+        const state = states.get(moveId);
+
+        return state !== undefined && state !== MOVE_STATE.DONE && state !== MOVE_STATE.CANCEL;
+      },
+      state: (moveId: string) => states.get(moveId),
+    };
+  };
+
+  // A line removed or made done since the plan, or a write onto a move that
+  // is no longer open, is left out: a done line's stock is already posted.
+  const openLineWrites = async (writes: AllocationLineWrite[], isOpen: (moveId: string) => boolean) => {
+    const lineStates = await port.readLineStates(writes.map((write) => write.lineId));
+
+    return writes.filter((write) => {
+      const state = lineStates.get(write.lineId);
+
+      return (
+        state !== undefined &&
+        state !== MOVE_STATE.DONE &&
+        isOpen(write.moveId) &&
+        (write.kind === 'move' || isOpen(write.copyMoveId))
+      );
+    });
+  };
+
   // The writes after the commit point. Each step sets planned values only, so
-  // a rerun of a step that stopped half-way finishes it.
+  // a rerun of a step that stopped half-way finishes it. A stored plan is
+  // replayed as stored, never planned again; what another flow closed or
+  // removed since is skipped and the rest is finished.
   const finishRun = async (run: AllocationRun, journal: ClaimJournal) => {
     if (run.kind === 'allocate') {
       await journal.step(
         'allocate:apply',
         async () => null,
         async () => {
-          for (const split of run.splits) {
+          const before = await readOpenness(run.splits.map((split) => split.moveId));
+
+          for (const split of run.splits.filter((planned) => before.isOpen(planned.moveId))) {
             await port.applyMoveSplit(split);
           }
-          await port.writeLines(run.lineWrites);
-          await port.linkMoves(run.plan.links.map((link) => ({ moveOrigId: link.inId, moveDestId: link.outId })));
-          await port.setProcureMethod(run.plan.makeToOrder, PROCURE_METHOD.MAKE_TO_ORDER);
+          const moves = await readOpenness([
+            ...run.plan.assignMoveIds,
+            ...run.splits.map((split) => split.newMoveId),
+            ...run.plan.links.map((link) => link.inId),
+          ]);
+
+          await port.writeLines(await openLineWrites(run.lineWrites, moves.isOpen));
+          await port.linkMoves(
+            run.plan.links
+              .filter((link) => moves.isOpen(link.outId) && moves.exists(link.inId) && moves.state(link.inId) !== MOVE_STATE.CANCEL)
+              .map((link) => ({ moveOrigId: link.inId, moveDestId: link.outId })),
+          );
+          await port.setProcureMethod(run.plan.makeToOrder.filter(moves.isOpen), PROCURE_METHOD.MAKE_TO_ORDER);
           for (const { pickingId, referenceIds } of run.plan.references) {
             await port.addReferences(pickingId, referenceIds);
           }
           await port.recompute(
-            [...run.plan.assignMoveIds, ...run.splits.map((split) => split.newMoveId)],
+            [...run.plan.assignMoveIds, ...run.splits.map((split) => split.newMoveId)].filter(moves.exists),
             touchedLineIds(run.lineWrites),
           );
         },
@@ -229,19 +250,37 @@ export const makeAllocation = (port: AllocationPort) => {
         for (const { pickingId, referenceIds } of run.plan.referencesToRemove) {
           await port.removeReferences(pickingId, referenceIds);
         }
-        if (run.split !== null) {
+        const out = await readOpenness([outId]);
+
+        if (run.split !== null && out.isOpen(outId)) {
           await port.applyMoveSplit(run.split);
-          await port.writeLines(run.lineWrites);
+          const moves = await readOpenness([outId, run.split.newMoveId]);
+
+          await port.writeLines(await openLineWrites(run.lineWrites, moves.isOpen));
           await port.unlinkMoves(run.split.moveOrigIds.map((moveOrigId) => ({ moveOrigId, moveDestId: outId })));
         }
-        await port.setProcureMethod([outId], PROCURE_METHOD.MAKE_TO_STOCK);
-        await port.recompute(run.split === null ? [outId] : [outId, run.split.newMoveId], touchedLineIds(run.lineWrites));
+        if (out.isOpen(outId)) {
+          await port.setProcureMethod([outId], PROCURE_METHOD.MAKE_TO_STOCK);
+        }
+        const touched = await readOpenness(run.split === null ? [outId] : [outId, run.split.newMoveId]);
+
+        await port.recompute(
+          (run.split === null ? [outId] : [outId, run.split.newMoveId]).filter(touched.exists),
+          touchedLineIds(run.lineWrites),
+        );
       },
     );
     await journal.step(
       'unallocate:reserve',
       async () => null,
-      () => port.unreserveMoves([run.plan.unreserve]),
+      async () => {
+        const out = await readOpenness([run.plan.unreserve]);
+
+        // A delivery validated meanwhile keeps its done lines.
+        if (out.exists(run.plan.unreserve) && out.state(run.plan.unreserve) !== MOVE_STATE.DONE) {
+          await port.unreserveMoves([run.plan.unreserve]);
+        }
+      },
     );
   };
 
@@ -359,96 +398,4 @@ export const makeAllocation = (port: AllocationPort) => {
   return { allocate, unallocate, resumeAllocation };
 };
 
-// A copy keeps everything that says where the goods are and what holds them;
-// only its move and quantity differ.
-const LINE_COPY_FIELDS = [
-  'name',
-  'pickingId',
-  'productId',
-  'productUomId',
-  'picked',
-  'date',
-  'ownerId',
-  'lotId',
-  'packageId',
-  'resultPackageId',
-  'locationId',
-  'locationDestId',
-  'state',
-] as const;
-
-// Written as the app; the route has checked the user can read every move asked for.
-const allocationPort: AllocationPort = {
-  claims: { withClaim, openJournal, takeClaims, releaseClaims, settleOwnedClaim, heldClaimKeys },
-  digits: () => readStockSettings().productUnitDigits,
-  uoms: readResolvedUoms,
-  readMovePickingIds,
-  readInputs: readAllocationInputs,
-  planMoveSplit: (moveId, quantity, target) => planMoveSplit(moveId, quantity, target),
-  applyMoveSplit,
-  writeLines: async (writes) => {
-    for (const write of writes) {
-      if (write.kind === 'move') {
-        await stockMoveLines.update(write.lineId, { moveId: write.moveId });
-        continue;
-      }
-      const [line] = await stockMoveLines.find<MoveLineRow>({ id: { eq: write.lineId } }, MOVE_LINE_ROW);
-
-      await stockMoveLines.update(write.lineId, { quantity: write.quantity, moveId: write.moveId });
-      if (line !== undefined) {
-        await createMissingRows(stockMoveLines, [
-          {
-            id: write.copyId,
-            data: {
-              ...Object.fromEntries(LINE_COPY_FIELDS.map((field) => [field, line[field]])),
-              moveId: write.copyMoveId,
-              quantity: write.copyQuantity,
-            },
-          },
-        ]);
-      }
-    }
-  },
-  linkMoves,
-  unlinkMoves,
-  setProcureMethod: (moveIds, procureMethod) => stockMoves.updateMany(moveIds, { procureMethod }),
-  // A reference added to a transfer goes on every move of it.
-  addReferences: async (pickingId, referenceIds) => {
-    const moves = await stockMoves.find<{ id: string }>({ pickingId: { eq: pickingId } }, 'id');
-    const existing = await readMoveReferences(moves.map((move) => move.id));
-    const missing = moves.flatMap((move) =>
-      referenceIds
-        .filter((referenceId) => !(existing.get(move.id) ?? []).includes(referenceId))
-        .map((referenceId) => ({ moveId: move.id, referenceId })),
-    );
-
-    if (missing.length > 0) {
-      await stockReferenceMoveRels.createMany(missing);
-    }
-  },
-  removeReferences: async (pickingId, referenceIds) => {
-    const moves = await stockMoves.find<{ id: string }>({ pickingId: { eq: pickingId } }, 'id');
-    const links = await stockReferenceMoveRels.find<{ id: string }>(
-      { moveId: { in: moves.map((move) => move.id) }, referenceId: { in: referenceIds } },
-      'id',
-    );
-
-    await stockReferenceMoveRels.destroyMany(links.map((link) => link.id));
-  },
-  recompute: async (moveIds, lineIds) => {
-    await recomputeMove(moveIds);
-    const lines = await stockMoveLines.find<MoveLineRow>({ id: { in: lineIds } }, MOVE_LINE_ROW);
-    const products = await readStockProducts(lines.map((line) => line.productId));
-
-    await recomputeReserved(
-      distinct(lines.filter((line) => products.get(line.productId)?.isStorable === true).map((line) => sourceKeyOf(line))),
-    );
-    const moves = await stockMoves.find<{ pickingId: string | null }>({ id: { in: moveIds } }, 'pickingId');
-
-    await recomputePickingState(distinct(moves.flatMap((move) => (move.pickingId === null ? [] : [move.pickingId]))));
-  },
-  assignMoves,
-  unreserveMoves,
-};
-
-export const { allocate, unallocate, resumeAllocation } = makeAllocation(allocationPort);
+export const { allocate, unallocate, resumeAllocation } = makeAllocation(graphqlAllocationPort);
