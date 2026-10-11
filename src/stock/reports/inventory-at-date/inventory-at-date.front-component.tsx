@@ -12,7 +12,7 @@ import {
   INVENTORY_AT_DATE_UNIVERSAL_IDENTIFIERS,
 } from 'src/stock/stock-reports-universal-identifiers.constant';
 import { type InventoryAtDateRow } from 'src/stock/types/inventory-at-date-row.type';
-import { INVENTORY_AT_DATE_PAGE_SIZE } from 'src/stock/utils/inventory-at-date.util';
+import { INVENTORY_AT_DATE_PAGE_SIZE, inventoryProductLabel } from 'src/stock/utils/inventory-at-date.util';
 
 // The texts the route answers, listed here so the extractor puts them in the catalog.
 export const INVENTORY_AT_DATE_ROUTE_TEXTS = [msg('Choose a date.')];
@@ -27,8 +27,6 @@ const formatMoment = (isoValue: string, locale: string) => {
     return new Date(isoValue).toLocaleString();
   }
 };
-
-const productLabel = (row: InventoryAtDateRow) => (row.defaultCode === null ? row.name : `[${row.defaultCode}] ${row.name}`);
 
 const InventoryAtDate = () => {
   const { t } = useTranslate();
@@ -76,7 +74,7 @@ const InventoryAtDate = () => {
             rowKey={(row) => row.productId}
             rows={page.rows}
             columns={[
-              { key: 'product', title: t('Product'), render: productLabel },
+              { key: 'product', title: t('Product'), render: inventoryProductLabel },
               { key: 'quantity', title: t('On Hand'), render: (row) => row.quantity },
               { key: 'unit', title: t('Unit'), render: (row) => row.uomName },
             ]}

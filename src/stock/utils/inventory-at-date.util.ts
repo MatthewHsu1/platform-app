@@ -78,3 +78,6 @@ export const doneMovesAfterInProductUnit = ({
 
 // A search text matched anywhere in a value with ilike: the pattern's own wildcards and escape are taken literally.
 export const containsPattern = (search: string) => `%${search.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
+
+// A variant's stored name already starts with its internal reference in brackets, so the table shows it as it is.
+export const inventoryProductLabel = (row: { name: string }) => row.name;

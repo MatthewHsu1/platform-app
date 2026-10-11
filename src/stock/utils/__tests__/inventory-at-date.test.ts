@@ -5,6 +5,7 @@ import {
   doneMovesAfter,
   doneMovesAfterInProductUnit,
   inventoryAtDate,
+  inventoryProductLabel,
 } from 'src/stock/utils/inventory-at-date.util';
 import { computeQuantity, resolveUoms } from 'src/uom/utils/uom.util';
 
@@ -80,5 +81,11 @@ describe('inventory at date in the product unit', () => {
 describe('inventory at date search pattern', () => {
   it('finds the text anywhere and takes %, _ and \\ literally', () => {
     expect(containsPattern('50%_off\\')).toBe('%50\\%\\_off\\\\%');
+  });
+});
+
+describe('inventoryProductLabel', () => {
+  it('shows a variant named with its reference once', () => {
+    expect(inventoryProductLabel({ name: '[A1] Desk' })).toBe('[A1] Desk');
   });
 });
