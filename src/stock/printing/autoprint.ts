@@ -1,19 +1,28 @@
 import { hasPersonToken } from 'src/shared/utils/has-person-token.util';
 import { readInChunks } from 'src/shared/utils/read-in-chunks.util';
 import { createCheckedPrintPass } from 'src/stock/printing/create-print-pass';
+import { makeAutoprint } from 'src/stock/printing/make-autoprint';
 import { type AutoprintPicking } from 'src/stock/printing/types/autoprint-picking.type';
 import { type LotLabelFormat } from 'src/stock/printing/types/lot-label-format.type';
-import { type PrintLink } from 'src/stock/printing/types/print-link.type';
 import { type ProductLabelFormat } from 'src/stock/printing/types/product-label-format.type';
-import { planAutoprint, receptionAutoShow } from 'src/stock/printing/utils/plan-autoprint.util';
+import { warehouseLocationIds } from 'src/stock/printing/utils/warehouse-location-ids.util';
 import { readReceptionData } from 'src/stock/reports/reception/read-reception-data';
 import { LOT_LABEL_FORMAT, PRODUCT_LABEL_FORMAT } from 'src/stock/stock-options.constant';
-import { stockMoveLines, stockMoveMoveRels, stockMoves, stockPickings, stockPickingTypes } from 'src/stock/stock-records';
+import {
+  stockLocations,
+  stockMoveLines,
+  stockMoveMoveRels,
+  stockMoves,
+  stockPickings,
+  stockPickingTypes,
+  stockWarehouses,
+} from 'src/stock/stock-records';
 
 type PickingRow = { id: string; pickingTypeId: string | null; pickingTypeCode: string | null };
 type TypeRow = {
   id: string;
   code: string | null;
+  warehouseId: string | null;
   autoShowReceptionReport: boolean | null;
   autoPrintDeliverySlip: boolean | null;
   autoPrintReturnSlip: boolean | null;
@@ -27,7 +36,7 @@ type TypeRow = {
 };
 
 const TYPE_SELECTION =
-  'id code autoShowReceptionReport autoPrintDeliverySlip autoPrintReturnSlip autoPrintReceptionReport autoPrintReceptionReportLabels autoPrintProductLabels productLabelFormat autoPrintLotLabels lotLabelFormat autoPrintPackages';
+  'id code warehouseId autoShowReceptionReport autoPrintDeliverySlip autoPrintReturnSlip autoPrintReceptionReport autoPrintReceptionReportLabels autoPrintProductLabels productLabelFormat autoPrintLotLabels lotLabelFormat autoPrintPackages';
 
 // Operation type settings are configuration, read as the app; each print link then checks what
 // the user may read.
@@ -83,69 +92,40 @@ const readAutoprintPickings = async (pickingIds: string[]): Promise<AutoprintPic
   }));
 };
 
-// The prints the operation types ask for when these transfers are validated, as one-time links for
-// the user who validated. Only a user's own click gets them: they open only in that user's window,
-// so a run nobody watches (a validation the daily job finishes) makes none. A print that fails
-// leaves the others and the validation as they are.
-export const autoprint = async (pickingIds: string[], timeZone: string): Promise<PrintLink[]> => {
-  if (pickingIds.length === 0 || !hasPersonToken()) {
-    return [];
-  }
-  const links: PrintLink[] = [];
+const distinct = (ids: (string | null)[]) => [...new Set(ids.filter((id): id is string => id !== null))];
 
-  for (const job of planAutoprint(await readAutoprintPickings(pickingIds))) {
-    const created = await createCheckedPrintPass({
-      report: job.report,
-      objectSingular: 'stockPicking',
-      recordIds: job.pickingIds,
-      options: job.options,
-      timeZone,
-    }).catch(() => null);
+const readReceptionFlags = async (pickingIds: string[]) => {
+  const flagged = (await readPickingsWithTypes(pickingIds)).filter(({ type }) => type.autoShowReceptionReport === true);
 
-    if (created !== null) {
-      links.push(created.link);
-    }
-  }
-  return links;
+  return { pickingIds: flagged.map(({ picking }) => picking.id), warehouseIds: distinct(flagged.map(({ type }) => type.warehouseId)) };
 };
 
-// The validated receipts whose reception report opens for the user who validated them: their
-// operation type asks for it and a waiting delivery of the warehouse can take what came in.
-export const receptionReportToShow = async (pickingIds: string[]): Promise<string[]> => {
-  if (pickingIds.length === 0 || !hasPersonToken()) {
-    return [];
-  }
-  const flagged = (await readPickingsWithTypes(pickingIds)).filter(({ type }) => type.autoShowReceptionReport === true).map(({ picking }) => picking.id);
+// Warehouses and their locations are configuration, read as the app.
+const readWarehouseLocationIds = async (warehouseIds: string[]) => {
+  const warehouses = await readInChunks(warehouseIds, (part) =>
+    stockWarehouses.find<{ viewLocationId: string | null }>({ id: { in: part } }, 'viewLocationId'),
+  );
+  const views = await readInChunks(distinct(warehouses.map((warehouse) => warehouse.viewLocationId)), (part) =>
+    stockLocations.find<{ parentPath: string | null }>({ id: { in: part } }, 'parentPath'),
+  );
+  const paths = distinct(views.map((view) => view.parentPath));
 
-  if (flagged.length === 0) {
-    return [];
+  if (paths.length === 0) {
+    return new Set<string>();
   }
-  const data = await readReceptionData({ pickingIds: flagged, batchId: null });
-  const flaggedSet = new Set(flagged);
-  const isFlagged = (pickingId: string | null) => pickingId !== null && flaggedSet.has(pickingId);
-  const show = receptionAutoShow({
-    flaggedPickingIds: flagged,
-    lines: data.moves
-      .filter((move) => isFlagged(move.pickingId))
-      .map((move) => ({
-        productId: move.productId,
-        isStorable: move.isStorable,
-        state: move.state,
-        quantity: move.quantity,
-        hasDestinationMoves: move.moveDestIds.length > 0,
-      })),
-    candidateOuts: data.moves
-      .filter((move) => !isFlagged(move.pickingId))
-      .map((move) => ({
-        productId: move.productId,
-        state: move.state,
-        productQty: move.productQty,
-        locationId: move.locationId,
-        pickingId: move.pickingId,
-        hasOrigins: move.moveOrigIds.length > 0,
-      })),
-    warehouseLocationIds: data.warehouseLocationIds,
-  });
+  const locations = await stockLocations.find<{ id: string; parentPath: string | null; usage: string }>(
+    { or: paths.map((path) => ({ parentPath: { like: `${path}%` } })) },
+    'id parentPath usage',
+  );
 
-  return show ? flagged : [];
+  return warehouseLocationIds(paths, locations);
 };
+
+export const { autoprint, receptionReportToShow } = makeAutoprint({
+  hasPersonToken: () => hasPersonToken(),
+  readAutoprintPickings,
+  createPrintPass: createCheckedPrintPass,
+  readReceptionFlags,
+  readReceptionMoves: async (pickingIds) => (await readReceptionData({ pickingIds, batchId: null })).moves,
+  readWarehouseLocationIds,
+});

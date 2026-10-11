@@ -9,12 +9,16 @@ import { type ValidateResult } from 'src/stock/picking/types/validate-result.typ
 
 const payload = (body: Record<string, unknown>) => ({ body }) as unknown as RoutePayload;
 
+// A done answer without its done transfers made done every transfer it was given.
+type Answer = ValidateResult | Omit<Extract<ValidateResult, { kind: 'done' }>, 'doneIds'>;
+
 const route = (
-  answer: (pickingIds: string[], options: ValidateOptions) => ValidateResult,
+  answer: (pickingIds: string[], options: ValidateOptions) => Answer,
   expiredLotsToConfirm: (pickingIds: string[]) => Promise<string[] | null> = async () => null,
-  { hookFails = false }: { hookFails?: boolean } = {},
+  { hookFails = false, receptionIds = [] }: { hookFails?: boolean; receptionIds?: string[] } = {},
 ) => {
   const calls: { pickingIds: string[]; options: ValidateOptions }[] = [];
+  const printCalls: { pickingIds: string[]; timeZone: string }[] = [];
   const hookCalls: { pickingIds: string[]; batchesToValidate: string[]; pickingsToDetach: string[] }[] = [];
   // Validate runs and the batch hook in the order they happened.
   const log: string[] = [];
@@ -24,7 +28,9 @@ const route = (
       validatePickings: async (pickingIds, options) => {
         calls.push({ pickingIds, options });
         log.push(`validate ${pickingIds.join(',')}`);
-        return answer(pickingIds, options);
+        const result = answer(pickingIds, options);
+
+        return result.kind === 'done' && !('doneIds' in result) ? { ...result, doneIds: pickingIds } : result;
       },
       expiredLotsToConfirm,
       afterValidateBatch: async (args) => {
@@ -34,6 +40,12 @@ const route = (
           throw new Error('timeout');
         }
       },
+      autoprint: async (pickingIds, timeZone) => {
+        printCalls.push({ pickingIds, timeZone });
+        log.push(`print ${pickingIds.join(',')}`);
+        return pickingIds.length === 0 ? [] : [{ report: 'deliverySlip', pass: `print-${pickingIds.join(',')}` }];
+      },
+      receptionReportToShow: async (pickingIds) => pickingIds.filter((id) => receptionIds.includes(id)),
     }),
   );
   const post = async (body: Record<string, unknown>) => {
@@ -41,7 +53,7 @@ const route = (
     return { status: response.status, body: JSON.parse(String(response.body)) as unknown };
   };
 
-  return { calls, hookCalls, log, post };
+  return { calls, hookCalls, log, post, printCalls };
 };
 
 describe('the Validate route', () => {
@@ -52,37 +64,51 @@ describe('the Validate route', () => {
       status: 200,
       body: { kind: 'needsAnswer', question: 'backorder', pickingIds: ['a', 'b'] },
     });
-    expect(calls).toEqual([{ pickingIds: ['a', 'b'], options: { skipExpired: false, skipBatchHook: true, printTimeZone: 'UTC' } }]);
+    expect(calls).toEqual([{ pickingIds: ['a', 'b'], options: { skipExpired: false, skipBatchHook: true, skipPrints: true } }]);
   });
 
-  it("hands Validate the browser's time zone for the dates of its prints, and UTC for a name that is not a zone", async () => {
-    const { calls, post } = route(() => ({ kind: 'done', backorderIds: [], printouts: [] }));
+  it("prints with the browser's time zone, and UTC for a name that is not a zone", async () => {
+    const { post, printCalls } = route(() => ({ kind: 'done', backorderIds: [], printouts: [] }));
 
     await post({ pickingIds: ['a'], timeZone: 'America/Denver' });
     await post({ pickingIds: ['b'], timeZone: 'Mars/Olympus' });
 
-    expect(calls.map((call) => call.options.printTimeZone)).toEqual(['America/Denver', 'UTC']);
+    expect(printCalls).toEqual([
+      { pickingIds: ['a'], timeZone: 'America/Denver' },
+      { pickingIds: ['b'], timeZone: 'UTC' },
+    ]);
   });
 
   // Ticked transfers get a backorder, unticked ones none; the other selected transfers
-  // were not asked and run as "create backorder".
-  it('runs the ticked and the unticked transfers apart and merges what they return', async () => {
-    const { calls, post } = route((pickingIds, options) =>
-      options.cancelBackorder === true
-        ? { kind: 'done', backorderIds: [], printouts: [{ report: 'deliverySlip', pass: 'print-c' }], showReceptionReport: ['c'] }
-        : { kind: 'done', backorderIds: [`bo-${pickingIds[0]}`], printouts: [{ report: 'deliverySlip', pass: 'print-a' }] },
+  // were not asked and run as "create backorder". The click prints once, over every transfer it made
+  // done, as one Validate does.
+  it('runs the ticked and the unticked transfers apart, then prints once for all of them', async () => {
+    const { calls, log, post } = route(
+      (pickingIds, options) =>
+        options.cancelBackorder === true
+          ? { kind: 'done', backorderIds: [], printouts: [] }
+          : { kind: 'done', backorderIds: [`bo-${pickingIds[0]}`], printouts: [] },
+      undefined,
+      { receptionIds: ['c'] },
     );
 
     expect(
       await post({ pickingIds: ['a', 'b', 'c'], backorderAnswer: { createBackorderIds: ['a'], noBackorderIds: ['c', 'x'] } }),
     ).toEqual({
       status: 200,
-      body: { kind: 'done', backorderIds: ['bo-a'], printouts: [{ report: 'deliverySlip', pass: 'print-a' }, { report: 'deliverySlip', pass: 'print-c' }], showReceptionReport: ['c'] },
+      body: {
+        kind: 'done',
+        backorderIds: ['bo-a'],
+        doneIds: ['a', 'b', 'c'],
+        printouts: [{ report: 'deliverySlip', pass: 'print-a,b,c' }],
+        showReceptionReport: ['c'],
+      },
     });
     expect(calls).toEqual([
-      { pickingIds: ['a', 'b'], options: { cancelBackorder: false, skipExpired: true, logEveryTransfer: false, skipBatchHook: true, printTimeZone: 'UTC' } },
-      { pickingIds: ['c'], options: { cancelBackorder: true, skipExpired: true, logEveryTransfer: false, skipBatchHook: true, printTimeZone: 'UTC' } },
+      { pickingIds: ['a', 'b'], options: { cancelBackorder: false, skipExpired: true, logEveryTransfer: false, skipBatchHook: true, skipPrints: true } },
+      { pickingIds: ['c'], options: { cancelBackorder: true, skipExpired: true, logEveryTransfer: false, skipBatchHook: true, skipPrints: true } },
     ]);
+    expect(log).toEqual(['validate a,b', 'validate c', 'batch hook a,b,c', 'print a,b,c']);
   });
 
   it('asks for the less-quantities task on every transfer when the answer is the "No backorder" button', async () => {
@@ -91,8 +117,8 @@ describe('the Validate route', () => {
     await post({ pickingIds: ['a', 'b'], backorderAnswer: { createBackorderIds: [], noBackorderIds: ['a'], noBackorderButton: true } });
 
     expect(calls).toEqual([
-      { pickingIds: ['b'], options: { cancelBackorder: false, skipExpired: true, logEveryTransfer: true, skipBatchHook: true, printTimeZone: 'UTC' } },
-      { pickingIds: ['a'], options: { cancelBackorder: true, skipExpired: true, logEveryTransfer: true, skipBatchHook: true, printTimeZone: 'UTC' } },
+      { pickingIds: ['b'], options: { cancelBackorder: false, skipExpired: true, logEveryTransfer: true, skipBatchHook: true, skipPrints: true } },
+      { pickingIds: ['a'], options: { cancelBackorder: true, skipExpired: true, logEveryTransfer: true, skipBatchHook: true, skipPrints: true } },
     ]);
   });
 
@@ -120,7 +146,7 @@ describe('the Validate route', () => {
 
     await post({ pickingIds: ['p1', 'p2'], backorderAnswer: { createBackorderIds: ['p1'], noBackorderIds: ['p2'] } });
 
-    expect(log).toEqual(['validate p1', 'validate p2', 'batch hook p1,p2']);
+    expect(log).toEqual(['validate p1', 'validate p2', 'batch hook p1,p2', 'print p1,p2']);
     expect(hookCalls).toEqual([{ pickingIds: ['p1', 'p2'], batchesToValidate: [], pickingsToDetach: [] }]);
   });
 
@@ -176,7 +202,7 @@ describe('the Validate route', () => {
 
     expect(await post({ pickingIds: ['a'], backorderAnswer: { createBackorderIds: [], noBackorderIds: ['a'] }, skipExpired: true })).toEqual({
       status: 200,
-      body: { kind: 'done', backorderIds: [], printouts: [] },
+      body: { kind: 'done', backorderIds: [], doneIds: ['a'], printouts: [{ report: 'deliverySlip', pass: 'print-a' }] },
     });
   });
 

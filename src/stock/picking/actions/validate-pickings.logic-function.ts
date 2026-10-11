@@ -5,13 +5,23 @@ import { expiredLotsToConfirm } from 'src/stock/lot/validate-tracking-checks';
 import { readRequestedPickingIds } from 'src/stock/picking/actions/read-requested-picking-ids';
 import { validatePickings } from 'src/stock/picking/actions/validate-pickings';
 import { makeValidateRoute } from 'src/stock/picking/actions/validate-route';
+import { autoprint, receptionReportToShow } from 'src/stock/printing/autoprint';
 import { stockRouteHandler } from 'src/stock/stock-route';
 import {
   VALIDATE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   VALIDATE_ROUTE_PATH,
 } from 'src/stock/stock-universal-identifiers.constant';
 
-const handler = stockRouteHandler(makeValidateRoute({ readPickingIds: readRequestedPickingIds, validatePickings, expiredLotsToConfirm, afterValidateBatch }));
+const handler = stockRouteHandler(
+  makeValidateRoute({
+    readPickingIds: readRequestedPickingIds,
+    validatePickings,
+    expiredLotsToConfirm,
+    afterValidateBatch,
+    autoprint,
+    receptionReportToShow,
+  }),
+);
 
 export default defineLogicFunction({
   universalIdentifier: VALIDATE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,

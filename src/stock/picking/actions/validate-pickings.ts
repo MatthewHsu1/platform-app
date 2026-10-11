@@ -293,16 +293,19 @@ export const makeValidatePickings = (deps: ValidatePickingsDeps) => {
       });
     }
     doneIds.push(...validatedIds);
-    const printouts = await deps.autoprint(doneIds, options.printTimeZone ?? DEFAULT_PRINT_TIME_ZONE);
-    const showReceptionReport = await deps.receptionReportToShow(doneIds);
 
     if (held) {
       return { kind: 'refused', reason: CLAIM_HELD_MESSAGE };
     }
+    if (options.skipPrints === true) {
+      return { kind: 'done', backorderIds, doneIds, printouts: [] };
+    }
+    const printouts = await deps.autoprint(doneIds, options.printTimeZone ?? DEFAULT_PRINT_TIME_ZONE);
+    const showReceptionReport = await deps.receptionReportToShow(doneIds);
 
     return showReceptionReport.length > 0
-      ? { kind: 'done', backorderIds, printouts, showReceptionReport }
-      : { kind: 'done', backorderIds, printouts };
+      ? { kind: 'done', backorderIds, doneIds, printouts, showReceptionReport }
+      : { kind: 'done', backorderIds, doneIds, printouts };
   };
 
   return { validatePickings, resumeValidate };

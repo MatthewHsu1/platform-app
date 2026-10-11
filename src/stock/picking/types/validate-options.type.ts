@@ -11,4 +11,6 @@ export type ValidateOptions = {
   skipBatchHook?: boolean;
   // The zone of the user's browser, for the dates on the prints Validate makes.
   printTimeZone?: string;
+  // The caller makes the prints itself, once for a click that validates in several calls.
+  skipPrints?: boolean;
 };

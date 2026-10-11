@@ -2,7 +2,7 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { createCheckedPrintPass } from 'src/stock/printing/create-print-pass';
 import { PRINT_MESSAGES } from 'src/stock/printing/print-messages.constant';
-import { isTimeZone } from 'src/stock/printing/utils/print-dates.util';
+import { DEFAULT_PRINT_TIME_ZONE, isTimeZone } from 'src/stock/printing/utils/print-dates.util';
 import { isOverIdLimit, isPrintOptionsSizeAllowed, PRINT_OPTION_MAX_IDS } from 'src/stock/printing/utils/print-options.util';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';
 import { StockUserError } from 'src/stock/stock-errors';
@@ -10,8 +10,6 @@ import {
   PRINT_ROUTE_PATH,
   PRINTING_UNIVERSAL_IDENTIFIERS,
 } from 'src/stock/stock-printing-universal-identifiers.constant';
-
-const DEFAULT_TIME_ZONE = 'UTC';
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -33,7 +31,7 @@ const readOptions = (value: unknown) => {
 // The pop-up sends the browser's zone; a caller without one prints in UTC.
 const readTimeZone = (value: unknown) => {
   if (value === undefined || value === null) {
-    return DEFAULT_TIME_ZONE;
+    return DEFAULT_PRINT_TIME_ZONE;
   }
   if (typeof value !== 'string' || !isTimeZone(value)) {
     throw new StockUserError(PRINT_MESSAGES.timeZoneNotValid);

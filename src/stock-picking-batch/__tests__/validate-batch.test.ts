@@ -67,7 +67,7 @@ const setup = (validate: (states: Map<string, string>) => ValidateResult) => {
   };
 };
 
-const done: ValidateResult = { kind: 'done', backorderIds: [], printouts: [] };
+const done: ValidateResult = { kind: 'done', backorderIds: [], doneIds: [], printouts: [] };
 
 // Validate stopped half-way: one transfer done, the other's own run stopped while holding its claim.
 const stopMidway = (states: Map<string, string>, store: ReturnType<typeof makeFakeClaimStore>['store']) => {

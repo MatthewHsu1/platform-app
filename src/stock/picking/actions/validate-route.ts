@@ -4,30 +4,23 @@ import { StockUserError } from 'src/stock/stock-errors';
 import { readIds } from 'src/stock/stock-route';
 import { type ValidateOptions } from 'src/stock/picking/types/validate-options.type';
 import { type ValidateResult } from 'src/stock/picking/types/validate-result.type';
+import { type PrintLink } from 'src/stock/printing/types/print-link.type';
 
 type DoneResult = Extract<ValidateResult, { kind: 'done' }>;
-
-const mergeDone = (results: DoneResult[]): DoneResult => {
-  const showReceptionReport = results.flatMap((result) => result.showReceptionReport ?? []);
-  const merged: DoneResult = {
-    kind: 'done',
-    backorderIds: results.flatMap((result) => result.backorderIds),
-    printouts: results.flatMap((result) => result.printouts),
-  };
-
-  return showReceptionReport.length > 0 ? { ...merged, showReceptionReport } : merged;
-};
 
 // The body of the Validate route. With an answer to the backorder question, the transfers answered
 // "no backorder" run with cancelBackorder true and every other selected transfer as answered
 // "create backorder": the option holds one answer per call. A refusal is a 409; its reason is
-// English text already filled in, so the route's translation finds no catalog entry for it.
+// English text already filled in, so the route's translation finds no catalog entry for it. The
+// prints are made once for the whole click, over every transfer it made done.
 export const makeValidateRoute =
   (deps: {
     readPickingIds: (body: Record<string, unknown>) => Promise<string[]>;
     validatePickings: (pickingIds: string[], options: ValidateOptions) => Promise<ValidateResult>;
     expiredLotsToConfirm: (pickingIds: string[]) => Promise<string[] | null>;
     afterValidateBatch: (args: { pickingIds: string[]; batchesToValidate: string[]; pickingsToDetach: string[] }) => Promise<void>;
+    autoprint: (pickingIds: string[], timeZone: string) => Promise<PrintLink[]>;
+    receptionReportToShow: (pickingIds: string[]) => Promise<string[]>;
   }) =>
   async (body: Record<string, unknown>): Promise<Record<string, unknown>> => {
     const pickingIds = await deps.readPickingIds(body);
@@ -38,7 +31,7 @@ export const makeValidateRoute =
     const results: ValidateResult[] = [];
 
     if (answer === null) {
-      results.push(await deps.validatePickings(pickingIds, { skipExpired, skipBatchHook: true, printTimeZone }));
+      results.push(await deps.validatePickings(pickingIds, { skipExpired, skipBatchHook: true, skipPrints: true }));
     } else {
       // The groups run one after the other, so the expired-lot question is asked once for the whole selection
       // first: otherwise one group could be done before another asks it.
@@ -54,10 +47,10 @@ export const makeValidateRoute =
       const logEveryTransfer = answer.noBackorderButton === true;
 
       if (withBackorderIds.length > 0) {
-        results.push(await deps.validatePickings(withBackorderIds, { cancelBackorder: false, skipExpired: true, logEveryTransfer, skipBatchHook: true, printTimeZone }));
+        results.push(await deps.validatePickings(withBackorderIds, { cancelBackorder: false, skipExpired: true, logEveryTransfer, skipBatchHook: true, skipPrints: true }));
       }
       if (noBackorderIds.length > 0) {
-        results.push(await deps.validatePickings(noBackorderIds, { cancelBackorder: true, skipExpired: true, logEveryTransfer, skipBatchHook: true, printTimeZone }));
+        results.push(await deps.validatePickings(noBackorderIds, { cancelBackorder: true, skipExpired: true, logEveryTransfer, skipBatchHook: true, skipPrints: true }));
       }
     }
 
@@ -87,5 +80,11 @@ export const makeValidateRoute =
       return question;
     }
 
-    return mergeDone(results.filter((result): result is DoneResult => result.kind === 'done'));
+    const done = results.filter((result): result is DoneResult => result.kind === 'done');
+    const doneIds = done.flatMap((result) => result.doneIds);
+    const printouts = await deps.autoprint(doneIds, printTimeZone);
+    const showReceptionReport = await deps.receptionReportToShow(doneIds);
+    const merged: DoneResult = { kind: 'done', backorderIds: done.flatMap((result) => result.backorderIds), doneIds, printouts };
+
+    return showReceptionReport.length > 0 ? { ...merged, showReceptionReport } : merged;
   };

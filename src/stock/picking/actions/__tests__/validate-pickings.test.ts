@@ -48,6 +48,7 @@ const runner = (db: FakeStockDb) => {
   const claimStore = makeFakeClaimStore();
   const claims = makeClaims(countClaimWrites(claimStore.store, db));
   const logged: string[][] = [];
+  const printed: string[][] = [];
   const batchCalls: { pickingIds: string[]; batchesToValidate: string[] }[] = [];
   // Transfers the checks ask the backorder question about.
   const asking = new Set<string>();
@@ -79,7 +80,10 @@ const runner = (db: FakeStockDb) => {
       logged.push(pickingIds);
       db.wrote('logLessQuantities', pickingIds);
     },
-    autoprint: async () => [],
+    autoprint: async (pickingIds) => {
+      printed.push(pickingIds);
+      return [];
+    },
     receptionReportToShow: async () => [],
     afterValidateBatch: async ({ pickingIds, batchesToValidate }) => {
       batchCalls.push({ pickingIds, batchesToValidate });
@@ -87,7 +91,7 @@ const runner = (db: FakeStockDb) => {
     sendDeliveryConfirmation: async () => {},
   });
 
-  return { db, claims, claimStore, logged, batchCalls, asking, validatePickings, resumeValidate };
+  return { db, claims, claimStore, logged, printed, batchCalls, asking, validatePickings, resumeValidate };
 };
 
 const baseDb = () => {
@@ -288,8 +292,8 @@ describe('validatePickings', () => {
     expect(run.batchCalls).toEqual([{ pickingIds: ['out'], batchesToValidate: ['batch1'] }]);
   });
 
-  it('lets one of two Validate clicks run; the other is told the transfer is being processed', async () => {
-    const { db, logged, validatePickings } = await build();
+  it('lets one of two Validate clicks run; the other is told the transfer is being processed and prints nothing', async () => {
+    const { db, logged, printed, validatePickings } = await build();
     const gate = db.gateCommits();
 
     const first = validatePickings(['out'], { cancelBackorder: true });
@@ -299,6 +303,7 @@ describe('validatePickings', () => {
 
     expect(await first).toMatchObject({ kind: 'done' });
     expect(second).toEqual({ kind: 'refused', reason: CLAIM_HELD_MESSAGE });
+    expect(printed).toEqual([['out']]);
     expect(logged).toEqual([['out']]);
     expect(db.quants.get(key('P', 'stock'))?.quantity).toBe(5);
     expect(db.quants.get(key('P', 'customers'))?.quantity).toBe(3);
@@ -307,7 +312,7 @@ describe('validatePickings', () => {
   it('with the answer "no backorder": logs the short quantities, cancels the unpicked move, makes no backorder', async () => {
     const { db, logged, validatePickings } = await build();
 
-    expect(await validatePickings(['out'], { cancelBackorder: true })).toEqual({ kind: 'done', backorderIds: [], printouts: [] });
+    expect(await validatePickings(['out'], { cancelBackorder: true })).toEqual({ kind: 'done', backorderIds: [], doneIds: ['out'], printouts: [] });
     expect(logged).toEqual([['out']]);
     expect(db.moves.get('b')?.state).toBe('CANCEL');
     expect({ demand: db.moves.get('a')?.productUomQty, state: db.moves.get('a')?.state }).toEqual({ demand: 5, state: 'DONE' });
