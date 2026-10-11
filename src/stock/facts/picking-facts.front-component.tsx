@@ -21,7 +21,7 @@ const PickingFactsWidget = () => {
         <>
           {facts.warningText === '' ? null : <div style={{ ...styles.card, whiteSpace: 'pre-wrap' }}>{facts.warningText}</div>}
           {facts.returnCount > 0 ? <div>{t('Returns: {count}', { count: facts.returnCount })}</div> : null}
-          <div>{facts.isSigned ? t('Signed') : t('Not signed')}</div>
+          {facts.isDelivery ? <div>{facts.isSigned ? t('Signed') : t('Not signed')}</div> : null}
           {facts.hasTracking ? <div>{t('Has products tracked by lot or serial number')}</div> : null}
         </>
       )}
