@@ -52,11 +52,20 @@ const phoneFromPerson = (lead: LeadRow, person: PartnerPersonRow): Partial<LeadR
   };
 };
 
-// A contact edit reaches its leads through email and phone only; the other
-// contact fields follow a change of the lead's links.
-export const planPersonContactSync = ({ lead, person }: { lead: LeadRow; person: PartnerPersonRow }): Partial<LeadRow> => ({
-  ...emailFromPerson(lead, person),
-  ...phoneFromPerson(lead, person),
+// A contact edit reaches its leads through email and phone only, each when
+// that part of the contact changed; the other contact fields follow a change
+// of the lead's links.
+export const planPersonContactSync = ({
+  lead,
+  person,
+  changed = { email: true, phone: true },
+}: {
+  lead: LeadRow;
+  person: PartnerPersonRow;
+  changed?: { email: boolean; phone: boolean };
+}): Partial<LeadRow> => ({
+  ...(changed.email ? emailFromPerson(lead, person) : {}),
+  ...(changed.phone ? phoneFromPerson(lead, person) : {}),
 });
 
 // The lead's partner is its contact, or without one its customer company.

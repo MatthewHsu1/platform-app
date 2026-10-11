@@ -36,20 +36,29 @@ export const makeRunPersonTrigger =
     const errors = errorCollector();
 
     if (operation === 'updated') {
-      const changedIds = [
-        ...new Set(
-          events
-            .filter((event) => updatedFieldsOf(event).some((field) => field === 'emails' || field === 'phones'))
-            .map((event) => event.recordId),
-        ),
-      ];
+      // An email change copies the email only and a phone change the phone
+      // only, so a lead keeps an email the contact could not take.
+      const changedParts = new Map<string, { email: boolean; phone: boolean }>();
+
+      for (const event of events) {
+        const fields = updatedFieldsOf(event);
+        const parts = changedParts.get(event.recordId) ?? { email: false, phone: false };
+
+        changedParts.set(event.recordId, {
+          email: parts.email || fields.includes('emails'),
+          phone: parts.phone || fields.includes('phones'),
+        });
+      }
+
+      const changedIds = [...changedParts].flatMap(([id, parts]) => (parts.email || parts.phone ? [id] : []));
 
       if (changedIds.length > 0) {
         await errors.run('contact changes', async () => {
           const contacts = new Map((await api.readPeople(changedIds)).map((person) => [person.id, person]));
           const writes = (await api.readLeadsOf('personId', changedIds)).flatMap((lead) => {
             const person = lead.personId === null ? undefined : contacts.get(lead.personId);
-            const data = person === undefined ? {} : planPersonContactSync({ lead, person });
+            const changed = lead.personId === null ? undefined : changedParts.get(lead.personId);
+            const data = person === undefined || changed === undefined ? {} : planPersonContactSync({ lead, person, changed });
 
             return Object.keys(data).length === 0 ? [] : [{ leadId: lead.id, data }];
           });

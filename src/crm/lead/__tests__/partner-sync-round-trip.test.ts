@@ -58,23 +58,27 @@ const makeWorld = (leads: LeadRow[]) => {
   let personWrites = 0;
   const leadWrites: { id: string; fields: string[] }[] = [];
 
+  // Another contact's email: the contact cannot take it, as with Twenty's unique person email.
+  const takenEmails = new Set<string>();
+
+  const writeContact = (personId: string, patch: Partial<PartnerPersonRow>) => {
+    const before = store.contacts.get(personId) as PartnerPersonRow;
+    const after: PartnerPersonRow = { ...before, ...patch };
+    const updatedFields = [...('emails' in patch ? ['emails'] : []), ...('phones' in patch ? ['phones'] : [])];
+
+    store.contacts.set(personId, after);
+    personEvents.push(leadEvent({ recordId: personId, properties: { before, after, updatedFields } }));
+  };
+
   const pushPeople = async (batch: LeadPersonPush[]) => {
     for (const { push } of batch) {
-      const before = store.contacts.get(push.personId) as PartnerPersonRow;
-      const after: PartnerPersonRow = {
-        ...before,
-        emails: push.primaryEmail === undefined ? before.emails : { primaryEmail: push.primaryEmail, additionalEmails: [] },
-        phones: push.phone ?? before.phones,
-      };
+      const email = push.primaryEmail === undefined || takenEmails.has(push.primaryEmail) ? {} : { emails: { primaryEmail: push.primaryEmail, additionalEmails: [] } };
+      const phone = push.phone === undefined ? {} : { phones: push.phone };
 
-      store.contacts.set(push.personId, after);
-      personWrites += 1;
-      personEvents.push(
-        leadEvent({
-          recordId: push.personId,
-          properties: { before, after, updatedFields: [...(push.primaryEmail === undefined ? [] : ['emails']), ...(push.phone === undefined ? [] : ['phones'])] },
-        }),
-      );
+      if (Object.keys(email).length + Object.keys(phone).length > 0) {
+        personWrites += 1;
+        writeContact(push.personId, { ...email, ...phone });
+      }
     }
   };
   const writeApi = { ...store.writeApi, pushPeople };
@@ -113,7 +117,7 @@ const makeWorld = (leads: LeadRow[]) => {
     throw new Error('the triggers did not settle');
   };
 
-  return { store, deletedPeople, settle, runLeadTrigger, runPersonTrigger, leadWrites, personWrites: () => personWrites };
+  return { store, deletedPeople, takenEmails, writeContact, settle, runLeadTrigger, runPersonTrigger, leadWrites, personWrites: () => personWrites };
 };
 
 describe('lead and contact sync across the triggers', () => {
@@ -145,6 +149,53 @@ describe('lead and contact sync across the triggers', () => {
     expect(await world.settle()).toBe(0);
     expect(world.personWrites()).toBe(1);
     expect(world.leadWrites).toHaveLength(1);
+  });
+
+  it('copies only the phone to the leads when only the contact phone changed', async () => {
+    const world = makeWorld([lead('A', { emailFrom: { primaryEmail: 'typed@test.example.com' } })]);
+
+    world.writeContact('P', { phones: { primaryPhoneNumber: '2025556666', primaryPhoneCountryCode: 'US', primaryPhoneCallingCode: '+1', additionalPhones: null } });
+    await world.settle();
+
+    expect(world.store.rows.get('A')).toMatchObject({
+      emailFrom: { primaryEmail: 'typed@test.example.com' },
+      phone: { primaryPhoneNumber: '2025556666', primaryPhoneCallingCode: '+1' },
+    });
+  });
+
+  it('copies only the email to the leads when only the contact email changed', async () => {
+    const typedPhone = { primaryPhoneNumber: '2025550888', primaryPhoneCountryCode: 'US', primaryPhoneCallingCode: '+1', additionalPhones: null };
+    const world = makeWorld([lead('A', { emailFrom: { primaryEmail: 'amy@test.example.com' }, phone: typedPhone })]);
+
+    world.store.contacts.set('P', { ...AMY, phones: { ...typedPhone, primaryPhoneNumber: '2025551111' } });
+    world.writeContact('P', { emails: { primaryEmail: 'amy.wong@test.example.com', additionalEmails: [] } });
+    await world.settle();
+
+    expect(world.store.rows.get('A')).toMatchObject({
+      emailFrom: { primaryEmail: 'amy.wong@test.example.com' },
+      phone: { primaryPhoneNumber: '2025550888' },
+    });
+  });
+
+  it('keeps an email the contact could not take on the lead while the phone goes through', async () => {
+    const leadA = lead('A', { emailFrom: { primaryEmail: 'amy@test.example.com' } });
+    const world = makeWorld([leadA]);
+    const edited = {
+      ...leadA,
+      emailFrom: { primaryEmail: 'taken@test.example.com', additionalEmails: null },
+      phone: { primaryPhoneNumber: '2025557799', primaryPhoneCountryCode: 'US', primaryPhoneCallingCode: '+1', additionalPhones: null },
+    };
+
+    world.takenEmails.add('taken@test.example.com');
+    world.store.rows.set('A', edited);
+    await world.runLeadTrigger({
+      operation: 'updated',
+      events: [leadEvent({ recordId: 'A', workspaceMemberId: 'm1', properties: { before: leadA, after: edited, updatedFields: ['emailFrom', 'phone'] } })],
+    });
+    await world.settle();
+
+    expect(world.store.rows.get('A')).toMatchObject({ emailFrom: { primaryEmail: 'taken@test.example.com' }, phone: { primaryPhoneNumber: '2025557799' } });
+    expect(world.store.contacts.get('P')).toMatchObject({ emails: { primaryEmail: 'amy@test.example.com' }, phones: { primaryPhoneNumber: '2025557799' } });
   });
 
   it('clears a deleted contact from its leads and empties the contact name, then stops', async () => {
