@@ -1,3 +1,8 @@
+import {
+  INVENTORY_LIST_VIEW_UNIVERSAL_IDENTIFIERS,
+  STOCK_VIEW_UNIVERSAL_IDENTIFIERS,
+} from 'src/stock/stock-pages-universal-identifiers.constant';
+
 export const INVENTORY_AT_DATE_ROUTE_PATH = '/stock/reports/inventory-at-date';
 
 export const INVENTORY_AT_DATE_UNIVERSAL_IDENTIFIERS = {
@@ -46,4 +51,88 @@ export const FORECAST_UNIVERSAL_IDENTIFIERS = {
   productTemplateTabWidget: '8945b449-65b1-4d09-8d82-3d7adb0fc538',
   orderpointTab: '0a7c0ebd-b275-44d2-94db-6490e8e66937',
   orderpointTabWidget: 'f3e4aa63-7724-46d0-8535-c832e7e7212a',
+};
+
+export const PRODUCT_ROUTES_ROUTE_PATH = '/stock/reports/product-routes';
+
+export const PRODUCT_ROUTES_UNIVERSAL_IDENTIFIERS = {
+  logicFunction: 'afc0b613-7015-4f37-bc50-c42a097c5254',
+  frontComponent: '6c272aae-ba5b-4442-965e-d497fe3e2479',
+  commandMenuItem: '83f1a062-b919-4d9e-bfd6-59d9ecb8ee84',
+};
+
+export const STATUS_TARGETS_ROUTE_PATH = '/stock/status-targets';
+
+export const STATUS_BUTTON_UNIVERSAL_IDENTIFIERS = {
+  logicFunction: 'aa2dcd4e-1977-4e96-ba9b-cd22d5b85fea',
+  pickingReturnsFrontComponent: '51cfad88-712f-4383-ad5f-1fc3944b3571',
+  pickingReturnsCommandMenuItem: '1e39a6e9-cae4-47bf-94ec-3abadf2d2747',
+  pickingScrapsFrontComponent: 'f8458889-a619-4ec1-b7c9-f045b98b8ae1',
+  pickingScrapsCommandMenuItem: '271ca079-aaa3-4e18-9874-7aa63741922f',
+  pickingPackagesFrontComponent: '64552025-b2de-4364-beb5-80462af2119b',
+  pickingPackagesCommandMenuItem: '245b4d3a-9ba0-4056-b54e-db651be39629',
+  pickingMovesFrontComponent: 'd5b0598e-ddf1-4827-96ff-84612ccaa32a',
+  pickingMovesCommandMenuItem: '9e528e60-78db-4e22-a8f8-8a37e524d084',
+  pickingNextTransfersFrontComponent: 'db61479f-8134-405a-8e78-c179e2f979df',
+  pickingNextTransfersCommandMenuItem: 'b327096a-6f50-48ba-bec6-042b44da98de',
+  variantHistoryFrontComponent: 'ec64b4ca-cdea-4862-bfd8-f4d5bf8971bc',
+  variantHistoryCommandMenuItem: 'e3d8f701-d8dc-4858-b576-70ab6787d1d0',
+  variantReplenishmentFrontComponent: 'a1897128-d702-4bc3-bfc7-cb30349e2908',
+  variantReplenishmentCommandMenuItem: '8cb53c55-a024-4abd-9304-64927b2859cc',
+  variantLocationsFrontComponent: 'd3d1372b-937f-4ead-9b7c-6a8241db6299',
+  variantLocationsCommandMenuItem: 'cd8da023-ea97-4c8b-ab54-f41d6488d106',
+};
+
+export const OVERVIEW_ROUTE_PATH = '/stock/overview';
+export const OVERVIEW_NEW_TRANSFER_ROUTE_PATH = '/stock/overview/new';
+
+export const OVERVIEW_UNIVERSAL_IDENTIFIERS = {
+  logicFunction: '52df7eda-25b6-42c5-8039-1d27e3df6b6e',
+  newTransferLogicFunction: 'ea66beac-7e6f-449a-935d-770edcfb09d1',
+  frontComponent: '1cd6dc13-622a-4fec-8319-d0158fef4e73',
+  pageLayout: '0231583e-c7a2-401d-8d55-1145747670f2',
+  tab: '43c7a33c-0841-44fc-95e3-17fc1ce0f459',
+  widget: '766e023d-41ab-4498-ab89-6a380c694616',
+  navigationItem: 'df045b72-3cec-4aba-a3d3-d469622850e9',
+};
+
+// The saved transfer list each Overview count opens: the count's own list,
+// or the plain transfer list for the counts that have none.
+export const OVERVIEW_COUNT_VIEW_UNIVERSAL_IDENTIFIERS = {
+  ready: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.ready,
+  waiting: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.waiting,
+  late: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.late,
+  backorders: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.backorders,
+  draft: INVENTORY_LIST_VIEW_UNIVERSAL_IDENTIFIERS.transfers,
+  toProcess: INVENTORY_LIST_VIEW_UNIVERSAL_IDENTIFIERS.transfers,
+};
+
+// The list an operation type's name opens: the transfers of its kind.
+export const OVERVIEW_TYPE_VIEW_UNIVERSAL_IDENTIFIERS = {
+  INCOMING: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.receipts,
+  OUTGOING: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.deliveries,
+  INTERNAL: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.internal,
+};
+
+export const RECORD_FACTS_ROUTE_PATH = '/stock/facts';
+
+export const RECORD_FACTS_UNIVERSAL_IDENTIFIERS = {
+  logicFunction: 'ad341d68-b9e1-4a6e-9a3a-813c365b1cbf',
+  pickingFacts: '4c640ca7-91df-4599-9853-42dd639f60c9',
+  pickingResultPackages: '0c64d694-3d0a-49ae-b765-42d00abb70ce',
+  moveLots: '4b1debd4-ca29-4ea1-a30d-920f3324be3e',
+  productInventoryFacts: '0ff31471-6b48-40b8-94d1-598aa5c8edf9',
+  variantQuants: '0294eb86-9e5f-4816-9d47-05863bf96fd5',
+  packageContent: '1bd221ef-250a-4dbb-b757-43425ba79d3c',
+  packageTransfers: 'c317db12-d2f6-4fb7-b3d3-395c1808872e',
+  pickingFactsWidget: '94cfd3d0-791d-4fb2-bdf4-39f3b24b3978',
+  pickingResultPackagesWidget: 'e3e84a5c-3ded-4b47-9a54-c4bfb55631ee',
+  moveLotsTab: 'e30b4722-bc62-431e-8198-fb7a4d331539',
+  moveLotsWidget: '2f6c8bc7-84c4-4899-8c4f-40cca54ffb36',
+  productInventoryFactsWidget: '219cbac2-c124-46c6-aca4-5ce90f7147b9',
+  variantQuantsWidget: '35e6b0bf-ef3f-41d0-b4a0-4de25a62e11f',
+  packageContentTab: 'efb73beb-d4ce-40a4-9972-158250f673cb',
+  packageContentWidget: '682d55e0-3aed-4737-8334-837e10284941',
+  packageTransfersTab: 'abd9687a-27de-4c93-bc68-c45f0b32693f',
+  packageTransfersWidget: '0155bab6-e6cd-4fcb-aad3-488ad922af82',
 };

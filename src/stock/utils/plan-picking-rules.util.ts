@@ -5,6 +5,7 @@ import { type LocationUsage } from 'src/stock/types/location-usage.type';
 import { type MoveState } from 'src/stock/types/move-state.type';
 import { type MoveType } from 'src/stock/types/move-type.type';
 import { type PickingState } from 'src/stock/types/picking-state.type';
+import { type PickingTypeCode } from 'src/stock/types/picking-type-code.type';
 
 export const PICKING_TYPE_CHANGE_MESSAGE = 'Changing the operation type of this record is forbidden at this point.';
 export const CANCELLED_SCHEDULED_DATE_MESSAGE = 'You cannot change the Scheduled Date on a cancelled transfer.';
@@ -51,6 +52,7 @@ export const planPickingLocations = ({
 export const planPickingCreate = ({
   picking,
   typeMoveType,
+  typeCode,
   nextName,
   locations,
   actingMemberId,
@@ -61,8 +63,10 @@ export const planPickingCreate = ({
     locationDestId: string | null;
     moveType: MoveType;
     responsibleUserId: string | null;
+    pickingTypeCode: PickingTypeCode | null;
   };
   typeMoveType: MoveType;
+  typeCode: PickingTypeCode;
   nextName: string | null;
   locations: { locationId: string | null; locationDestId: string | null } | null;
   actingMemberId: string | undefined;
@@ -85,6 +89,9 @@ export const planPickingCreate = ({
   if (picking.responsibleUserId === null && actingMemberId !== undefined) {
     data.responsibleUserId = actingMemberId;
   }
+  if (picking.pickingTypeCode !== typeCode) {
+    data.pickingTypeCode = typeCode;
+  }
 
   return data;
 };
@@ -96,7 +103,13 @@ export const planTypeChange = ({
   moveIds,
 }: {
   state: PickingState;
-  newType: { id: string; defaultLocationSrcId: string | null; defaultLocationDestId: string | null; moveType: MoveType };
+  newType: {
+    id: string;
+    code: PickingTypeCode;
+    defaultLocationSrcId: string | null;
+    defaultLocationDestId: string | null;
+    moveType: MoveType;
+  };
   nextName: string | null;
   moveIds: { id: string; pickingTypeId: string | null }[];
 }):
@@ -113,6 +126,7 @@ export const planTypeChange = ({
       locationId: newType.defaultLocationSrcId,
       locationDestId: newType.defaultLocationDestId,
       moveType: newType.moveType,
+      pickingTypeCode: newType.code,
     },
     moves: moveIds
       .filter((move) => move.pickingTypeId !== newType.id)

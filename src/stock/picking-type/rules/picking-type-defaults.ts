@@ -4,6 +4,7 @@ import { type PickingTypeEventRecord } from 'src/stock/picking-type/types/pickin
 import { type RecordOperation } from 'src/shared/triggers/batch-events';
 import { type ErrorCollector } from 'src/shared/triggers/retry-on-conflict';
 import { findSeedLocationId } from 'src/stock/location/read-locations';
+import { followTypeCode } from 'src/stock/picking-type/rules/follow-type-code';
 import { eventAfter, eventBefore, eventChangedFields, isStaffEvent, localizedReason } from 'src/stock/stock-event-helpers';
 import { STOCK_SEED_KEYS } from 'src/stock/stock-options.constant';
 import { putBackForEvent } from 'src/stock/stock-put-back';
@@ -87,7 +88,7 @@ export const handlePickingTypeCreated = async (
   }
 };
 
-// The defaults and flags follow a new type of operation.
+// The defaults and flags, and the transfers' type of operation, follow a new type of operation.
 export const handlePickingTypeCodeChanged = async (
   events: ObjectRecordEvent<PickingTypeEventRecord>[],
   operation: RecordOperation,
@@ -133,6 +134,7 @@ export const handlePickingTypeCodeChanged = async (
         return;
       }
       await stockPickingTypes.update(type.id, plan.data);
+      await followTypeCode(type);
     });
   }
 };

@@ -6,6 +6,8 @@ import {
   STOCK_MOVE_LINE_FIELD_UNIVERSAL_IDENTIFIERS as LINE_FIELDS,
   STOCK_MOVE_LINE_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/stock/stock-universal-identifiers.constant';
+import { keepColumnIds, listColumns } from 'src/stock/views/list-columns';
+import { STOCK_MOVE_LINE_ALL_FIELDS } from 'src/stock/views/object-fields';
 
 // Open move lines that belong to a transfer: tick some, then Add to wave.
 export default defineView({
@@ -14,19 +16,29 @@ export default defineView({
   objectUniversalIdentifier: STOCK_MOVE_LINE_OBJECT_UNIVERSAL_IDENTIFIER,
   type: ViewType.TABLE,
   icon: 'IconWaveSine',
-  fields: [
-    { universalIdentifier: IDS.fieldPicking, fieldMetadataUniversalIdentifier: LINE_FIELDS.picking, position: 0, isVisible: true },
-    { universalIdentifier: IDS.fieldProduct, fieldMetadataUniversalIdentifier: LINE_FIELDS.product, position: 1, isVisible: true },
-    { universalIdentifier: IDS.fieldLocation, fieldMetadataUniversalIdentifier: LINE_FIELDS.location, position: 2, isVisible: true },
-    {
-      universalIdentifier: IDS.fieldLocationDest,
-      fieldMetadataUniversalIdentifier: LINE_FIELDS.locationDest,
-      position: 3,
-      isVisible: true,
-    },
-    { universalIdentifier: IDS.fieldQuantity, fieldMetadataUniversalIdentifier: LINE_FIELDS.quantity, position: 4, isVisible: true },
-    { universalIdentifier: IDS.fieldUnit, fieldMetadataUniversalIdentifier: LINE_FIELDS.productUom, position: 5, isVisible: true },
-  ],
+  fields: keepColumnIds(
+    listColumns(
+      IDS.view,
+      [
+        LINE_FIELDS.name,
+        LINE_FIELDS.picking,
+        LINE_FIELDS.product,
+        LINE_FIELDS.location,
+        LINE_FIELDS.locationDest,
+        LINE_FIELDS.quantity,
+        LINE_FIELDS.productUom,
+      ],
+      STOCK_MOVE_LINE_ALL_FIELDS,
+    ),
+    new Map([
+      [LINE_FIELDS.picking, IDS.fieldPicking],
+      [LINE_FIELDS.product, IDS.fieldProduct],
+      [LINE_FIELDS.location, IDS.fieldLocation],
+      [LINE_FIELDS.locationDest, IDS.fieldLocationDest],
+      [LINE_FIELDS.quantity, IDS.fieldQuantity],
+      [LINE_FIELDS.productUom, IDS.fieldUnit],
+    ]),
+  ),
   filters: [
     {
       universalIdentifier: IDS.filterState,
