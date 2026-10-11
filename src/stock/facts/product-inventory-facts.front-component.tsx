@@ -6,6 +6,23 @@ import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { FactsPanel } from 'src/stock/facts/facts-panel';
 import { type ProductInventoryFacts } from 'src/stock/facts/types/product-inventory-facts.type';
 import { RECORD_FACTS_UNIVERSAL_IDENTIFIERS } from 'src/stock/stock-reports-universal-identifiers.constant';
+import { reorderingStat, showsNextSerial } from 'src/stock/utils/inventory-facts-display.util';
+
+const ReorderingLine = ({ facts }: { facts: ProductInventoryFacts }) => {
+  const { t } = useTranslate();
+  const stat = reorderingStat(facts, facts.isStorable);
+
+  if (stat === null) {
+    return null;
+  }
+  return (
+    <div>
+      {stat.kind === 'minMax'
+        ? t('Reordering rule: min {min}, max {max}', { min: stat.min, max: stat.max })
+        : t('Reordering rules: {count}', { count: stat.count })}
+    </div>
+  );
+};
 
 type OrderpointRow = ProductInventoryFacts['orderpoints'][number];
 type PutawayRow = ProductInventoryFacts['putawayRules'][number];
@@ -21,16 +38,10 @@ const ProductInventoryFactsWidget = () => {
       text={{ loading: t('Loading…'), loadFailed: t('Could not load these values.') }}
       render={(facts) => (
         <>
-          <div>{t('Next serial: {value}', { value: facts.nextSerial })}</div>
+          {showsNextSerial(facts.tracking) ? <div>{t('Next serial: {value}', { value: facts.nextSerial })}</div> : null}
           <div>{t('In (last 12 months): {count}', { count: facts.movesIn })}</div>
           <div>{t('Out (last 12 months): {count}', { count: facts.movesOut })}</div>
-          <div>
-            {t('Reordering rules: {count} (min {min}, max {max})', {
-              count: facts.nbrReorderingRules,
-              min: facts.reorderingMinQty,
-              max: facts.reorderingMaxQty,
-            })}
-          </div>
+          <ReorderingLine facts={facts} />
           {facts.orderpoints.length === 0 ? null : (
             <>
               <div style={styles.title}>{t('Reordering rules of the variants')}</div>

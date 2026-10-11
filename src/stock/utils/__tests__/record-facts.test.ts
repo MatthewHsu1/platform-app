@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { reorderingStat, showsNextSerial } from 'src/stock/utils/inventory-facts-display.util';
 import {
   duplicatedSerialQuantIds,
   moveLotTotals,
@@ -8,6 +9,7 @@ import {
   oneYearBefore,
   packageContentSummary,
   reorderingSummary,
+  sortVariantsInListOrder,
 } from 'src/stock/utils/record-facts.util';
 
 describe('nextSerialOfSequence', () => {
@@ -16,6 +18,12 @@ describe('nextSerialOfSequence', () => {
   });
   it('starts at 0000001 without a sequence', () => {
     expect(nextSerialOfSequence(null)).toBe('0000001');
+  });
+});
+
+describe('showsNextSerial', () => {
+  it('shows the next serial for products tracked by lot or serial number only', () => {
+    expect(['SERIAL', 'LOT', 'NONE'].map(showsNextSerial)).toEqual([true, true, false]);
   });
 });
 
@@ -52,6 +60,29 @@ describe('reorderingSummary', () => {
   });
 });
 
+describe('reorderingStat', () => {
+  it('shows min and max for exactly one rule, else the count of a storable product', () => {
+    expect(reorderingStat({ nbrReorderingRules: 1, reorderingMinQty: 5, reorderingMaxQty: 20 }, true)).toEqual({ kind: 'minMax', min: 5, max: 20 });
+    expect(reorderingStat({ nbrReorderingRules: 3, reorderingMinQty: 3, reorderingMaxQty: 9 }, true)).toEqual({ kind: 'count', count: 3 });
+    expect(reorderingStat({ nbrReorderingRules: 0, reorderingMinQty: 0, reorderingMaxQty: 0 }, true)).toEqual({ kind: 'count', count: 0 });
+    expect(reorderingStat({ nbrReorderingRules: 0, reorderingMinQty: 0, reorderingMaxQty: 0 }, false)).toBeNull();
+  });
+});
+
+describe('sortVariantsInListOrder', () => {
+  it('orders variants by internal reference, those without one last, then oldest first', () => {
+    expect(
+      sortVariantsInListOrder([
+        { id: 'b', defaultCode: 'B', createdAt: '2026-01-01T00:00:00.000Z' },
+        { id: 'none', defaultCode: '', createdAt: '2025-01-01T00:00:00.000Z' },
+        { id: 'a-new', defaultCode: 'A', createdAt: '2026-03-01T00:00:00.000Z' },
+        { id: 'a-old', defaultCode: 'A', createdAt: '2026-02-01T00:00:00.000Z' },
+        { id: 'null', defaultCode: null, createdAt: '2024-01-01T00:00:00.000Z' },
+      ]).map((variant) => variant.id),
+    ).toEqual(['a-old', 'a-new', 'b', 'null', 'none']);
+  });
+});
+
 describe('duplicatedSerialQuantIds', () => {
   it('flags every quant of a serial held positive in two internal or transit places', () => {
     expect(
@@ -64,6 +95,15 @@ describe('duplicatedSerialQuantIds', () => {
         { id: 'f', lotId: 'L1', tracking: 'LOT', quantity: 3, locationUsage: 'INTERNAL' },
       ]),
     ).toEqual(new Set(['a', 'b', 'c']));
+  });
+
+  it('marks both shelves of a serial in two places, and neither once one shelf is empty', () => {
+    const twoShelves = [
+      { id: 'shelf2', lotId: 'SN1', tracking: 'SERIAL', quantity: 1, locationUsage: 'INTERNAL' },
+      { id: 'shelf1', lotId: 'SN1', tracking: 'SERIAL', quantity: 1, locationUsage: 'INTERNAL' },
+    ];
+    expect(duplicatedSerialQuantIds(twoShelves)).toEqual(new Set(['shelf2', 'shelf1']));
+    expect(duplicatedSerialQuantIds([{ ...twoShelves[0], quantity: 0 }, twoShelves[1]])).toEqual(new Set());
   });
 });
 
