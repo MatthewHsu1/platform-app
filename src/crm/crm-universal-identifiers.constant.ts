@@ -78,6 +78,7 @@ export const CRM_STAGE_FIELD_UNIVERSAL_IDENTIFIERS = {
   color: '5fada11b-e6cc-4c68-8c68-49045829e1ba',
   crmLeads: '6420838e-013b-4e5a-951d-2c0362beeb4b',
   seedKey: '8df343c1-4312-41f1-b609-50640a4da732',
+  teams: 'd12c77fd-ca8d-4f97-83c2-b9fd6d0d04c7',
 } as const;
 export const CRM_STAGES_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER =
   'bfcb0abb-9e04-41d5-ab76-171237f35029';

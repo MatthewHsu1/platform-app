@@ -24,8 +24,19 @@ beforeAll(async () => {
   );
 });
 
-// Objects of the CRM module: the inventory roles keep the member defaults on them.
-const OUTSIDE_INVENTORY = ['crmLead', 'crmLostReason', 'crmStage', 'crmRecurringPlan', 'utmSource', 'utmMedium', 'utmCampaign'];
+// Objects of the CRM and sales team modules: the inventory roles keep the member defaults on them.
+const OUTSIDE_INVENTORY = [
+  'crmLead',
+  'crmLostReason',
+  'crmStage',
+  'crmRecurringPlan',
+  'crmTeam',
+  'crmTeamMember',
+  'crmStageTeam',
+  'utmSource',
+  'utmMedium',
+  'utmCampaign',
+];
 
 const rowOf = (nameSingular: string) => {
   const object = APP_OBJECTS.find((candidate) => candidate.nameSingular === nameSingular);

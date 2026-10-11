@@ -56,6 +56,35 @@ describe('stage repair', () => {
   });
 });
 
+describe('team default', () => {
+  const teamsOfU: Partial<LeadContext> = {
+    stages: [stage('new', 1), stage('t2First', 0, { teamIds: ['T2'] })],
+    teams: [
+      {
+        id: 'T2',
+        name: 'T2',
+        sequence: 1,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        active: true,
+        leaderId: 'U',
+        useLeads: false,
+        useOpportunities: true,
+        assignmentOptout: false,
+        assignmentMax: 0,
+        assignmentDomain: null,
+        color: null,
+        seedKey: null,
+      },
+    ],
+  };
+
+  it("gives a new lead its salesperson's team, then the first stage of that team", () => {
+    const values = compute(null, lead({ salespersonId: 'U' }), ['salespersonId'], teamsOfU);
+
+    expect(values).toMatchObject({ teamId: 'T2', stageId: 't2First' });
+  });
+});
+
 describe('default name', () => {
   it("names an unnamed lead after its contact's full name", () => {
     expect(compute(null, lead({ name: '', personId: 'p1', stageId: 'new' }), ['personId']).name).toBe("Ann Lee's opportunity");

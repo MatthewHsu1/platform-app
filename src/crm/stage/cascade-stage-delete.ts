@@ -1,3 +1,11 @@
-// A deleted stage takes its sales-team links with it. Stages have no team
-// links yet, so there is nothing to remove.
-export const cascadeStageDelete = async (_stageIds: string[]): Promise<void> => undefined;
+import { destroyLinksOf, stillDeletedIds } from 'src/shared/triggers/cascade-restore';
+import { records } from 'src/shared/triggers/records';
+
+const stages = records('crmStage', 'crmStages');
+const stageTeams = records('crmStageTeam', 'crmStageTeams');
+
+// A deleted stage loses its team links for good: a link row in the trash
+// would keep the unique index busy, so it is destroyed, not soft-deleted.
+export const cascadeStageDelete = async (stageIds: string[]): Promise<void> => {
+  await destroyLinksOf(stageTeams, 'stageId', await stillDeletedIds(stages, stageIds));
+};

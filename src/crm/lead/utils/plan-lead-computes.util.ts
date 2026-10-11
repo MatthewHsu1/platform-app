@@ -7,6 +7,7 @@ import { emailState } from 'src/crm/lead/utils/email.util';
 import { findStage } from 'src/crm/lead/utils/find-stage.util';
 import { planMoney } from 'src/crm/lead/utils/money.util';
 import { phoneState } from 'src/crm/lead/utils/phone.util';
+import { planTeamDefault } from 'src/crm/lead/utils/plan-team-default.util';
 import { sameProbability } from 'src/crm/lead/utils/probability.util';
 import { cleanWebsite } from 'src/crm/lead/utils/website.util';
 import { planWonStatus } from 'src/crm/lead/utils/won-status.util';
@@ -56,6 +57,13 @@ export const planLeadComputes = (input: LeadComputesInput): Partial<LeadRow> => 
   }
   if (changed('salespersonId') && lead.salespersonId !== null && lead.dateOpen === null && isFree('dateOpen')) {
     set('dateOpen', now);
+  }
+
+  // The team follows the salesperson and the type before the stage follows the team.
+  const team = planTeamDefault({ operation, before, lead, written, context });
+
+  if (team.teamId !== undefined) {
+    set('teamId', team.teamId);
   }
 
   // A stage limited to other teams, or no stage, gives way to the first open

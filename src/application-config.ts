@@ -8,6 +8,7 @@ import {
   APPLICATION_UNIVERSAL_IDENTIFIER,
   PRODUCT_UNIT_DIGITS_VARIABLE_UNIVERSAL_IDENTIFIER,
   ROW_ACCESS_CONFIG_VARIABLE_UNIVERSAL_IDENTIFIER,
+  SALES_TEAM_MEMBERSHIP_MULTI_VARIABLE_UNIVERSAL_IDENTIFIER,
   SHOW_EXPECTED_QUANTITY_COUNT_VARIABLE_UNIVERSAL_IDENTIFIER,
 } from 'src/constants/universal-identifiers';
 import { EMPTY_ROW_ACCESS_CONFIG } from 'src/row-access/constants/empty-row-access-config.constant';
@@ -68,6 +69,14 @@ export default defineApplication({
       description: 'How many days ahead reordering counts what comes in and goes out.',
       type: FieldType.NUMBER,
       value: 365,
+      isSecret: false,
+    },
+    SALES_TEAM_MEMBERSHIP_MULTI: {
+      universalIdentifier: SALES_TEAM_MEMBERSHIP_MULTI_VARIABLE_UNIVERSAL_IDENTIFIER,
+      label: 'Salespeople in several teams',
+      description: 'Off: adding a salesperson to a team archives their membership in any other team.',
+      type: FieldType.BOOLEAN,
+      value: false,
       isSecret: false,
     },
   },

@@ -7,6 +7,7 @@ import { finishCrmInstall } from 'src/crm/finish-crm-install';
 import { CRM_STAGE_INSTALL } from 'src/crm/stage/crm-stage-install';
 import { syncStageBoardGroups } from 'src/crm/stage/stage-board-groups';
 import { PRODUCT_INSTALL } from 'src/product/product-install';
+import { SALES_TEAM_INSTALL } from 'src/sales-team/sales-team-install';
 import { ROUTING_INSTALL } from 'src/stock/routing-install';
 import { STOCK_INSTALL } from 'src/stock/stock-install';
 import { STOCK_PICKING_BATCH_INSTALL } from 'src/stock-picking-batch/stock-picking-batch-install';
@@ -27,7 +28,7 @@ const handler = async ({ previousVersion }: InstallPayload) => {
   const startedAt = Date.now();
   const { skippedBoards, validationRulesSkipped, skippedViewSorts } = await runInstall({
     api: twentyInstallApi,
-    specs: [UTM_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL],
+    specs: [UTM_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, SALES_TEAM_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL],
     previousVersion,
   });
   await finishStockInstall(previousVersion);

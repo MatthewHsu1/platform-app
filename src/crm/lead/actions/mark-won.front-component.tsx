@@ -22,6 +22,14 @@ export const CRM_DELETE_REFUSAL_TEXTS = [
   msg('This lost reason is used by leads. Archive it instead (untick Active).'),
 ];
 
+// The notes of the sales team rules (src/sales-team/team/team-messages.ts), listed for the extractor the
+// same way: sales teams have no front component of their own yet.
+export const SALES_TEAM_RULE_TEXTS = [
+  msg('This is a default sales team. It cannot be deleted; it can stay archived.'),
+  msg('Some pipeline stages are limited to this sales team. Take the team off those stages first.'),
+  msg('{name} is already an active member of this team. The new or changed membership was undone.'),
+];
+
 // The answers of the Mark won route, listed for the extractor the same way.
 export const MARK_WON_TEXTS = [
   msg('leadId is required.'),

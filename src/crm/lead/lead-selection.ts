@@ -19,9 +19,8 @@ const BASE_SELECTION = [
   'createdBy { source workspaceMemberId } updatedBy { source workspaceMemberId }',
 ].join(' ');
 
-// The lead's team field arrives with the sales teams; tags and language are
-// staff lists made by the install step and are read only by the rules that
-// need them.
+// Tags and language are staff lists made by the install step and are read
+// only by the rules that need them.
 export const leadSelection = ({ withTeam, withScoringFields = false }: { withTeam: boolean; withScoringFields?: boolean }) =>
   [BASE_SELECTION, withTeam ? 'teamId' : '', withScoringFields ? 'tags language' : ''].filter(Boolean).join(' ');
 

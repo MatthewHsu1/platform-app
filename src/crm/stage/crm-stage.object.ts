@@ -6,6 +6,10 @@ import {
   CRM_STAGE_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
   CRM_STAGE_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/crm/crm-universal-identifiers.constant';
+import {
+  CRM_STAGE_TEAM_FIELD_UNIVERSAL_IDENTIFIERS,
+  CRM_STAGE_TEAM_OBJECT_UNIVERSAL_IDENTIFIER,
+} from 'src/sales-team/sales-team-universal-identifiers.constant';
 import { booleanField, numberField, oneToManyField, seedKeyField, textField } from 'src/shared/fields';
 
 // Pipeline steps, in sequence order. A won stage puts its leads at 100 %;
@@ -44,6 +48,15 @@ export default defineObject({
       icon: 'IconTarget',
       targetObjectUniversalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
       targetFieldUniversalIdentifier: CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS.stage,
+    }),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.teams,
+      name: 'teams',
+      label: 'Teams',
+      icon: 'IconUsers',
+      targetObjectUniversalIdentifier: CRM_STAGE_TEAM_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: CRM_STAGE_TEAM_FIELD_UNIVERSAL_IDENTIFIERS.stage,
+      junctionTargetFieldUniversalIdentifier: CRM_STAGE_TEAM_FIELD_UNIVERSAL_IDENTIFIERS.team,
     }),
     seedKeyField(FIELD_IDS.seedKey),
   ],

@@ -67,7 +67,7 @@ export const makeFakeLeadStore = ({ leads, stages, now }: { leads: LeadRow[]; st
 
   const triggerApi: LeadTriggerApi = {
     now: () => now,
-    readFields: leadSelectionFields({ withTeam: false }),
+    readFields: leadSelectionFields({ withTeam: true }),
     readLeads,
     loadContext: async () => context,
     updateLead: async (id, data) => apply(id, data),

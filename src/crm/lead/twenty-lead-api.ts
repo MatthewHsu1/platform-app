@@ -14,8 +14,8 @@ const LEADS = { objectSingular: 'crmLead', objectPlural: 'crmLeads' } as const;
 const leads = records(LEADS.objectSingular, LEADS.objectPlural);
 
 // Every Platform read of a lead uses this selection.
-export const LEAD_SELECTION = leadSelection({ withTeam: false });
-export const LEAD_SELECTION_FIELDS = leadSelectionFields({ withTeam: false });
+export const LEAD_SELECTION = leadSelection({ withTeam: true });
+export const LEAD_SELECTION_FIELDS = leadSelectionFields({ withTeam: true });
 
 export const readLeadsById = async (ids: string[]) =>
   (

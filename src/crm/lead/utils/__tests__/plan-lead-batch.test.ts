@@ -27,7 +27,7 @@ const CONTEXT: LeadContext = {
   people: new Map(),
   companies: new Map(),
 };
-const READ = leadSelectionFields({ withTeam: false });
+const READ = leadSelectionFields({ withTeam: true });
 // The money values the computes give a lead without amounts, so a test row is
 // already up to date apart from what the test changes.
 const ZERO = { amountMicros: 0, currencyCode: 'USD' };

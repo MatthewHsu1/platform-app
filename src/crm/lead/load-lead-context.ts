@@ -3,6 +3,8 @@ import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { type PartnerCompanyRow } from 'src/crm/lead/types/partner-company-row.type';
 import { type PartnerPersonRow } from 'src/crm/lead/types/partner-person-row.type';
 import { sortStages } from 'src/crm/stage/utils/sort-stages.util';
+import { TEAM_CONTEXT_FINDS, toTeamContext } from 'src/sales-team/load-team-context';
+import { type TeamContextLists } from 'src/sales-team/types/team-context-lists.type';
 import { findMany, records } from 'src/shared/triggers/records';
 
 type StageNode = {
@@ -17,15 +19,18 @@ type StageNode = {
 
 const presentIds = (values: (string | null)[]) => [...new Set(values.filter((value): value is string => value !== null))];
 
-// One request for everything the lead rules read besides the leads. Stages and
-// plans are few; contacts and customers only those of these leads.
+// One request for everything the lead rules read besides the leads. Stages,
+// plans and teams are few; contacts and customers only those of these leads.
 export const loadLeadContext = async (leads: LeadRow[]): Promise<LeadContext> => {
-  const { stages, plans, people, companies } = await findMany<{
-    stages: StageNode[];
-    plans: { id: string; numberOfMonths: number | null }[];
-    people: PartnerPersonRow[];
-    companies: PartnerCompanyRow[];
-  }>({
+  const { stages, plans, people, companies, ...teamLists } = await findMany<
+    {
+      stages: StageNode[];
+      plans: { id: string; numberOfMonths: number | null }[];
+      people: PartnerPersonRow[];
+      companies: PartnerCompanyRow[];
+    } & TeamContextLists
+  >({
+    ...TEAM_CONTEXT_FINDS,
     stages: {
       of: records('crmStage', 'crmStages'),
       filter: {},
@@ -45,6 +50,7 @@ export const loadLeadContext = async (leads: LeadRow[]): Promise<LeadContext> =>
         'id name domainName { primaryLinkUrl primaryLinkLabel secondaryLinks } address { addressStreet1 addressStreet2 addressCity addressPostcode addressState addressCountry }',
     },
   });
+  const { teams, memberships, stageTeamIds } = toTeamContext(teamLists);
 
   return {
     stages: sortStages(
@@ -56,12 +62,12 @@ export const loadLeadContext = async (leads: LeadRow[]): Promise<LeadContext> =>
         fold: stage.fold === true,
         rottingThresholdDays: stage.rottingThresholdDays ?? 0,
         createdAt: stage.createdAt,
-        teamIds: [],
+        teamIds: stageTeamIds.get(stage.id) ?? [],
       })),
     ),
     recurringPlanMonths: new Map(plans.map((plan) => [plan.id, plan.numberOfMonths ?? 0])),
-    teams: [],
-    memberships: [],
+    teams,
+    memberships,
     people: new Map(people.map((person) => [person.id, person])),
     companies: new Map(companies.map((company) => [company.id, company])),
   };
