@@ -63,7 +63,7 @@ export default defineFrontComponent({
   isHeadless: true,
   component: makeLeadActionCommand({
     routePath: MARK_WON_ROUTE_PATH,
-    successMessage: 'Lead marked won.',
-    fallbackError: 'Could not mark the lead won.',
+    successMessage: msg('Lead marked won.'),
+    fallbackError: msg('Could not mark the lead won.'),
   }),
 });

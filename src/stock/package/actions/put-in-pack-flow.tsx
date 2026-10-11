@@ -14,7 +14,7 @@ import { LinkList } from 'src/shared/front-components/link-list';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
 import { printViewUrl } from 'src/stock/printing/print-view-url';
 import { type PrintLink } from 'src/stock/printing/types/print-link.type';
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { readStockStyles } from 'src/stock/stock-theme';
 import { ChoiceSelect, FieldRow, PopupPanel } from 'src/stock/tracking-controls';
 

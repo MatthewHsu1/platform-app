@@ -6,7 +6,7 @@ import { Button, Input } from 'twenty-ui/primitives/input';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
 import { readQuantViewsAsUser } from 'src/stock/quant/actions/count-panels';
 import { textOrNull } from 'src/shared/utils/text-or-null.util';
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { readStockStyles } from 'src/stock/stock-theme';
 import {
   RELOCATE_QUANTS_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,

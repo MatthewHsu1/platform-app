@@ -9,12 +9,20 @@ import {
   SALES_TEAM_RULE_TEXTS,
   UTM_RULE_TEXTS,
 } from 'src/crm/lead/actions/mark-won.front-component';
+import { LEADS_NOT_FOUND, SELECT_ONE_LEAD, SELECT_SOME_LEADS } from 'src/crm/lead/actions/lead-action-route';
+import { LEAD_ACTION_TEXTS } from 'src/crm/lead/actions/mark-lost.front-component';
 import { PERSON_PUSH_MESSAGES } from 'src/crm/lead/apply-person-pushes';
 import {
+  AUTOMATIC_ALREADY,
+  AUTOMATIC_NOT_PENDING,
+  LOST_COMMENT_TITLE,
+  MARK_LOST_IN_WON_STAGE,
+  MARK_LOST_WON,
   MARK_WON_ALREADY_WON,
   MARK_WON_LOST,
   MARK_WON_NO_STAGE,
   MARK_WON_NOT_OPPORTUNITY,
+  RESTORE_NOT_LOST,
 } from 'src/crm/lead/actions/utils/plan-won-lost.util';
 import { DEFAULT_OPPORTUNITY_NAME_TEMPLATE } from 'src/crm/lead/utils/plan-lead-computes.util';
 import { WON_STAGE_REFUSAL_MESSAGE } from 'src/crm/lead/utils/won-stage-refusal.util';
@@ -70,5 +78,22 @@ describe('lead rule texts', () => {
       expect.arrayContaining([MARK_WON_NOT_OPPORTUNITY, MARK_WON_ALREADY_WON, MARK_WON_LOST, MARK_WON_NO_STAGE, NOT_ALLOWED_MESSAGE]),
     );
     expect(listed.filter((text) => !(text in CATALOG))).toEqual([]);
+  });
+
+  it('lists every answer of the Mark lost, Restore and Use automatic probability routes, and the catalog holds each', () => {
+    const texts = [
+      SELECT_ONE_LEAD,
+      SELECT_SOME_LEADS,
+      LEADS_NOT_FOUND,
+      MARK_LOST_WON,
+      MARK_LOST_IN_WON_STAGE,
+      LOST_COMMENT_TITLE,
+      RESTORE_NOT_LOST,
+      AUTOMATIC_NOT_PENDING,
+      AUTOMATIC_ALREADY,
+    ];
+
+    expect(LEAD_ACTION_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
+    expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
   });
 });

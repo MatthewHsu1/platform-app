@@ -9,7 +9,7 @@ import {
   ADD_TO_TRANSFER_ROUTE_PATH,
 } from 'src/stock/package/actions/package-actions-universal-identifiers.constant';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { readStockStyles } from 'src/stock/stock-theme';
 import { ChoiceSelect, FieldRow, PopupPanel } from 'src/stock/tracking-controls';
 import { randomId } from 'src/shared/utils/random-id.util';

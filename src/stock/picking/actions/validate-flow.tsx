@@ -12,7 +12,7 @@ import { postAppRoute } from 'src/shared/front-components/post-app-route';
 import { printViewUrl } from 'src/stock/printing/print-view-url';
 import { type PrintLink } from 'src/stock/printing/types/print-link.type';
 import { ReceptionReport } from 'src/stock/reports/reception/reception-widget.front-component';
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { readStockStyles } from 'src/stock/stock-theme';
 import { type ValidateRouteBody } from 'src/stock/picking/types/validate-route-body.type';
 import { type ValidateRouteResult } from 'src/stock/picking/types/validate-route-result.type';

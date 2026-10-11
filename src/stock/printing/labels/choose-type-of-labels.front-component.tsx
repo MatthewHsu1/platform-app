@@ -9,7 +9,7 @@ import { LABELS_LAYOUT_TEXT } from 'src/stock/printing/labels/choose-labels-layo
 import { LOT_LABELS_LAYOUT_TEXT } from 'src/stock/printing/labels/choose-lot-labels-layout.front-component';
 import { LabelsLayoutForm } from 'src/stock/printing/labels/labels-layout-form';
 import { LotLabelsLayoutForm } from 'src/stock/printing/labels/lot-labels-layout-form';
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { LABEL_UNIVERSAL_IDENTIFIERS } from 'src/stock/stock-printing-universal-identifiers.constant';
 import { ChoiceSelect, FieldRow, PopupPanel } from 'src/stock/tracking-controls';
 

@@ -1,134 +1,136 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
-import {
-  closeSidePanel,
-  enqueueSnackbar,
-  unmountFrontComponent,
-  useRecordId,
-} from 'twenty-sdk/front-component';
+import { msg, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
+import { Button } from 'twenty-ui/primitives/input';
 import { themeCssVariables } from 'twenty-ui/theme';
 
-import { postLeadAction } from 'src/crm/lead/actions/lead-action-command';
 import {
   MARK_LOST_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
   MARK_LOST_ROUTE_PATH,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
-import { describeRouteError } from 'src/shared/describe-route-error';
+import { ChoiceSelect } from 'src/shared/front-components/choice-select';
+import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
+import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
+import { randomId } from 'src/shared/utils/random-id.util';
 
-type LostReason = { id: string; name: string };
+// The answers of the Mark lost, Restore and Use automatic probability routes. The translation extractor reads
+// only front-component files, so they are listed here to reach the catalog; each must match its source text.
+export const LEAD_ACTION_TEXTS = [
+  msg('Select one lead.'),
+  msg('Select at least one lead.'),
+  msg('{count} of the selected leads were not found.'),
+  msg('A won lead cannot be marked lost: {names}.'),
+  msg('A lead in a won stage stays at 100 %. Move these leads to another stage first: {names}.'),
+  msg('Lost comment'),
+  msg('Only a lost lead can be restored.'),
+  msg('Only a pending lead can follow the automatic probability.'),
+  msg('The probability already follows the automatic one.'),
+];
 
-const loadActiveLostReasons = async (): Promise<LostReason[]> => {
-  const response = await fetch(`${process.env.TWENTY_API_URL}/graphql`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${process.env.TWENTY_APP_ACCESS_TOKEN}`,
-    },
-    body: JSON.stringify({
-      query: `{ crmLostReasons(filter: { active: { eq: true } }, orderBy: [{ name: AscNullsLast }], first: 200) {
+type LostReason = { id: string; name: string | null };
+
+const NO_REASON = '';
+
+const MarkLost = () => {
+  const { t } = useTranslate();
+  const theme = themeCssVariables;
+  const styles = readPopUpStyles();
+  const leadIds = useSelectedRecordIds();
+  const { busy, error, setError, call } = usePopUpCall(t('Could not mark the leads lost.'));
+  const [reasons, setReasons] = useState<LostReason[] | null>(null);
+  const [reasonId, setReasonId] = useState(NO_REASON);
+  const [closingNote, setClosingNote] = useState('');
+  // One id per opened dialog: a second click after a stopped run finds the notes the first one wrote.
+  const [runId] = useState(randomId);
+
+  useRunOnce(() => {
+    queryAsUser<{ crmLostReasons: { edges: { node: LostReason }[] } }>(
+      `{ crmLostReasons(filter: { active: { eq: true } }, orderBy: [{ name: AscNullsLast }], first: 200) {
         edges { node { id name } }
       } }`,
-    }),
-  });
-  const body = (await response.json()) as {
-    data?: { crmLostReasons: { edges: { node: LostReason }[] } };
-  };
-
-  return body.data?.crmLostReasons.edges.map(({ node }) => node) ?? [];
-};
-
-// The lost reason is optional.
-const MarkLost = () => {
-  const STYLES = {
-    panel: {
-      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-      fontSize: '13px',
-      padding: '16px',
-      display: 'flex',
-      flexDirection: 'column' as const,
-      gap: '8px',
-    },
-    title: { fontWeight: 600, marginBottom: '4px' },
-    button: {
-      textAlign: 'left' as const,
-      padding: '8px 12px',
-      border: `1px solid ${themeCssVariables.border.color.medium}`,
-      borderRadius: '6px',
-      background: themeCssVariables.background.primary,
-      font: 'inherit',
-      cursor: 'pointer',
-    },
-  };
-
-  const recordId = useRecordId();
-  const [reasons, setReasons] = useState<LostReason[] | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    loadActiveLostReasons()
-      .then(setReasons)
-      .catch(() => setReasons([]));
-  }, []);
-
-  const close = () => {
-    void unmountFrontComponent();
-    void closeSidePanel();
-  };
-
-  const markLost = async (lostReasonId: string | null) => {
-    if (recordId === null) {
-      await enqueueSnackbar({ message: 'Open one lead first.', variant: 'error' });
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      await postLeadAction(MARK_LOST_ROUTE_PATH, { leadId: recordId, lostReasonId });
-      await enqueueSnackbar({ message: 'Lead marked lost.', variant: 'success' });
-      close();
-    } catch (error) {
-      await enqueueSnackbar({
-        message: describeRouteError(error, 'Could not mark the lead lost.'),
-        variant: 'error',
+    )
+      .then((data) => setReasons(data.crmLostReasons.edges.map(({ node }) => node)))
+      .catch(() => {
+        setReasons([]);
+        setError(t('The lost reasons could not be read.'));
       });
-      setIsSaving(false);
+  });
+
+  if (leadIds.length === 0) {
+    return (
+      <ClosablePanel
+        message={null}
+        error={t('Select all is not supported here. Tick the records you want instead.')}
+        busy={false}
+        closeLabel={t('Close')}
+      />
+    );
+  }
+
+  const markLost = async () => {
+    const result = await call<{ leadIds: string[] }>(MARK_LOST_ROUTE_PATH, {
+      leadIds,
+      lostReasonId: reasonId === NO_REASON ? null : reasonId,
+      closingNote,
+      runId,
+    });
+
+    if (result !== null) {
+      await finishWith(leadIds.length === 1 ? t('Lead marked lost.') : t('{count} leads marked lost.', { count: leadIds.length }));
     }
   };
 
   return (
-    <div style={STYLES.panel}>
-      <div style={STYLES.title}>Why was this lead lost?</div>
-      {reasons === null ? (
-        <div>Loading…</div>
-      ) : (
-        reasons.map((reason) => (
-          <button
-            key={reason.id}
-            type="button"
-            style={STYLES.button}
-            disabled={isSaving}
-            onClick={() => void markLost(reason.id)}
-          >
-            {reason.name}
-          </button>
-        ))
-      )}
-      <button
-        type="button"
-        style={STYLES.button}
-        disabled={isSaving}
-        onClick={() => void markLost(null)}
-      >
-        No reason
-      </button>
+    <div className="platform-crm-mark-lost" style={styles.panel}>
+      <div style={styles.title}>{t('Mark lost')}</div>
+      <label style={styles.row}>
+        <span>{t('Lost reason')}</span>
+        <ChoiceSelect
+          value={reasonId}
+          disabled={reasons === null || busy}
+          options={[
+            { value: NO_REASON, label: t('No reason') },
+            ...(reasons ?? []).map((reason) => ({ value: reason.id, label: reason.name ?? '' })),
+          ]}
+          onChange={setReasonId}
+        />
+      </label>
+      <label style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing[1] }}>
+        <span>{t('Closing note')}</span>
+        <textarea
+          value={closingNote}
+          rows={5}
+          disabled={busy}
+          onChange={(event) => setClosingNote(event.target.value)}
+          style={{
+            padding: theme.spacing[2],
+            borderRadius: theme.border.radius.sm,
+            border: `1px solid ${theme.border.color.medium}`,
+            background: theme.background.transparent.lighter,
+            color: theme.font.color.primary,
+            fontFamily: theme.font.family,
+            fontSize: theme.font.size.md,
+            resize: 'vertical',
+          }}
+        />
+      </label>
+      <ErrorText error={error} />
+      <div style={styles.buttons}>
+        <Button size="sm" variant="outline" disabled={busy} onClick={closePopUp}>
+          {t('Cancel')}
+        </Button>
+        <Button size="sm" variant="solid" disabled={busy} onClick={() => void markLost()}>
+          {t('Mark lost')}
+        </Button>
+      </div>
     </div>
   );
 };
 
 export default defineFrontComponent({
   universalIdentifier: MARK_LOST_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
-  name: 'mark-lead-lost',
-  description: 'Asks why the open lead was lost, then marks it lost.',
+  name: 'mark-leads-lost',
+  description: 'Asks for a lost reason and a closing note, then marks the selected leads lost.',
   component: MarkLost,
 });

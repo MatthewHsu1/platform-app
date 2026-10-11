@@ -1,5 +1,6 @@
 import {
   defineCommandMenuItem,
+  isSelectAll,
   noneEquals,
   numberOfSelectedRecords,
   objectPermissions,
@@ -24,6 +25,7 @@ export default defineCommandMenuItem({
   availabilityObjectUniversalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
   conditionalAvailabilityExpression:
     numberOfSelectedRecords === 1 &&
+    !isSelectAll &&
     objectPermissions.canUpdateObjectRecords &&
     noneEquals(selectedRecords, 'recordPermissions.canUpdate', false),
   frontComponentUniversalIdentifier: MARK_WON_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,

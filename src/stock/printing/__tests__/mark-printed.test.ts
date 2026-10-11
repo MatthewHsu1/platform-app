@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 let canUpdate = true;
 const updateMany = vi.fn(async (..._args: unknown[]) => undefined);
 
-vi.mock('src/stock/stock-access', () => ({ hasUpdateRights: async () => canUpdate }));
+vi.mock('src/shared/object-rights', () => ({ hasUpdateRights: async () => canUpdate }));
 vi.mock('src/stock/stock-records', () => ({
   stockPickings: { find: async () => [{ id: 'ready-1' }, { id: 'ready-2' }], updateMany },
 }));

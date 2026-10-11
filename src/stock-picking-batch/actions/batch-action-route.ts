@@ -1,6 +1,7 @@
 import { BATCH_MESSAGES } from 'src/stock-picking-batch/stock-picking-batch-messages.constant';
 import { STOCK_PICKING_BATCH_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock-picking-batch/stock-picking-batch-universal-identifiers.constant';
-import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
+import { filterReadableIds } from 'src/stock/stock-access';
+import { requireUpdateRights } from 'src/shared/object-rights';
 import { StockUserError } from 'src/stock/stock-errors';
 import { readIds } from 'src/stock/stock-route';
 import { STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';

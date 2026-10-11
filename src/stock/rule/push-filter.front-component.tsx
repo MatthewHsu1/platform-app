@@ -7,7 +7,7 @@ import { FilterEditor } from 'src/shared/filter-editor/filter-editor';
 import { type FilterField } from 'src/shared/filter-editor/types/filter-field.type';
 import { PUSH_FILTER_FIELDS } from 'src/stock/rule/push-filter';
 import { PUSH_FILTER_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER } from 'src/stock/routing-universal-identifiers.constant';
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 
 const FIELD_LABELS: Record<string, MessageDescriptor> = {
   productUomQty: msg('Demand'),

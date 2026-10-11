@@ -1,4 +1,5 @@
-import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
+import { filterReadableIds } from 'src/stock/stock-access';
+import { requireUpdateRights } from 'src/shared/object-rights';
 import { StockUserError } from 'src/stock/stock-errors';
 import { readIds } from 'src/stock/stock-route';
 import { STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';

@@ -8,9 +8,9 @@ import {
   planMarkLost,
   planMarkWon,
   planRestore,
+  planUseAutomaticProbability,
+  sameAtTwoDecimals,
 } from 'src/crm/lead/actions/utils/plan-won-lost.util';
-
-const NOW = '2026-10-06T15:00:00.000Z';
 
 describe('planMarkWon', () => {
   const stage = (id: string, sequence: number, isWon: boolean, teamIds: string[] = []) => ({
@@ -62,43 +62,112 @@ describe('planMarkWon', () => {
   });
 });
 
+const pending = (id: string, name: string, stageIsWon = false) => ({ id, name, wonStatus: 'PENDING', stageIsWon });
+
 describe('planMarkLost', () => {
-  it('sets lost, 0 %, the closed date and the reason', () => {
-    expect(planMarkLost({ wonStatus: 'PENDING', lostReasonId: 'reason-2', now: NOW })).toEqual({
+  it('marks every lead lost at 0 % with the reason, and zeroes the automated probability', () => {
+    expect(planMarkLost({ leads: [pending('a', 'Gym A'), pending('b', 'Gym B')], lostReasonId: 'reason-2' })).toEqual({
       kind: 'update',
-      data: { wonStatus: 'LOST', probability: 0, dateClosed: NOW, lostReasonId: 'reason-2' },
+      userData: { wonStatus: 'LOST', probability: 0, lostReasonId: 'reason-2' },
+      appData: { automatedProbability: 0 },
     });
   });
 
-  it('allows no reason', () => {
-    expect(planMarkLost({ wonStatus: 'PENDING', lostReasonId: null, now: NOW })).toMatchObject({
-      data: { lostReasonId: null },
+  it('clears an old reason when none is chosen', () => {
+    expect(planMarkLost({ leads: [pending('a', 'Gym A')], lostReasonId: null })).toMatchObject({
+      kind: 'update',
+      userData: { lostReasonId: null },
     });
   });
 
-  it('refuses a won or a lost lead', () => {
-    expect(planMarkLost({ wonStatus: 'WON', lostReasonId: null, now: NOW })).toEqual({
-      kind: 'refuse',
-      reason: 'Only a pending lead can be marked lost.',
+  it('marks a lead that is already lost again, with the new reason', () => {
+    expect(
+      planMarkLost({
+        leads: [pending('a', 'Gym A'), { id: 'b', name: 'Gym B', wonStatus: 'LOST', stageIsWon: false }],
+        lostReasonId: 'reason-3',
+      }),
+    ).toEqual({
+      kind: 'update',
+      userData: { wonStatus: 'LOST', probability: 0, lostReasonId: 'reason-3' },
+      appData: { automatedProbability: 0 },
     });
-    expect(planMarkLost({ wonStatus: 'LOST', lostReasonId: null, now: NOW })).toMatchObject({
+  });
+
+  it('refuses the whole action when a lead is won, naming it', () => {
+    expect(
+      planMarkLost({
+        leads: [pending('a', 'Gym A'), { id: 'b', name: 'Gym B', wonStatus: 'WON', stageIsWon: false }],
+        lostReasonId: null,
+      }),
+    ).toEqual({
       kind: 'refuse',
+      reason: 'A won lead cannot be marked lost: {names}.',
+      values: { names: 'Gym B' },
+    });
+  });
+
+  it('refuses the whole action when a lead sits in a won stage, naming it', () => {
+    expect(planMarkLost({ leads: [pending('a', 'Gym A'), pending('b', 'Gym B', true)], lostReasonId: null })).toEqual({
+      kind: 'refuse',
+      reason: 'A lead in a won stage stays at 100 %. Move these leads to another stage first: {names}.',
+      values: { names: 'Gym B' },
     });
   });
 });
 
 describe('planRestore', () => {
-  it('puts a lost lead back to pending and clears the reason and the closed date', () => {
-    expect(planRestore({ wonStatus: 'LOST' })).toEqual({
+  it('reactivates the lead without its reason, at the fresh automated probability', () => {
+    expect(planRestore({ wonStatus: 'LOST', storedAutomated: 0, newAutomated: 30 })).toEqual({
       kind: 'update',
-      data: { wonStatus: 'PENDING', lostReasonId: null, dateClosed: null },
+      appData: { automatedProbability: 30 },
+      userData: { wonStatus: 'PENDING', lostReasonId: null, probability: 30 },
+    });
+  });
+
+  it('writes no automated value when the score did not move', () => {
+    expect(planRestore({ wonStatus: 'LOST', storedAutomated: 0, newAutomated: 0 })).toEqual({
+      kind: 'update',
+      appData: null,
+      userData: { wonStatus: 'PENDING', lostReasonId: null, probability: 0 },
     });
   });
 
   it('refuses a lead that is not lost', () => {
-    expect(planRestore({ wonStatus: 'PENDING' })).toEqual({
+    expect(planRestore({ wonStatus: 'PENDING', storedAutomated: 10, newAutomated: 10 })).toEqual({
       kind: 'refuse',
       reason: 'Only a lost lead can be restored.',
     });
+  });
+});
+
+describe('planUseAutomaticProbability', () => {
+  it('aligns the probability with a fresh automated value', () => {
+    expect(
+      planUseAutomaticProbability({ wonStatus: 'PENDING', probability: 40, storedAutomated: 20.87, newAutomated: 21.5 }),
+    ).toEqual({
+      kind: 'update',
+      appData: { automatedProbability: 21.5 },
+      userData: { probability: 21.5 },
+    });
+  });
+
+  it('refuses when the probability already is the automatic one at two decimals', () => {
+    expect(
+      planUseAutomaticProbability({ wonStatus: 'PENDING', probability: 33.494, storedAutomated: 33.49, newAutomated: 33.49 }),
+    ).toEqual({ kind: 'refuse', reason: 'The probability already follows the automatic one.' });
+  });
+
+  it('refuses a lead that is not pending', () => {
+    expect(
+      planUseAutomaticProbability({ wonStatus: 'LOST', probability: 0, storedAutomated: 10, newAutomated: 10 }),
+    ).toEqual({ kind: 'refuse', reason: 'Only a pending lead can follow the automatic probability.' });
+  });
+});
+
+describe('sameAtTwoDecimals', () => {
+  it('treats an empty probability as 0 and compares at two decimals', () => {
+    expect(sameAtTwoDecimals(null, 0)).toBe(true);
+    expect(sameAtTwoDecimals(74.304, 74.3)).toBe(true);
+    expect(sameAtTwoDecimals(74.31, 74.3)).toBe(false);
   });
 });

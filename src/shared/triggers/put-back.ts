@@ -95,6 +95,26 @@ export const addNotes = makeAddNotes({
   destroyNotes: (ids) => notes.destroyMany(ids),
 });
 
+// With ids chosen by the caller, a rerun finds the notes (and links) it made instead of adding a second set.
+export const addNotesWithIds = async (
+  objectSingular: string,
+  items: { id: string; recordId: string; title: string; body: string }[],
+) => {
+  for (const part of chunks(items, MUTATION_MAXIMUM_RECORDS)) {
+    await createMissingRows(
+      notes,
+      part.map((item) => ({ id: item.id, data: { title: item.title, bodyV2: { markdown: item.body } } })),
+    );
+    await createMissingRows(
+      noteTargets,
+      part.map((item) => ({
+        id: derivedId('noteTarget', item.id),
+        data: { noteId: item.id, [noteTargetFieldName(objectSingular)]: item.recordId },
+      })),
+    );
+  }
+};
+
 // These saves are refused. Twenty has already saved, so the old values go
 // back and a note says why.
 export const putBack = async ({

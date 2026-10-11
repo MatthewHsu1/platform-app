@@ -9,7 +9,7 @@ import { type ApplyCountsText } from 'src/stock/quant/types/apply-counts-text.ty
 import { type CountQuantView } from 'src/stock/quant/types/count-quant-view.type';
 import { type CountRouteResult } from 'src/stock/quant/types/count-route-result.type';
 import { type CountRowsText } from 'src/stock/quant/types/count-rows-text.type';
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { readStockStyles } from 'src/stock/stock-theme';
 import { APPLY_INVENTORY_ROUTE_PATH } from 'src/stock/stock-universal-identifiers.constant';
 import { type ConflictAnswer } from 'src/stock/utils/types/conflict-answer.type';

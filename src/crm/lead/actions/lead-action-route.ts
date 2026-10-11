@@ -1,15 +1,38 @@
 import { type RoutePayload } from 'twenty-sdk/define';
 
+import { LeadActionError } from 'src/crm/lead/actions/lead-action-error';
 import { type LeadUpdatePlan } from 'src/crm/lead/actions/utils/types/lead-update-plan.type';
+import { queryLeads } from 'src/crm/lead/query-leads';
+import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
+import { translate } from 'src/shared/i18n/translate';
 import { notAllowedResponse } from 'src/shared/not-allowed';
-import { jsonResponse } from 'src/shared/route-response';
-import { GraphqlForbiddenError, requireData, twentyGraphql } from 'src/shared/twenty-graphql';
+import { jsonResponse, readBody } from 'src/shared/route-response';
+import { MUTATION_MAXIMUM_RECORDS } from 'src/shared/triggers/records';
+import { GraphqlForbiddenError, requireData, twentyGraphql, twentyMetadata } from 'src/shared/twenty-graphql';
+import { UserError } from 'src/shared/user-error';
+import { chunks } from 'src/shared/utils/chunks.util';
 
 type RouteResponse = ReturnType<typeof jsonResponse>;
 
-export const readLeadId = (body: Record<string, unknown>) =>
-  typeof body.leadId === 'string' && body.leadId.length > 0 ? body.leadId : null;
+export const LEADS_NOT_FOUND = '{count} of the selected leads were not found.';
+export const SELECT_ONE_LEAD = 'Select one lead.';
+export const SELECT_SOME_LEADS = 'Select at least one lead.';
+
+export const readLeadIds = (body: Record<string, unknown>) =>
+  Array.isArray(body.leadIds)
+    ? [...new Set(body.leadIds.filter((id): id is string => typeof id === 'string' && id.length > 0))]
+    : [];
+
+// One-lead routes take `leadId`, or the one selected id of a command.
+export const readLeadId = (body: Record<string, unknown>) => {
+  if (typeof body.leadId === 'string' && body.leadId.length > 0) {
+    return body.leadId;
+  }
+  const leadIds = readLeadIds(body);
+
+  return leadIds.length === 1 ? leadIds[0] : null;
+};
 
 // Reads as the clicking user, so a lead their row rule hides is "not found". A read their role refuses, or
 // one that fails, throws instead.
@@ -61,3 +84,86 @@ export const makeLeadRouteErrors =
   };
 
 export const withLeadRouteErrors = makeLeadRouteErrors(readUserLocale);
+
+// A route that answers its result with 200. A refusal answers with its status
+// and its text in the user's language; a role refusal and any other failure
+// as every lead route does.
+export const makeLeadRouteHandler =
+  (readLocale: () => Promise<string>) => (run: (body: Record<string, unknown>) => Promise<Record<string, unknown>>) =>
+    makeLeadRouteErrors(readLocale)(async (payload) => {
+      try {
+        return jsonResponse(200, await run(readBody(payload)));
+      } catch (error) {
+        if (!(error instanceof UserError)) {
+          throw error;
+        }
+        const locale = await readLocale().catch(() => 'en');
+
+        return jsonResponse(error instanceof LeadActionError ? error.status : 409, {
+          ...error.details,
+          error: translate(locale, error.message, error.values),
+        });
+      }
+    });
+
+export const leadRouteHandler = makeLeadRouteHandler(readUserLocale);
+
+// In the order given. A lead the user's row rule hides counts as not found,
+// and the whole action stops: acting on part of a selection would surprise.
+export const readLeadsAsUser = async (leadIds: string[]): Promise<LeadRow[]> => {
+  const found = await queryLeads('person', { id: { in: leadIds } });
+  const byId = new Map(found.map((lead) => [lead.id, lead]));
+  const missing = leadIds.filter((id) => !byId.has(id));
+
+  if (missing.length > 0) {
+    throw new LeadActionError(LEADS_NOT_FOUND, { count: missing.length }, 404);
+  }
+
+  return leadIds.flatMap((id) => {
+    const lead = byId.get(id);
+
+    return lead === undefined ? [] : [lead];
+  });
+};
+
+// Staff fields go in as the clicking user, so the save rules treat the change
+// as the user's.
+export const updateLeadsAsUser = async (leadIds: string[], data: Record<string, unknown>) => {
+  for (const part of chunks(leadIds, MUTATION_MAXIMUM_RECORDS)) {
+    requireData(
+      await twentyGraphql(
+        'person',
+        `mutation UpdateLeadsAsUser($filter: CrmLeadFilterInput!, $data: CrmLeadUpdateInput!) {
+          updateCrmLeads(filter: $filter, data: $data) { id }
+        }`,
+        { filter: { id: { in: part } }, data },
+      ),
+      'Update leads',
+    );
+  }
+};
+
+export const updateLeadAsUser = async (leadId: string, data: Record<string, unknown>) => {
+  if (Object.keys(data).length === 0) {
+    return;
+  }
+  requireData(
+    await twentyGraphql(
+      'person',
+      `mutation UpdateLeadAsUser($id: UUID!, $data: CrmLeadUpdateInput!) {
+        updateCrmLead(id: $id, data: $data) { id }
+      }`,
+      { id: leadId, data },
+    ),
+    `Update lead ${leadId}`,
+  );
+};
+
+export const readCurrentMemberId = async () => {
+  const response = await twentyMetadata<{ currentUser: { workspaceMember: { id: string } | null } | null }>(
+    'person',
+    `{ currentUser { workspaceMember { id } } }`,
+  );
+
+  return response.data?.currentUser?.workspaceMember?.id ?? null;
+};

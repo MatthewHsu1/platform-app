@@ -9,7 +9,7 @@ import {
 } from 'src/stock/lot/actions/lot-actions-universal-identifiers.constant';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
 import { PRODUCT_TRACKING } from 'src/stock/stock-options.constant';
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { readStockStyles } from 'src/stock/stock-theme';
 import { ChoiceSelect, FieldRow, PopupPanel } from 'src/stock/tracking-controls';
 import { type ProductTracking } from 'src/stock/types/product-tracking.type';

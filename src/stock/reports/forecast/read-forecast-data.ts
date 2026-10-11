@@ -11,7 +11,7 @@ import { type ForecastHeading } from 'src/stock/reports/forecast/types/forecast-
 import { type ForecastMoveNode } from 'src/stock/reports/forecast/types/forecast-move-node.type';
 import { type ForecastProduct } from 'src/stock/reports/forecast/types/forecast-product.type';
 import { type ForecastRequest } from 'src/stock/reports/forecast/types/forecast-request.type';
-import { hasUpdateRights } from 'src/stock/stock-access';
+import { hasUpdateRights } from 'src/shared/object-rights';
 import { StockUserError } from 'src/stock/stock-errors';
 import { MOVE_STATE, PICKING_TYPE_CODE } from 'src/stock/stock-options.constant';
 import { findReadableAsPerson } from 'src/stock/stock-person-writes';

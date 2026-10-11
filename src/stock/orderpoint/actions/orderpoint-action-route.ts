@@ -1,5 +1,6 @@
 import { StockUserError } from 'src/stock/stock-errors';
-import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
+import { filterReadableIds } from 'src/stock/stock-access';
+import { requireUpdateRights } from 'src/shared/object-rights';
 import { readIds } from 'src/stock/stock-route';
 import { ORDERPOINT_MESSAGES } from 'src/stock/orderpoint/orderpoint-messages.constant';
 import { type OrderMode } from 'src/stock/orderpoint/types/order-mode.type';

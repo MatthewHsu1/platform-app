@@ -9,7 +9,7 @@ import { type LabelsLayoutText } from 'src/stock/printing/types/labels-layout-te
 import { type ProductLabelFormat } from 'src/stock/printing/types/product-label-format.type';
 import { type ProductLabelOptions } from 'src/stock/printing/types/product-label-options.type';
 import { type ZplTemplate } from 'src/stock/printing/types/zpl-template.type';
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { ChoiceSelect, FieldRow, PopupPanel } from 'src/stock/tracking-controls';
 
 const FORMATS: ProductLabelFormat[] = ['DYMO', 'PRICE_2X7', 'PRICE_4X7', 'PLAIN_4X12', 'PRICE_4X12', 'ZPL', 'ZPL_PRICE'];

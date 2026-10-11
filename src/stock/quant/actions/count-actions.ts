@@ -1,7 +1,8 @@
 import { applyInventory } from 'src/stock/quant/actions/apply-inventory';
 import { readCountQuantViews } from 'src/stock/quant/actions/read-count-quant-views';
 import { writeQuantCounts } from 'src/stock/quant/write-quant-counts';
-import { filterReadableIds, requireStockManagerRight, requireUpdateRights } from 'src/stock/stock-access';
+import { filterReadableIds, requireStockManagerRight } from 'src/stock/stock-access';
+import { requireUpdateRights } from 'src/shared/object-rights';
 import { readCurrentMemberId } from 'src/stock/stock-current-member';
 import { StockUserError } from 'src/stock/stock-errors';
 import { stockQuants } from 'src/stock/stock-records';

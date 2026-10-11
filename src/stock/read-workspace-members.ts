@@ -1,4 +1,4 @@
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { type WorkspaceMemberChoice } from 'src/stock/types/workspace-member-choice.type';
 
 type MemberPage = {

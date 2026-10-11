@@ -6,7 +6,8 @@ import {
   UNPACK_ROUTE_PATH,
 } from 'src/stock/package/actions/package-actions-universal-identifiers.constant';
 import { unpackPackages } from 'src/stock/package/unpack-package';
-import { filterReadableIds, requireUpdateRights } from 'src/stock/stock-access';
+import { filterReadableIds } from 'src/stock/stock-access';
+import { requireUpdateRights } from 'src/shared/object-rights';
 import { StockUserError } from 'src/stock/stock-errors';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';
 import { PACKAGE_UNPACKED_REASON } from 'src/stock/utils/plan-package-rules.util';

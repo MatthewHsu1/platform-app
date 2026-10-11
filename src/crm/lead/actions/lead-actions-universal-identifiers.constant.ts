@@ -30,3 +30,11 @@ export const CONVERT_LEAD_ROUTE_PATH = '/crm/lead/convert';
 export const MARK_WON_ROUTE_PATH = '/crm/lead/mark-won';
 export const MARK_LOST_ROUTE_PATH = '/crm/lead/mark-lost';
 export const RESTORE_LEAD_ROUTE_PATH = '/crm/lead/restore';
+
+export const USE_AUTOMATIC_PROBABILITY_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
+  '8aecbe8d-5750-4062-b4af-8e433d5d2e33';
+export const USE_AUTOMATIC_PROBABILITY_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER =
+  '2f247718-5419-4558-88e9-35c236d03138';
+export const USE_AUTOMATIC_PROBABILITY_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIER =
+  'e12909bb-1753-4755-9c67-88245ca053e3';
+export const USE_AUTOMATIC_PROBABILITY_ROUTE_PATH = '/crm/lead/use-automatic-probability';

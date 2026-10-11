@@ -1,7 +1,7 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { readReceptionData } from 'src/stock/reports/reception/read-reception-data';
-import { hasUpdateRights } from 'src/stock/stock-access';
+import { hasUpdateRights } from 'src/shared/object-rights';
 import { StockUserError } from 'src/stock/stock-errors';
 import { RECEPTION_ROUTE_PATH, RECEPTION_UNIVERSAL_IDENTIFIERS } from 'src/stock/stock-reports-universal-identifiers.constant';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';

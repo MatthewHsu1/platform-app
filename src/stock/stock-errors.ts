@@ -1,16 +1,9 @@
-import { type TranslationValues } from 'src/shared/i18n/types/translation-values.type';
+import { UserError } from 'src/shared/user-error';
 
-// A refusal the user reads. The message is the English source; the route
-// translates it with the values into the user's language. `details` go into
-// the answer beside the text, for a pop-up that must know what the flow made.
-export class StockUserError extends Error {
-  readonly values: TranslationValues;
-  readonly details: Record<string, unknown>;
-
-  constructor(message: string, values: TranslationValues = {}, details: Record<string, unknown> = {}) {
-    super(message);
+// A refusal of a stock button. The routes answer it like any refusal the user reads.
+export class StockUserError extends UserError {
+  constructor(...parameters: ConstructorParameters<typeof UserError>) {
+    super(...parameters);
     this.name = 'StockUserError';
-    this.values = values;
-    this.details = details;
   }
 }

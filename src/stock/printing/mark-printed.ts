@@ -1,5 +1,5 @@
 import { PICKING_STATE } from 'src/stock/stock-options.constant';
-import { hasUpdateRights } from 'src/stock/stock-access';
+import { hasUpdateRights } from 'src/shared/object-rights';
 import { stockPickings } from 'src/stock/stock-records';
 import { STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
 

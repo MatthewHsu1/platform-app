@@ -1,6 +1,6 @@
 import { expiryConfirmationNeeded } from 'src/product-expiry/utils/expiry-confirmation.util';
 import { EXPIRY_LINE_SELECTION, toExpiryLine } from 'src/product-expiry/utils/expiry-line.util';
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { MOVE_STATE } from 'src/stock/stock-options.constant';
 import { type ExpiryLineNode } from 'src/product-expiry/types/expiry-line-node.type';
 

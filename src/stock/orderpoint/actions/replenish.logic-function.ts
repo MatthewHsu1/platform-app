@@ -15,7 +15,7 @@ import {
   STOCK_MOVE_OBJECT_UNIVERSAL_IDENTIFIER,
   STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/stock/stock-universal-identifiers.constant';
-import { requireUpdateRights } from 'src/stock/stock-access';
+import { requireUpdateRights } from 'src/shared/object-rights';
 
 const readDateTime = (value: unknown) => {
   const parsed = typeof value === 'string' ? new Date(value) : null;

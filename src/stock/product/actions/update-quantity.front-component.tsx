@@ -4,7 +4,7 @@ import { Trans, useSelectedObjectMetadata, useSelectedRecordIds, useTranslate } 
 import { Button, Input } from 'twenty-ui/primitives/input';
 
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
-import { queryAsUser } from 'src/stock/stock-front-graphql';
+import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { LOCATION_USAGE, PRODUCT_TRACKING } from 'src/stock/stock-options.constant';
 import { readStockStyles } from 'src/stock/stock-theme';
 import {

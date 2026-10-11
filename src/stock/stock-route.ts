@@ -5,8 +5,8 @@ import { translate } from 'src/shared/i18n/translate';
 import { jsonResponse, readBody } from 'src/shared/route-response';
 import { notAllowedResponse } from 'src/shared/not-allowed';
 import { GraphqlForbiddenError } from 'src/shared/twenty-graphql';
+import { UserError } from 'src/shared/user-error';
 import { ProcurementFailure } from 'src/stock/procurement/apply-procurement-plan';
-import { StockUserError } from 'src/stock/stock-errors';
 
 export const readIds = (body: Record<string, unknown>, name: string) => {
   const value = body[name];
@@ -34,7 +34,7 @@ export const makeStockRouteHandler =
       if (error instanceof GraphqlForbiddenError) {
         return notAllowedResponse(await readLocale().catch(() => 'en'), error);
       }
-      if (error instanceof StockUserError) {
+      if (error instanceof UserError) {
         const locale = await readLocale().catch(() => 'en');
 
         return jsonResponse(409, { ...error.details, error: translate(locale, error.message, error.values) });

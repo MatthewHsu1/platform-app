@@ -1,6 +1,6 @@
 import { readHeadedPackages, readOpenLinesInto, unpackLines } from 'src/stock/package/pack-into';
 import { applyPutawayStrategy } from 'src/stock/putaway/apply-putaway-strategy';
-import { requireDeleteRights } from 'src/stock/stock-access';
+import { requireDeleteRights } from 'src/shared/object-rights';
 import { StockUserError } from 'src/stock/stock-errors';
 import { deleteAsUser, updateAsUser } from 'src/stock/stock-person-writes';
 import { stockMoveLines, stockMoves } from 'src/stock/stock-records';

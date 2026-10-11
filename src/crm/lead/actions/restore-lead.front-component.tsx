@@ -1,4 +1,5 @@
 import { defineFrontComponent } from 'twenty-sdk/define';
+import { msg } from 'twenty-sdk/front-component';
 
 import { makeLeadActionCommand } from 'src/crm/lead/actions/lead-action-command';
 import {
@@ -13,7 +14,7 @@ export default defineFrontComponent({
   isHeadless: true,
   component: makeLeadActionCommand({
     routePath: RESTORE_LEAD_ROUTE_PATH,
-    successMessage: 'Lead restored.',
-    fallbackError: 'Could not restore the lead.',
+    successMessage: msg('Lead restored.'),
+    fallbackError: msg('Could not restore the lead.'),
   }),
 });

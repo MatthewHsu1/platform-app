@@ -3,7 +3,8 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 import { NO_STOCK_ROW_SELECTED_MESSAGE } from 'src/stock/quant/actions/count-actions';
 import { updateQuantity } from 'src/stock/quant/actions/update-quantity';
 import { type QuantityUpdateRow } from 'src/stock/quant/types/quantity-update-row.type';
-import { filterReadableIds, requireStockManagerRight, requireUpdateRights } from 'src/stock/stock-access';
+import { filterReadableIds, requireStockManagerRight } from 'src/stock/stock-access';
+import { requireUpdateRights } from 'src/shared/object-rights';
 import { StockUserError } from 'src/stock/stock-errors';
 import { stockRouteHandler } from 'src/stock/stock-route';
 import {
