@@ -11,6 +11,8 @@ import {
 import {
   CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
   CRM_LOST_REASON_OBJECT_UNIVERSAL_IDENTIFIER,
+  CRM_RECURRING_PLAN_OBJECT_UNIVERSAL_IDENTIFIER,
+  CRM_STAGE_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/crm/crm-universal-identifiers.constant';
 import {
   PRODUCT_ATTR_EXCLUSION_VALUE_IDS_REL_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -134,7 +136,7 @@ export default defineApplicationRole({
   universalIdentifier: FUNCTION_ROLE_UNIVERSAL_IDENTIFIER,
   label: `${APP_DISPLAY_NAME} function role`,
   description:
-    'Runs the install hook, the lead buttons and the row access settings page.',
+    'Runs the install hook, the CRM triggers, the lead buttons and the row access settings page.',
   canReadAllObjectRecords: false,
   canUpdateAllObjectRecords: false,
   canSoftDeleteAllObjectRecords: false,
@@ -145,8 +147,10 @@ export default defineApplicationRole({
   canBeAssignedToAgents: false,
   canBeAssignedToApiKeys: false,
   objectPermissions: [
-    readAndWrite(CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER),
-    readAndWrite(CRM_LOST_REASON_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndDestroy(CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndRestore(CRM_LOST_REASON_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndRestore(CRM_STAGE_OBJECT_UNIVERSAL_IDENTIFIER),
+    readAndWrite(CRM_RECURRING_PLAN_OBJECT_UNIVERSAL_IDENTIFIER),
     readAndWrite(UTM_SOURCE_OBJECT_UNIVERSAL_IDENTIFIER),
     readAndWrite(UTM_MEDIUM_OBJECT_UNIVERSAL_IDENTIFIER),
     readAndWrite(UTM_CAMPAIGN_OBJECT_UNIVERSAL_IDENTIFIER),

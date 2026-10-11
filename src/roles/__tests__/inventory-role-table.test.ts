@@ -25,7 +25,7 @@ beforeAll(async () => {
 });
 
 // Objects of the CRM module: the inventory roles keep the member defaults on them.
-const OUTSIDE_INVENTORY = ['crmLead', 'crmLostReason', 'utmSource', 'utmMedium', 'utmCampaign'];
+const OUTSIDE_INVENTORY = ['crmLead', 'crmLostReason', 'crmStage', 'crmRecurringPlan', 'utmSource', 'utmMedium', 'utmCampaign'];
 
 const rowOf = (nameSingular: string) => {
   const object = APP_OBJECTS.find((candidate) => candidate.nameSingular === nameSingular);

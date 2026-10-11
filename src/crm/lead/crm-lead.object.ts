@@ -1,11 +1,14 @@
 import {
   defineObject,
   FieldType,
+  OnDeleteAction,
   STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS,
 } from 'twenty-sdk/define';
 
 import {
+  EMAIL_STATE,
   LEAD_TYPE,
+  PHONE_STATE,
   PRIORITY,
   WON_STATUS,
 } from 'src/crm/crm-options.constant';
@@ -15,10 +18,14 @@ import {
   CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
   CRM_LOST_REASON_FIELD_UNIVERSAL_IDENTIFIERS,
   CRM_LOST_REASON_OBJECT_UNIVERSAL_IDENTIFIER,
+  CRM_RECURRING_PLAN_FIELD_UNIVERSAL_IDENTIFIERS,
+  CRM_RECURRING_PLAN_OBJECT_UNIVERSAL_IDENTIFIER,
+  CRM_STAGE_FIELD_UNIVERSAL_IDENTIFIERS,
+  CRM_STAGE_OBJECT_UNIVERSAL_IDENTIFIER,
   PERSON_CRM_LEADS_FIELD_UNIVERSAL_IDENTIFIER,
   WORKSPACE_MEMBER_CRM_LEADS_FIELD_UNIVERSAL_IDENTIFIER,
 } from 'src/crm/crm-universal-identifiers.constant';
-import { manyToOneField } from 'src/shared/fields';
+import { appWritten, booleanField, currencyField, manyToOneField, numberField } from 'src/shared/fields';
 import {
   UTM_CAMPAIGN_FIELD_UNIVERSAL_IDENTIFIERS,
   UTM_CAMPAIGN_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -29,7 +36,7 @@ import {
 } from 'src/utm/utm-universal-identifiers.constant';
 
 // `salesperson`, `leadType` and `contactAddress` stand in for the user, type and
-// address fields, whose names Twenty reserves. Stage and Tags are not here: the install hook makes
+// address fields, whose names Twenty reserves. Tags and Language are not here: the install hook makes
 // them as staff lists.
 export default defineObject({
   universalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -46,7 +53,7 @@ export default defineObject({
       label: 'Type',
       type: FieldType.SELECT,
       icon: 'IconFilter',
-      defaultValue: `'${LEAD_TYPE.LEAD}'`,
+      defaultValue: `'${LEAD_TYPE.OPPORTUNITY}'`,
       options: [
         { value: LEAD_TYPE.LEAD, label: 'Lead', position: 0, color: 'gray' },
         { value: LEAD_TYPE.OPPORTUNITY, label: 'Opportunity', position: 1, color: 'blue' },
@@ -66,10 +73,20 @@ export default defineObject({
       ],
     },
     manyToOneField({
+      universalIdentifier: FIELD_IDS.stage,
+      name: 'stage',
+      label: 'Stage',
+      icon: 'IconProgress',
+      onDelete: OnDeleteAction.RESTRICT,
+      targetObjectUniversalIdentifier: CRM_STAGE_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: CRM_STAGE_FIELD_UNIVERSAL_IDENTIFIERS.crmLeads,
+    }),
+    manyToOneField({
       universalIdentifier: FIELD_IDS.lostReason,
       name: 'lostReason',
       label: 'Lost reason',
       icon: 'IconMoodSad',
+      onDelete: OnDeleteAction.RESTRICT,
       targetObjectUniversalIdentifier: CRM_LOST_REASON_OBJECT_UNIVERSAL_IDENTIFIER,
       targetFieldUniversalIdentifier: CRM_LOST_REASON_FIELD_UNIVERSAL_IDENTIFIERS.crmLeads,
     }),
@@ -92,6 +109,7 @@ export default defineObject({
       name: 'salesperson',
       label: 'Salesperson',
       icon: 'IconUserCircle',
+      onDelete: OnDeleteAction.SET_NULL,
       targetObjectUniversalIdentifier:
         STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.workspaceMember.universalIdentifier,
       targetFieldUniversalIdentifier: WORKSPACE_MEMBER_CRM_LEADS_FIELD_UNIVERSAL_IDENTIFIER,
@@ -101,6 +119,7 @@ export default defineObject({
       name: 'person',
       label: 'Contact',
       icon: 'IconUser',
+      onDelete: OnDeleteAction.SET_NULL,
       targetObjectUniversalIdentifier:
         STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.person.universalIdentifier,
       targetFieldUniversalIdentifier: PERSON_CRM_LEADS_FIELD_UNIVERSAL_IDENTIFIER,
@@ -110,6 +129,7 @@ export default defineObject({
       name: 'company',
       label: 'Customer',
       icon: 'IconBuildingSkyscraper',
+      onDelete: OnDeleteAction.SET_NULL,
       targetObjectUniversalIdentifier:
         STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.company.universalIdentifier,
       targetFieldUniversalIdentifier: COMPANY_CRM_LEADS_FIELD_UNIVERSAL_IDENTIFIER,
@@ -170,6 +190,33 @@ export default defineObject({
       type: FieldType.CURRENCY,
       icon: 'IconCurrencyDollar',
     },
+    currencyField(FIELD_IDS.recurringRevenue, 'recurringRevenue', 'Recurring revenue', 'IconRepeat'),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.recurringPlan,
+      name: 'recurringPlan',
+      label: 'Recurring plan',
+      icon: 'IconCalendarRepeat',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: CRM_RECURRING_PLAN_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: CRM_RECURRING_PLAN_FIELD_UNIVERSAL_IDENTIFIERS.crmLeads,
+    }),
+    appWritten(numberField(FIELD_IDS.automatedProbability, 'automatedProbability', 'Automated probability (%)', 'IconPercentage', { defaultValue: 0 })),
+    appWritten({ universalIdentifier: FIELD_IDS.proratedRevenue, name: 'proratedRevenue', label: 'Prorated revenue', icon: 'IconCoin', type: FieldType.CURRENCY }),
+    appWritten({ universalIdentifier: FIELD_IDS.recurringRevenueMonthly, name: 'recurringRevenueMonthly', label: 'Expected MRR', icon: 'IconRepeat', type: FieldType.CURRENCY }),
+    appWritten({
+      universalIdentifier: FIELD_IDS.recurringRevenueMonthlyProrated,
+      name: 'recurringRevenueMonthlyProrated',
+      label: 'Prorated MRR',
+      icon: 'IconRepeat',
+      type: FieldType.CURRENCY,
+    }),
+    appWritten({
+      universalIdentifier: FIELD_IDS.recurringRevenueProrated,
+      name: 'recurringRevenueProrated',
+      label: 'Prorated recurring revenue',
+      icon: 'IconRepeat',
+      type: FieldType.CURRENCY,
+    }),
     {
       universalIdentifier: FIELD_IDS.probability,
       name: 'probability',
@@ -198,6 +245,40 @@ export default defineObject({
       type: FieldType.DATE_TIME,
       icon: 'IconTransform',
     },
+    appWritten({ universalIdentifier: FIELD_IDS.dateOpen, name: 'dateOpen', label: 'Assignment date', icon: 'IconCalendarUser', type: FieldType.DATE_TIME }),
+    appWritten(numberField(FIELD_IDS.dayOpen, 'dayOpen', 'Days to assign', 'IconClock', { decimals: 0, int: true })),
+    appWritten(numberField(FIELD_IDS.dayClose, 'dayClose', 'Days to close', 'IconClock', { decimals: 0, int: true })),
+    appWritten({
+      universalIdentifier: FIELD_IDS.dateLastStageUpdate,
+      name: 'dateLastStageUpdate',
+      label: 'Last stage update',
+      icon: 'IconCalendarTime',
+      type: FieldType.DATE_TIME,
+    }),
+    appWritten({
+      universalIdentifier: FIELD_IDS.phoneState,
+      name: 'phoneState',
+      label: 'Phone quality',
+      icon: 'IconPhoneCheck',
+      type: FieldType.SELECT,
+      options: [
+        { value: PHONE_STATE.CORRECT, label: 'Correct', position: 0, color: 'green' },
+        { value: PHONE_STATE.INCORRECT, label: 'Incorrect', position: 1, color: 'red' },
+      ],
+    }),
+    appWritten({
+      universalIdentifier: FIELD_IDS.emailState,
+      name: 'emailState',
+      label: 'Email quality',
+      icon: 'IconMailCheck',
+      type: FieldType.SELECT,
+      options: [
+        { value: EMAIL_STATE.CORRECT, label: 'Correct', position: 0, color: 'green' },
+        { value: EMAIL_STATE.INCORRECT, label: 'Incorrect', position: 1, color: 'red' },
+      ],
+    }),
+    appWritten(booleanField(FIELD_IDS.isRotting, 'isRotting', 'Rotting', 'IconFlame', false)),
+    appWritten(numberField(FIELD_IDS.rottingDays, 'rottingDays', 'Days rotting', 'IconFlame', { decimals: 0, int: true, defaultValue: 0 })),
     {
       universalIdentifier: FIELD_IDS.description,
       name: 'description',
@@ -217,6 +298,7 @@ export default defineObject({
       name: 'source',
       label: 'Source',
       icon: 'IconSpeakerphone',
+      onDelete: OnDeleteAction.SET_NULL,
       targetObjectUniversalIdentifier: UTM_SOURCE_OBJECT_UNIVERSAL_IDENTIFIER,
       targetFieldUniversalIdentifier: UTM_SOURCE_FIELD_UNIVERSAL_IDENTIFIERS.crmLeads,
     }),
@@ -225,6 +307,7 @@ export default defineObject({
       name: 'medium',
       label: 'Medium',
       icon: 'IconBroadcast',
+      onDelete: OnDeleteAction.SET_NULL,
       targetObjectUniversalIdentifier: UTM_MEDIUM_OBJECT_UNIVERSAL_IDENTIFIER,
       targetFieldUniversalIdentifier: UTM_MEDIUM_FIELD_UNIVERSAL_IDENTIFIERS.crmLeads,
     }),
@@ -233,6 +316,7 @@ export default defineObject({
       name: 'campaign',
       label: 'Campaign',
       icon: 'IconAd',
+      onDelete: OnDeleteAction.SET_NULL,
       targetObjectUniversalIdentifier: UTM_CAMPAIGN_OBJECT_UNIVERSAL_IDENTIFIER,
       targetFieldUniversalIdentifier: UTM_CAMPAIGN_FIELD_UNIVERSAL_IDENTIFIERS.crmLeads,
     }),

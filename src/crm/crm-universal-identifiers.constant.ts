@@ -26,6 +26,22 @@ export const CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS = {
   source: '18614832-c586-4f8f-9bb7-37d667cb586a',
   medium: 'a34ea3be-350a-4b96-92b4-00d9f7e98547',
   campaign: 'e318eeef-3ab4-43de-bacb-d03b7f275faf',
+  stage: 'e80c1376-7dfe-4b48-9dce-a376864a2a19',
+  recurringRevenue: '575acd4a-3e82-44e4-8b8a-c66b2460d703',
+  recurringPlan: '902724c7-3417-4906-8d97-3251f611ebb8',
+  automatedProbability: '4ebf2972-e423-41bd-b6a4-fcff4d35498b',
+  proratedRevenue: 'fd1630d0-650b-46ab-acea-231e95d2928d',
+  recurringRevenueMonthly: '8369bc6e-2368-489a-98dc-ac49bda9cc59',
+  recurringRevenueMonthlyProrated: 'd3d2aba2-759c-487a-be2a-1377ef058715',
+  recurringRevenueProrated: 'afae8dc2-e47c-4240-81e1-33b2a8c43c38',
+  dateOpen: '8e7169e2-b067-4ba5-96f0-429d4efe4127',
+  dayOpen: '85e92b12-de9b-43aa-8452-fa82a7e0053d',
+  dayClose: '3d35de09-fb98-4918-b88a-06a0e25dca03',
+  dateLastStageUpdate: 'a065b51a-fc29-451b-bcb8-dda0acdf11fa',
+  phoneState: 'c7bb5782-b022-4330-a1c1-4dffc4e4f9ac',
+  emailState: '5e719f0b-dfc6-4e85-8eb0-df0234c683d0',
+  isRotting: '88641d59-61df-462a-adaa-487f0bf4aef1',
+  rottingDays: 'fcf953bf-4222-431c-978b-359dccf042b7',
 } as const;
 
 // The other side of each lead relation, on the standard objects
@@ -49,3 +65,56 @@ export const CRM_LEADS_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER =
   '65d66f3a-99af-4cc9-b7ab-728122bd3eba';
 export const CRM_LOST_REASONS_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER =
   '9248274a-e6a3-4b6d-a60c-0630f0c60c45';
+
+export const CRM_STAGE_OBJECT_UNIVERSAL_IDENTIFIER =
+  '6c6f2157-59b9-4472-9cd2-5b8e07afc15d';
+export const CRM_STAGE_FIELD_UNIVERSAL_IDENTIFIERS = {
+  name: '04667f6e-966c-4e99-a589-243ccccfdf7e',
+  sequence: '87f286ef-96cd-4562-a0c5-e745c56e67d0',
+  isWon: '0f3efe29-9b34-43d4-8b11-e95fa941d760',
+  rottingThresholdDays: 'f945f5ff-d32f-4b00-8908-3315681d90e5',
+  requirements: 'db75a152-3949-46af-9513-a7d8c65aab2b',
+  fold: '6088a0f2-b2cc-4206-837b-0d813190515f',
+  color: '5fada11b-e6cc-4c68-8c68-49045829e1ba',
+  crmLeads: '6420838e-013b-4e5a-951d-2c0362beeb4b',
+  seedKey: '8df343c1-4312-41f1-b609-50640a4da732',
+} as const;
+export const CRM_STAGES_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER =
+  'bfcb0abb-9e04-41d5-ab76-171237f35029';
+export const CRM_STAGE_TRIGGER_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
+  '50d8133d-7672-48b9-995a-7626f0ef7c45';
+
+export const CRM_RECURRING_PLAN_OBJECT_UNIVERSAL_IDENTIFIER =
+  '803d5933-e978-4f42-8719-5412fbe129d5';
+export const CRM_RECURRING_PLAN_FIELD_UNIVERSAL_IDENTIFIERS = {
+  name: '973ddc43-9a9b-4db8-b1c9-80f73149b08e',
+  numberOfMonths: '7b198a7d-dbfe-4b02-810c-2eeaac7672cc',
+  active: '9c4c822a-974e-4f5e-9918-01db9acfde54',
+  sequence: '1569f382-44ed-4132-b9da-0929f721a036',
+  crmLeads: 'e0c33e93-662d-41fb-b7d4-9cc6ef1c08fb',
+  seedKey: '8ae05e7a-80af-4618-a6d8-e446ecccaa05',
+} as const;
+export const CRM_RECURRING_PLANS_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER =
+  'c7dac6f3-d932-4cfc-a815-e2916374e3b9';
+export const CRM_RECURRING_PLAN_TRIGGER_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
+  '35203025-af8b-4680-bbe7-e14dc66d79bd';
+
+export const CRM_LEAD_TRIGGER_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
+  '81056677-8e81-413b-8783-a90047696b17';
+export const CRM_LOST_REASON_TRIGGER_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
+  '1a2a8ce2-a7d3-4069-987f-75f23190b886';
+
+// Rows the install step makes once; code finds them by key after staff rename them.
+export const CRM_STAGE_SEED_KEYS = {
+  new: 'crm.stage_lead1',
+  qualified: 'crm.stage_lead2',
+  proposition: 'crm.stage_lead3',
+  won: 'crm.stage_lead4',
+} as const;
+
+export const CRM_RECURRING_PLAN_SEED_KEYS = {
+  monthly: 'crm.crm_recurring_plan_monthly',
+  yearly: 'crm.crm_recurring_plan_yearly',
+  overThreeYears: 'crm.crm_recurring_plan_over_3_years',
+  overFiveYears: 'crm.crm_recurring_plan_over_5_years',
+} as const;
