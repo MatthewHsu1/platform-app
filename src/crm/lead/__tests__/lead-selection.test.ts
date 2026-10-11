@@ -36,4 +36,35 @@ describe('readLeadRow', () => {
   it('reads an empty text as no value', () => {
     expect(readLeadRow({ id: 'l1', createdAt: 'x', name: '', contactName: '' }).name).toBeNull();
   });
+
+  it("reads an event's composite value and a read of the same data as equal", () => {
+    const fromEvent = readLeadRow({
+      id: 'l1',
+      createdAt: 'x',
+      website: { primaryLinkLabel: '', primaryLinkUrl: 'http://acme.example', secondaryLinks: [] },
+      contactAddress: { addressStreet1: '1 Main St', addressCity: 'Reno', addressState: '', addressLat: 39.5, addressLng: -119.8 },
+      description: { blocknote: '[]', markdown: 'Call back' },
+    });
+    const fromRead = readLeadRow({
+      id: 'l1',
+      createdAt: 'x',
+      website: { primaryLinkUrl: 'http://acme.example', primaryLinkLabel: null, secondaryLinks: null },
+      contactAddress: {
+        addressStreet1: '1 Main St',
+        addressStreet2: null,
+        addressCity: 'Reno',
+        addressPostcode: null,
+        addressState: null,
+        addressCountry: null,
+      },
+      description: { markdown: 'Call back' },
+    });
+
+    expect(JSON.stringify(fromEvent)).toBe(JSON.stringify(fromRead));
+  });
+
+  it('reads a composite with no part filled as no value', () => {
+    expect(readLeadRow({ id: 'l1', createdAt: 'x', emailFrom: { primaryEmail: '', additionalEmails: [] } }).emailFrom).toBeNull();
+  });
 });
+

@@ -1,0 +1,68 @@
+import { type LeadContext } from 'src/crm/lead/types/lead-context.type';
+import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
+import { type PartnerCompanyRow } from 'src/crm/lead/types/partner-company-row.type';
+import { type PartnerPersonRow } from 'src/crm/lead/types/partner-person-row.type';
+import { sortStages } from 'src/crm/stage/utils/sort-stages.util';
+import { findMany, records } from 'src/shared/triggers/records';
+
+type StageNode = {
+  id: string;
+  name: string | null;
+  sequence: number | null;
+  isWon: boolean | null;
+  fold: boolean | null;
+  rottingThresholdDays: number | null;
+  createdAt: string;
+};
+
+const presentIds = (values: (string | null)[]) => [...new Set(values.filter((value): value is string => value !== null))];
+
+// One request for everything the lead rules read besides the leads. Stages and
+// plans are few; contacts and customers only those of these leads.
+export const loadLeadContext = async (leads: LeadRow[]): Promise<LeadContext> => {
+  const { stages, plans, people, companies } = await findMany<{
+    stages: StageNode[];
+    plans: { id: string; numberOfMonths: number | null }[];
+    people: PartnerPersonRow[];
+    companies: PartnerCompanyRow[];
+  }>({
+    stages: {
+      of: records('crmStage', 'crmStages'),
+      filter: {},
+      selection: 'id name sequence isWon fold rottingThresholdDays createdAt',
+    },
+    plans: { of: records('crmRecurringPlan', 'crmRecurringPlans'), filter: {}, selection: 'id numberOfMonths' },
+    people: {
+      of: records('person', 'people'),
+      filter: { id: { in: presentIds(leads.map((lead) => lead.personId)) } },
+      selection:
+        'id name { firstName lastName } emails { primaryEmail additionalEmails } phones { primaryPhoneNumber primaryPhoneCountryCode primaryPhoneCallingCode additionalPhones } jobTitle companyId',
+    },
+    companies: {
+      of: records('company', 'companies'),
+      filter: { id: { in: presentIds(leads.map((lead) => lead.companyId)) } },
+      selection:
+        'id name domainName { primaryLinkUrl primaryLinkLabel secondaryLinks } address { addressStreet1 addressStreet2 addressCity addressPostcode addressState addressCountry }',
+    },
+  });
+
+  return {
+    stages: sortStages(
+      stages.map((stage) => ({
+        id: stage.id,
+        name: stage.name ?? '',
+        sequence: stage.sequence ?? 0,
+        isWon: stage.isWon === true,
+        fold: stage.fold === true,
+        rottingThresholdDays: stage.rottingThresholdDays ?? 0,
+        createdAt: stage.createdAt,
+        teamIds: [],
+      })),
+    ),
+    recurringPlanMonths: new Map(plans.map((plan) => [plan.id, plan.numberOfMonths ?? 0])),
+    teams: [],
+    memberships: [],
+    people: new Map(people.map((person) => [person.id, person])),
+    companies: new Map(companies.map((company) => [company.id, company])),
+  };
+};
