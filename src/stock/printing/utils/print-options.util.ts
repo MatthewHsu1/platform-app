@@ -1,3 +1,4 @@
+import { isUuid } from 'src/shared/utils/is-uuid.util';
 import { type PrintOptionsParser } from 'src/stock/printing/types/print-options-parser.type';
 
 type PrintOptionKind = 'string' | 'number' | 'boolean' | 'idList' | readonly string[];
@@ -5,7 +6,6 @@ type PrintOptionKind = 'string' | 'number' | 'boolean' | 'idList' | readonly str
 // Options travel inside the stored print pass: they stay small.
 export const PRINT_OPTIONS_MAX_LENGTH = 2000;
 const TEXT_MAX_LENGTH = 200;
-export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // A list of record ids stays within the options size cap.
 export const PRINT_OPTION_MAX_IDS = 50;
 
@@ -27,7 +27,7 @@ const fits = (kind: PrintOptionKind, value: unknown) => {
       return (
         Array.isArray(value) &&
         value.length <= PRINT_OPTION_MAX_IDS &&
-        value.every((item) => typeof item === 'string' && UUID_PATTERN.test(item))
+        value.every(isUuid)
       );
   }
 };

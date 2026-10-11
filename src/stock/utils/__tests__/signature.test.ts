@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { orderSignedNote, readSignatureStrokes, signatureSvg, signedSlipFileName } from 'src/stock/utils/signature.util';
+import { readSignatureStrokes, signatureSvg, signedSlipFileName } from 'src/stock/utils/signature.util';
 
 describe('signature', () => {
   it('draws each stroke as one path on a white background', () => {
@@ -19,11 +19,6 @@ describe('signature', () => {
       '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"><rect width="400" height="200" fill="white"/>' +
         '<path d="M10.0 20.0 L30.3 40.0" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     );
-  });
-
-  it('names the signer in the note when the transfer has a contact', () => {
-    expect(orderSignedNote('Gym A')).toBe('Order signed by Gym A');
-    expect(orderSignedNote('')).toBe('Order signed');
   });
 
   it('names the signed slip after the transfer', () => {
@@ -57,5 +52,6 @@ describe('signature', () => {
     expect(readSignatureStrokes([[['10', 20]]], 400, 200)).toBeNull();
     expect(readSignatureStrokes([[[Number.NaN, 20]]], 400, 200)).toBeNull();
     expect(readSignatureStrokes([[[10, 20, 30]]], 400, 200)).toBeNull();
+    expect(readSignatureStrokes([Array.from({ length: 20001 }, () => [10, 20])], 400, 200)).toBeNull();
   });
 });

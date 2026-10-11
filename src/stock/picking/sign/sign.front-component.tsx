@@ -5,7 +5,7 @@ import { Button } from 'twenty-ui/primitives/input';
 import { themeCssVariables } from 'twenty-ui/theme';
 
 import { LinkList } from 'src/shared/front-components/link-list';
-import { ClosablePanel, closePopUp, ErrorText, usePopUpCall } from 'src/shared/front-components/pop-up';
+import { ClosablePanel, closePopUp, ErrorText, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { type LinkItem } from 'src/shared/front-components/types/link-item.type';
 import { SIGNATURE_PAD } from 'src/stock/picking/sign/signature-pad.constant';
@@ -19,6 +19,7 @@ const SIGN_TEXT = {
   cancel: msg('Cancel'),
   close: msg('Close'),
   failed: msg('Could not save the signature.'),
+  opening: msg('Opening the signature pad…'),
   drawFirst: msg('Draw the signature before you sign.'),
   signed: msg('Signed. The signed delivery slip is saved on the transfer.'),
   selectOne: msg('Select one delivery to sign.'),
@@ -30,6 +31,7 @@ const SIGN_TEXT = {
 export const SIGN_ROUTE_TEXTS = [
   msg('Draw the signature before you sign.'),
   msg('Transfer not found.'),
+  msg('You are not allowed to change this transfer, so you cannot sign it.'),
   msg('Only deliveries can be signed.'),
   msg('This transfer is already signed.'),
   msg('Your time zone is not known. Check the time zone in your settings and sign again.'),
@@ -49,10 +51,25 @@ const SignPad = () => {
   const isDrawing = useRef(false);
   const [strokes, setStrokes] = useState<SignaturePoint[][]>([]);
   const [files, setFiles] = useState<LinkItem[] | null>(null);
+  const [canSign, setCanSign] = useState(false);
   const { busy, error, setError, call } = usePopUpCall(t(SIGN_TEXT.failed));
+
+  // A delivery already signed, or one this person may not change, says so before any drawing.
+  useRunOnce(() => {
+    if (selectedIds.length === 1) {
+      void call<{ canSign: boolean }>(SIGN_ROUTE_PATH, { pickingId: selectedIds[0], check: true }).then((result) => {
+        setCanSign(result?.canSign === true);
+      });
+    }
+  });
 
   if (selectedIds.length !== 1) {
     return <ClosablePanel message={null} error={t(SIGN_TEXT.selectOne)} busy={false} closeLabel={t(SIGN_TEXT.close)} />;
+  }
+  if (!canSign) {
+    return (
+      <ClosablePanel message={error === null ? t(SIGN_TEXT.opening) : null} error={error} busy={busy} closeLabel={t(SIGN_TEXT.close)} />
+    );
   }
 
   const point = (event: PointerEvent): SignaturePoint => {

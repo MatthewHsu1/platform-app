@@ -57,8 +57,8 @@ type PickingNode = Pick<TransferForGroups, 'person' | 'company'> & {
 };
 
 const LINE_SELECTION = `id createdAt date state quantity productUomId productId lotId lotName pickingId moveId locationId locationDestId
-  lot { name deletedAt } location { id completeName usage deletedAt } locationDest { id completeName usage deletedAt }`;
-const MOVE_SELECTION = 'id date isInventory pickingId scrapId scrap { name deletedAt }';
+  lot { id name deletedAt } location { id completeName usage deletedAt } locationDest { id completeName usage deletedAt }`;
+const MOVE_SELECTION = 'id date isInventory pickingId scrapId scrap { id name deletedAt }';
 const PICKING_SELECTION = `id name pickingTypeCode dateDone pickingType { code deletedAt } ${CONTACT_GROUP_SELECTION}`;
 
 const distinct = (ids: (string | null)[]) => [...new Set(ids.filter((id): id is string => id !== null))];

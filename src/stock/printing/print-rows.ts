@@ -38,10 +38,14 @@ const nestedRecords = (row: Row): { objectSingular: string; id: string }[] =>
 
     return values.filter(isRow).flatMap((nested) => {
       const objectSingular = objectOf(nested);
-      const own =
-        objectSingular !== null && objectSingular in GUARDED_PLURALS && typeof nested.id === 'string'
-          ? [{ objectSingular, id: nested.id }]
-          : [];
+      if (objectSingular === null || !(objectSingular in GUARDED_PLURALS)) {
+        return nestedRecords(nested);
+      }
+      // Without its id the page could not tell the record was allowed and would print it blank.
+      if (typeof nested.id !== 'string') {
+        throw new Error(`A print read a ${objectSingular} inside another record without its id: add id to that selection.`);
+      }
+      const own = [{ objectSingular, id: nested.id }];
 
       return [...own, ...nestedRecords(nested)];
     });

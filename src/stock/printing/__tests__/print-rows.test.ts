@@ -48,4 +48,29 @@ describe('print rows', () => {
       ['p2', null],
     ]);
   });
+
+  it('refuses a nested record a row rule may hide when it was read without its id', async () => {
+    personRows.stockMoveLine = [{ id: 'l1', lot: { __typename: 'StockLot', name: 'LOT-1' } }];
+
+    await expect(recordingFinder().find('stockMoveLine', 'stockMoveLines', {}, 'lot { name }')).rejects.toThrow(
+      'A print read a stockLot inside another record without its id',
+    );
+  });
+
+  it('keeps a lot on the page when it was read with its id and the user may read it', async () => {
+    personRows.stockMoveLine = [{ id: 'l1', lot: { __typename: 'StockLot', id: 'lot1', name: 'LOT-1' } }];
+    appRows.stockMoveLine = personRows.stockMoveLine;
+    readable.stockLot = ['lot1'];
+    const recorder = recordingFinder();
+
+    await recorder.find('stockMoveLine', 'stockMoveLines', {}, 'lot { id name }');
+    const rows = await restrictedFinder(await recorder.rows())<{ lot: { name: string } | null }>(
+      'stockMoveLine',
+      'stockMoveLines',
+      {},
+      'lot { id name }',
+    );
+
+    expect(rows.map((row) => row.lot?.name ?? null)).toEqual(['LOT-1']);
+  });
 });

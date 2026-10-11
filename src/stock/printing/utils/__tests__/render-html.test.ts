@@ -13,6 +13,15 @@ describe('escapeHtml', () => {
 });
 
 describe('renderHtml', () => {
+  it('puts the signature in the right third, at most 8 by 4 cm, the name centred under it', () => {
+    const png = new Uint8Array([137, 80, 78, 71]);
+    const html = renderHtml({ kind: 'document', blocks: [{ kind: 'signature', png, name: 'Gym <A>' }] }, 'x', noBarcode);
+
+    expect(html).toContain('.signature { margin-left: 66.67%;');
+    expect(html).toContain('max-width: 80mm; max-height: 40mm');
+    expect(html).toContain('<div class="signature"><h2>Signature</h2><img src="data:image/png;base64,iVBORw==" alt=""><p class="signature-name">Gym &lt;A&gt;</p></div>');
+  });
+
   it('prints a document on A4 portrait', () => {
     const html = renderHtml({ kind: 'document', blocks: [{ kind: 'title', text: 'WH/OUT/00001' }] }, 'WH/OUT/00001', noBarcode);
 

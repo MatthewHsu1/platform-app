@@ -514,22 +514,21 @@ describe('buildDeliverySlip', () => {
   it('says so when a signed slip could not load its signature', () => {
     const blocks = buildDeliverySlip([picking({ state: 'DONE', signatureFailed: true })], {}, UTC).blocks;
 
-    expect(blocks.slice(-3)).toEqual([
-      { kind: 'heading', text: 'Signature' },
-      { kind: 'text', text: 'The signature could not be loaded.' },
-      { kind: 'text', text: 'Gym A' },
-    ]);
+    expect(blocks[blocks.length - 1]).toEqual({ kind: 'signature', png: null, name: 'Gym A' });
   });
 
-  it('shows the signature with the contact name', () => {
+  it('shows the signature with the name of the transfer\'s own contact', () => {
     const png = new Uint8Array([137, 80, 78, 71]);
     const blocks = buildDeliverySlip([picking({ state: 'DONE', signaturePng: png })], {}, UTC).blocks;
 
-    expect(blocks.slice(-3)).toEqual([
-      { kind: 'heading', text: 'Signature' },
-      { kind: 'image', png, widthMm: 60 },
-      { kind: 'text', text: 'Gym A' },
-    ]);
+    expect(blocks[blocks.length - 1]).toEqual({ kind: 'signature', png, name: 'Gym A' });
+  });
+
+  it('leaves the name out under a signature when the contact comes only from the first move', () => {
+    const png = new Uint8Array([137, 80, 78, 71]);
+    const blocks = buildDeliverySlip([picking({ state: 'DONE', signaturePng: png, hasTransferPartner: false })], {}, UTC).blocks;
+
+    expect(blocks[blocks.length - 1]).toEqual({ kind: 'signature', png, name: '' });
   });
 });
 

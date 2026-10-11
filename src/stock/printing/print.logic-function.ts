@@ -1,11 +1,12 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
+import { isUuid } from 'src/shared/utils/is-uuid.util';
 import { createPrintPass } from 'src/stock/printing/create-print-pass';
 import { PRINT_MESSAGES } from 'src/stock/printing/print-messages.constant';
 import { AFTER_PRINT, OPTION_RECORDS, printOptionsParserOf } from 'src/stock/printing/printable-objects';
 import { type PrintReportKey } from 'src/stock/printing/types/print-report-key.type';
 import { isTimeZone } from 'src/stock/printing/utils/print-dates.util';
-import { isOverIdLimit, isPrintOptionsSizeAllowed, PRINT_OPTION_MAX_IDS, UUID_PATTERN } from 'src/stock/printing/utils/print-options.util';
+import { isOverIdLimit, isPrintOptionsSizeAllowed, PRINT_OPTION_MAX_IDS } from 'src/stock/printing/utils/print-options.util';
 import { filterReadableIds } from 'src/stock/stock-access';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';
 import { StockUserError } from 'src/stock/stock-errors';
@@ -55,7 +56,7 @@ const checkOptionRecords = async (report: PrintReportKey, options: Record<string
       continue;
     }
     const ids: unknown[] = Array.isArray(value) ? value : [value];
-    const isIdList = ids.every((id): id is string => typeof id === 'string' && UUID_PATTERN.test(id));
+    const isIdList = ids.every(isUuid);
 
     if (
       !isIdList ||

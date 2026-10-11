@@ -12,3 +12,9 @@ export const PRINT_PAGE_MESSAGES = {
   linkNotValid: 'This print link is not valid any more. Print again from Twenty.',
   failed: 'Could not print.',
 } as const;
+
+// Printed under a signed slip's lines, in the page's language like the rest of the slip.
+export const SIGNATURE_PAGE_TEXTS = {
+  heading: 'Signature',
+  failed: 'The signature could not be loaded.',
+} as const;

@@ -20,7 +20,6 @@ const CODE_REPORT_NAMES: Record<PickingPrintData['pickingTypeCode'], string> = {
 };
 const NOT_RESERVED_TEXT = 'All products could not be reserved. Click on the "Check Availability" button to try to reserve products.';
 const NO_PACKAGE_TEXT = 'Products with no package assigned';
-const SIGNATURE_FAILED_TEXT = 'The signature could not be loaded.';
 const WAITING_STATES: string[] = [PICKING_STATE.DRAFT, PICKING_STATE.WAITING, PICKING_STATE.CONFIRMED];
 const PACKAGE_TABLE_STATES: string[] = [PICKING_STATE.ASSIGNED, PICKING_STATE.DONE];
 const CLOSED_STATES: string[] = [PICKING_STATE.DONE, PICKING_STATE.CANCEL];
@@ -539,17 +538,11 @@ const openSlipTable = (picking: PickingPrintData) =>
       }),
   );
 
-const signatureBlocks = (picking: PickingPrintData): PrintBlock[] => {
-  if (picking.signaturePng === null && !picking.signatureFailed) {
-    return [];
-  }
-
-  return [
-    { kind: 'heading', text: 'Signature' },
-    picking.signaturePng === null ? { kind: 'text', text: SIGNATURE_FAILED_TEXT } : { kind: 'image', png: picking.signaturePng, widthMm: 60 },
-    ...(picking.partnerName === '' ? [] : [{ kind: 'text' as const, text: picking.partnerName }]),
-  ];
-};
+// Only the transfer's own contact is named under the signature, not one taken from its first move.
+const signatureBlocks = (picking: PickingPrintData): PrintBlock[] =>
+  picking.signaturePng === null && !picking.signatureFailed
+    ? []
+    : [{ kind: 'signature', png: picking.signaturePng, name: picking.hasTransferPartner ? picking.partnerName : '' }];
 
 const deliverySlipBlocks = (picking: PickingPrintData, timeZone: string): PrintBlock[] => {
   const lines = picking.state === PICKING_STATE.DONE ? doneTable(picking, timeZone) : openSlipTable(picking);

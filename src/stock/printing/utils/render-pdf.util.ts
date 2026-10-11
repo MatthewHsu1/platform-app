@@ -1,10 +1,12 @@
 import { grayscale, PDFDocument, type PDFFont, type PDFImage, type PDFPage, StandardFonts } from 'pdf-lib';
 
+import { SIGNATURE_PAGE_TEXTS } from 'src/stock/printing/print-messages.constant';
 import { type BarcodeBlock } from 'src/stock/printing/types/barcode-block.type';
 import { type BarcodePng } from 'src/stock/printing/types/barcode-png.type';
 import { type PrintBlock } from 'src/stock/printing/types/print-block.type';
 import { type PrintDocument } from 'src/stock/printing/types/print-document.type';
 import { type PrintTableCell } from 'src/stock/printing/types/print-table-cell.type';
+import { type SignatureBlock } from 'src/stock/printing/types/signature-block.type';
 
 const MM = 72 / 25.4;
 // ISO 216 A4 in points.
@@ -14,6 +16,8 @@ const LEADING = 1.25;
 const SIZE = { title: 18, heading: 12, text: 10, table: 9, caption: 9 };
 const GAP = 2 * MM;
 const CELL_PADDING = 2 * MM;
+// A signature sits in the right third of the page, its image at most 8 by 4 cm.
+const SIGNATURE_BOX = { width: 80 * MM, height: 40 * MM };
 const BLACK = grayscale(0);
 const LIGHT = grayscale(0.8);
 
@@ -202,6 +206,45 @@ export const renderPdf = async (output: PrintDocument, barcodePng: BarcodePng): 
     cursor.y -= GAP;
   };
 
+  // Heading, image and name move to the next page together.
+  const drawSignature = async (block: SignatureBlock) => {
+    const x = MARGIN + (usable * 2) / 3;
+    const columnWidth = usable / 3;
+    const image = block.png === null ? null : await pdf.embedPng(block.png);
+    const boxWidth = Math.min(columnWidth, SIGNATURE_BOX.width);
+    const scale = image === null ? 0 : Math.min(boxWidth / image.width, SIGNATURE_BOX.height / image.height);
+    const imageWidth = image === null ? 0 : image.width * scale;
+    const imageHeight = image === null ? 0 : image.height * scale;
+    const failedLines = image === null ? wrapText(SIGNATURE_PAGE_TEXTS.failed, font, SIZE.text, columnWidth) : [];
+    const nameLines = block.name === '' ? [] : wrapText(block.name, font, SIZE.text, columnWidth);
+    const height =
+      8 * MM +
+      lineHeight(SIZE.heading) +
+      GAP +
+      imageHeight +
+      failedLines.length * lineHeight(SIZE.text) +
+      (nameLines.length === 0 ? 0 : GAP + nameLines.length * lineHeight(SIZE.text));
+
+    ensure(height);
+    cursor.y -= cursor.y < top ? 8 * MM : 0;
+    cursor.y -= drawLines([SIGNATURE_PAGE_TEXTS.heading], x, cursor.y, SIZE.heading, bold) + GAP;
+    if (image !== null) {
+      cursor.page.drawImage(image, { x, y: cursor.y - imageHeight, width: imageWidth, height: imageHeight });
+      cursor.y -= imageHeight;
+    }
+    cursor.y -= drawLines(failedLines, x, cursor.y, SIZE.text, font);
+    if (nameLines.length > 0) {
+      cursor.y -= GAP;
+      nameLines.forEach((line, index) => {
+        const lineX = x + (columnWidth - font.widthOfTextAtSize(line, SIZE.text)) / 2;
+
+        cursor.page.drawText(line, { x: lineX, y: cursor.y - SIZE.text - index * lineHeight(SIZE.text), size: SIZE.text, font, color: BLACK });
+      });
+      cursor.y -= nameLines.length * lineHeight(SIZE.text);
+    }
+    cursor.y -= GAP;
+  };
+
   for (const block of output.blocks) {
     switch (block.kind) {
       case 'pageBreak':
@@ -242,6 +285,9 @@ export const renderPdf = async (output: PrintDocument, barcodePng: BarcodePng): 
         cursor.y -= height + GAP;
         break;
       }
+      case 'signature':
+        await drawSignature(block);
+        break;
     }
   }
 

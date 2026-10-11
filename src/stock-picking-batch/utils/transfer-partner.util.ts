@@ -4,7 +4,7 @@ import { type TransferForGroups } from 'src/stock-picking-batch/types/transfer-f
 // The contact of a transfer or a move. Twenty returns a nested to-one relation
 // as null unless its deletedAt is selected.
 export const CONTACT_GROUP_SELECTION =
-  'person { id name { firstName lastName } deletedAt company { address { addressCountry } deletedAt } } company { id name address { addressCountry } deletedAt }';
+  'person { id name { firstName lastName } deletedAt company { id address { addressCountry } deletedAt } } company { id name address { addressCountry } deletedAt }';
 
 export const TRANSFER_GROUP_SELECTION = `locationId location { completeName deletedAt } locationDestId locationDest { completeName deletedAt } ${CONTACT_GROUP_SELECTION}`;
 

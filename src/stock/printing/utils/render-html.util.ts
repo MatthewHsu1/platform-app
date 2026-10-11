@@ -1,3 +1,4 @@
+import { SIGNATURE_PAGE_TEXTS } from 'src/stock/printing/print-messages.constant';
 import { type BarcodeBlock } from 'src/stock/printing/types/barcode-block.type';
 import { type LabelSheet } from 'src/stock/printing/types/label-sheet.type';
 import { type PrintBlock } from 'src/stock/printing/types/print-block.type';
@@ -32,6 +33,9 @@ table.fields th { width: 35%; }
 .barcode .symbol svg { display: block; width: 100%; height: 100%; }
 .barcode .caption { font-size: 9pt; }
 img { max-width: 100%; }
+.signature { margin-left: 66.67%; margin-top: 8mm; break-inside: avoid; }
+.signature img { display: block; width: 100%; height: auto; object-fit: contain; max-width: 80mm; max-height: 40mm; }
+.signature-name { text-align: center; }
 .page-break { break-before: page; }
 `;
 
@@ -86,6 +90,12 @@ const blockHtml = (block: PrintBlock, barcodeSvg: (block: BarcodeBlock) => strin
       return barcodeHtml(block, barcodeSvg);
     case 'image':
       return `<img src="data:image/png;base64,${Buffer.from(block.png).toString('base64')}" style="width: ${size(block.widthMm)}mm" alt="">`;
+    case 'signature':
+      return `<div class="signature"><h2>${SIGNATURE_PAGE_TEXTS.heading}</h2>${
+        block.png === null
+          ? `<p>${escapeHtml(SIGNATURE_PAGE_TEXTS.failed)}</p>`
+          : `<img src="data:image/png;base64,${Buffer.from(block.png).toString('base64')}" alt="">`
+      }${block.name === '' ? '' : `<p class="signature-name">${escapeHtml(block.name)}</p>`}</div>`;
     case 'pageBreak':
       return '<div class="page-break"></div>';
   }

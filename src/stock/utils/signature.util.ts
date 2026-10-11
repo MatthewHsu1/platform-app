@@ -1,5 +1,3 @@
-import { translate } from 'src/shared/i18n/translate';
-import { SIGN_MESSAGES } from 'src/stock/picking/sign/sign-messages.constant';
 import { type SignaturePoint } from 'src/stock/utils/types/signature-point.type';
 
 // A signature with more points than this is not a hand drawing.
@@ -27,21 +25,26 @@ const isPoint = (value: unknown): value is SignaturePoint =>
 // The pad sends its strokes as points; the route draws the image from them itself rather than
 // taking markup from the browser. A point a fast pointer put just outside the pad goes to its edge.
 export const readSignatureStrokes = (value: unknown, width: number, height: number): SignaturePoint[][] | null => {
-  if (!Array.isArray(value) || !value.every((stroke) => Array.isArray(stroke) && stroke.every(isPoint))) {
+  if (!Array.isArray(value)) {
     return null;
   }
-  const strokes = (value as SignaturePoint[][])
-    .filter((stroke) => stroke.length > 0)
-    .map((stroke) => stroke.map(([x, y]): SignaturePoint => [clamp(x, width), clamp(y, height)]));
-  const points = strokes.reduce((sum, stroke) => sum + stroke.length, 0);
+  const strokes: SignaturePoint[][] = [];
+  let points = 0;
 
-  return points === 0 || points > MAXIMUM_POINTS ? null : strokes;
+  for (const stroke of value) {
+    if (!Array.isArray(stroke)) {
+      return null;
+    }
+    points += stroke.length;
+    if (points > MAXIMUM_POINTS || !stroke.every(isPoint)) {
+      return null;
+    }
+    if (stroke.length > 0) {
+      strokes.push(stroke.map(([x, y]): SignaturePoint => [clamp(x, width), clamp(y, height)]));
+    }
+  }
+
+  return points === 0 ? null : strokes;
 };
-
-// The note names the transfer's own contact; no locale gives the English text.
-export const orderSignedNote = (partnerName: string, locale: string | null = null) =>
-  partnerName
-    ? translate(locale, SIGN_MESSAGES.orderSignedBy, { partner: partnerName })
-    : translate(locale, SIGN_MESSAGES.orderSigned);
 
 export const signedSlipFileName = (pickingName: string) => `${pickingName}_signed_delivery_slip.pdf`;
