@@ -13,6 +13,6 @@ export type ForecastLine = {
   receiptLate: boolean;
   inTransit: boolean;
   isMatched: boolean;
-  reservation: { id: string; name: string } | null;
+  reservation: { id: string | null; name: string } | null;
   removalDate: 'NOW' | string | null;
 };
