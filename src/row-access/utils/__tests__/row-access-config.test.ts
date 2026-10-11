@@ -104,10 +104,10 @@ describe('config edits', () => {
   });
 });
 
-// D35: a rule whose owner field became invalid must not vanish on Save. A
+// A rule whose owner field became invalid must not vanish on Save. A
 // dropped enabled rule opens every row of its object; a kept one makes the
 // server fail closed until the admin fixes it.
-describe('rules that became invalid (D35)', () => {
+describe('rules that became invalid', () => {
   const brokenConfig = {
     version: 1 as const,
     rules: [

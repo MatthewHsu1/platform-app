@@ -1,10 +1,8 @@
 import { EMPTY_ROW_ACCESS_CONFIG } from 'src/row-access/constants/empty-row-access-config.constant';
-import {
-  type RowAccessConfig,
-  type RowAccessRule,
-} from 'src/row-access/types/row-access-config.type';
+import { type RowAccessConfig } from 'src/row-access/types/row-access-config.type';
+import { type RowAccessRule } from 'src/row-access/types/row-access-rule.type';
 
-export type ParsedRowAccessConfig = {
+type ParsedRowAccessConfig = {
   config: RowAccessConfig;
   problem: string | undefined;
 };

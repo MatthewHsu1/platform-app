@@ -1,8 +1,7 @@
 import { type RowAccessConfig } from 'src/row-access/types/row-access-config.type';
-import {
-  type OwnerCandidateObject,
-  type RuleObject,
-} from 'src/row-access/types/owner-candidate-object.type';
+import { type OwnerCandidateObject } from 'src/row-access/types/owner-candidate-object.type';
+import { type RowAccessRuleWarning } from 'src/row-access/types/row-access-rule-warning.type';
+import { type RuleObject } from 'src/row-access/types/rule-object.type';
 
 export const setRuleEnabled = (
   config: RowAccessConfig,
@@ -74,13 +73,6 @@ export const removeRule = (
     (rule) => rule.objectMetadataId !== objectMetadataId,
   ),
 });
-
-export type RowAccessRuleWarning = {
-  objectMetadataId: string;
-  ownerFieldMetadataId: string;
-  isEnabled: boolean;
-  reason: 'object-unavailable' | 'owner-field-invalid' | 'duplicate-object';
-};
 
 // Rules the server will refuse: the object is gone, inactive or not allowed,
 // the owner field is no longer an active MANY_TO_ONE to workspaceMember, or

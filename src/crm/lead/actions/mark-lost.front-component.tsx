@@ -6,6 +6,7 @@ import {
   unmountFrontComponent,
   useRecordId,
 } from 'twenty-sdk/front-component';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { postLeadAction } from 'src/crm/lead/actions/lead-action-command';
 import {
@@ -36,29 +37,29 @@ const loadActiveLostReasons = async (): Promise<LostReason[]> => {
   return body.data?.crmLostReasons.edges.map(({ node }) => node) ?? [];
 };
 
-const STYLES = {
-  panel: {
-    fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-    fontSize: '13px',
-    padding: '16px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '8px',
-  },
-  title: { fontWeight: 600, marginBottom: '4px' },
-  button: {
-    textAlign: 'left' as const,
-    padding: '8px 12px',
-    border: '1px solid #ebebeb',
-    borderRadius: '6px',
-    background: '#ffffff',
-    font: 'inherit',
-    cursor: 'pointer',
-  },
-};
-
 // The lost reason is optional.
 const MarkLost = () => {
+  const STYLES = {
+    panel: {
+      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+      fontSize: '13px',
+      padding: '16px',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: '8px',
+    },
+    title: { fontWeight: 600, marginBottom: '4px' },
+    button: {
+      textAlign: 'left' as const,
+      padding: '8px 12px',
+      border: `1px solid ${themeCssVariables.border.color.medium}`,
+      borderRadius: '6px',
+      background: themeCssVariables.background.primary,
+      font: 'inherit',
+      cursor: 'pointer',
+    },
+  };
+
   const recordId = useRecordId();
   const [reasons, setReasons] = useState<LostReason[] | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -70,8 +71,8 @@ const MarkLost = () => {
   }, []);
 
   const close = () => {
-    unmountFrontComponent();
-    closeSidePanel();
+    void unmountFrontComponent();
+    void closeSidePanel();
   };
 
   const markLost = async (lostReasonId: string | null) => {

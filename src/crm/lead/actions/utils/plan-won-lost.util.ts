@@ -1,8 +1,5 @@
 import { WON_STAGE_VALUE, WON_STATUS } from 'src/crm/crm-options.constant';
-
-export type LeadUpdatePlan =
-  | { kind: 'refuse'; reason: string }
-  | { kind: 'update'; data: Record<string, string | number | null> };
+import { type LeadUpdatePlan } from 'src/crm/lead/actions/utils/types/lead-update-plan.type';
 
 // Won from any state, probability 100, into the
 // won stage. Stage is a staff list here, so the move happens only while the

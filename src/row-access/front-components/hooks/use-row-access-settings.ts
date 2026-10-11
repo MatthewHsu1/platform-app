@@ -3,31 +3,16 @@ import { MetadataApiClient } from 'twenty-client-sdk/metadata';
 
 import { APPLICATION_UNIVERSAL_IDENTIFIER } from 'src/constants/universal-identifiers';
 import { ROW_ACCESS_CONFIG_VARIABLE_KEY } from 'src/row-access/constants/row-access-config-variable-key.constant';
-import {
-  type MetadataObject,
-  type MetadataRole,
-} from 'src/row-access/types/metadata-object.type';
-import {
-  type OwnerCandidateObject,
-  type RuleObject,
-} from 'src/row-access/types/owner-candidate-object.type';
+import { type MetadataObject } from 'src/row-access/types/metadata-object.type';
 import { type RowAccessConfig } from 'src/row-access/types/row-access-config.type';
 import {
   listOwnerCandidateObjects,
   listRuleObjects,
 } from 'src/row-access/utils/list-owner-candidate-objects.util';
 import { parseRowAccessConfig } from 'src/row-access/utils/parse-row-access-config.util';
+import { type RowAccessSettingsData } from 'src/row-access/types/row-access-settings-data.type';
 
-export type RowAccessSettingsData = {
-  applicationId: string;
-  savedConfig: RowAccessConfig;
-  savedConfigProblem: string | undefined;
-  candidateObjects: OwnerCandidateObject[];
-  ruleObjects: RuleObject[];
-  roles: MetadataRole[];
-};
-
-export type RowAccessSettingsState =
+type RowAccessSettingsState =
   | { kind: 'loading' }
   | { kind: 'error'; message: string }
   | { kind: 'ready'; data: RowAccessSettingsData };

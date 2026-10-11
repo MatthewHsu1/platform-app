@@ -1,6 +1,6 @@
-import { type LeadUpdatePlan } from 'src/crm/lead/actions/utils/plan-won-lost.util';
 import { jsonResponse } from 'src/shared/route-response';
 import { describeGraphqlErrors, twentyGraphql } from 'src/shared/twenty-graphql';
+import { type LeadUpdatePlan } from 'src/crm/lead/actions/utils/types/lead-update-plan.type';
 
 export const readLeadId = (body: Record<string, unknown>) =>
   typeof body.leadId === 'string' && body.leadId.length > 0 ? body.leadId : null;

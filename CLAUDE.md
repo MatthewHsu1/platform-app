@@ -13,6 +13,13 @@ Twenty app (twenty-sdk 2.45.0, same as the server). Read `README.md` first. Desi
 - Never define a staff-editable SELECT in app code: an upgrade wipes options staff added. Add it
   to the module's `*-install.ts` instead; the post-install hook makes it once as a workspace
   field. A SELECT in code is only for values code compares against (`*-options.constant.ts`).
+- An exported type goes in its module's `types/` folder, one type per file, named
+  `<kebab-name>.type.ts` (`src/stock/picking/types/validate-result.type.ts` exports
+  `ValidateResult`), as Twenty's own apps do. A type used in one file only stays there, unexported.
+- Comments and test names never cite the design or build documents: no task or phase numbers, no
+  rule, probe or hole ids (`C17`, `CP22`, `RB5`, `T3`, `PF1`, `H9`), no spec sections (`§5.7`), no
+  "the spec", "the brief" or "ruling". A reader of the code has none of those documents. Say the
+  reason in plain words instead ("a done line is never destroyed: its stock is already posted").
 - Pure logic goes in `utils/` with a vitest test next to it (`__tests__/*.test.ts`) whose
   expected values come from the module's rules or real examples. Logic functions stay thin: GraphQL
   calls and the util.
@@ -20,7 +27,20 @@ Twenty app (twenty-sdk 2.45.0, same as the server). Read `README.md` first. Desi
   call uses: `'person'` (the clicking user, row rule applies) or `'application'` (the app role
   alone). Never make the app role see-all.
 - The design notes for each module, including where its data model comes from, are in `docs/superpowers/` (not in git); read the handoff `docs/superpowers/sdd/2026-10-06-twenty-v2.45.6-upgrade/handoff.md` §9 before starting a module.
-- Twenty app docs: https://docs.twenty.com/developers/extend/apps/getting-started/quick-start
+- Twenty app docs: read the copy in the submodule, not the website. It matches our twenty-sdk
+  version; the website follows Twenty's main branch. Paths are from this folder:
+  - `../../source/packages/twenty-docs/developers/extend/apps/`: the app docs, one folder per
+    topic (data, logic, layout, config, operations). Read the page for the piece you add.
+  - `../../source/packages/twenty-agent-skills/skills/develop-app/SKILL.md`: Twenty's own
+    workflow for changing an app.
+  - `../../source/packages/create-twenty-app/src/constants/template/AGENTS.md`: Twenty's
+    pitfalls for every app. Its `yarn twenty dev:add` writes to `src/objects/` and the like;
+    move the file into its module folder.
+  - `../../source/packages/twenty-apps/`: real apps to copy patterns from.
+  - Website: https://docs.twenty.com/developers/extend/apps/getting-started/quick-start
+- `yarn lint` uses the rules of Twenty's own code, with types (`--type-aware`) and Twenty's
+  custom rules from the submodule. After the submodule moves, rebuild those rules from
+  `../../source`: `npx nx build twenty-oxlint-rules`. Fix the code; do not turn a rule off.
 - Triggers read rows, call a pure planner in `utils/`, and write only what differs. A trigger
   skips events the app itself caused (its writes run as `'application'`), re-reads the row before
   it puts a change back, and collects its errors instead of stopping at the first one, so one bad

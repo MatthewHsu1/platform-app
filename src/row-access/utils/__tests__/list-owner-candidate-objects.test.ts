@@ -110,7 +110,7 @@ describe('listOwnerCandidateObjects', () => {
   });
 });
 
-// D32, D41: only audited objects can hold a rule: company, opportunity, task
+// Only audited objects can hold a rule: company, opportunity, task
 // and objects of the workspace's own custom application.
 describe('listOwnerCandidateObjects: audited objects only', () => {
   const withOwner = (

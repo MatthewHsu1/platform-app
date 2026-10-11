@@ -8,12 +8,10 @@ import {
   CONVERT_LEAD_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   CONVERT_LEAD_ROUTE_PATH,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
-import {
-  type LeadToConvert,
-  planLeadConversion,
-} from 'src/crm/lead/actions/utils/plan-lead-conversion.util';
+import { planLeadConversion } from 'src/crm/lead/actions/utils/plan-lead-conversion.util';
 import { describeGraphqlErrors, twentyGraphql } from 'src/shared/twenty-graphql';
 import { jsonResponse, readBody } from 'src/shared/route-response';
+import { type LeadToConvert } from 'src/crm/lead/actions/utils/types/lead-to-convert.type';
 
 const findPersonIdByEmail = async (email: string | null | undefined) => {
   if (!email) {

@@ -1,15 +1,4 @@
-// The slice of the metadata API the settings page reads.
-export type MetadataField = {
-  id: string;
-  name: string;
-  label: string;
-  type: string;
-  isActive?: boolean | null;
-  relation?: {
-    type: string;
-    targetObjectMetadata: { nameSingular: string };
-  } | null;
-};
+import { type MetadataField } from 'src/row-access/types/metadata-field.type';
 
 export type MetadataObject = {
   id: string;
@@ -20,9 +9,4 @@ export type MetadataObject = {
   isSystem: boolean;
   isActive: boolean;
   fieldsList: MetadataField[];
-};
-
-export type MetadataRole = {
-  id: string;
-  label: string;
 };

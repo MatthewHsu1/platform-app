@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  type LeadToConvert,
-  planLeadConversion,
-} from 'src/crm/lead/actions/utils/plan-lead-conversion.util';
+import { planLeadConversion } from 'src/crm/lead/actions/utils/plan-lead-conversion.util';
+import { type LeadToConvert } from 'src/crm/lead/actions/utils/types/lead-to-convert.type';
 
 const NOW = '2026-10-06T15:00:00.000Z';
 

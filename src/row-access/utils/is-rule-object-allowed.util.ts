@@ -7,7 +7,7 @@ const AUDITED_STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS = new Set<string>([
   STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.task,
 ]);
 
-// The same definition as the server validator (design D32, D41): a rule may
+// The same definition as the server validator: a rule may
 // sit on company, opportunity, task, an object of the workspace's own custom
 // application, or an object of Platform (ownApplicationIds holds Platform's
 // id). Objects of other installed apps, other standard objects and every

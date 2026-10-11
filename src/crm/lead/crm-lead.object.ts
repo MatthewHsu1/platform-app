@@ -28,9 +28,8 @@ import {
   UTM_SOURCE_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/utm/utm-universal-identifiers.constant';
 
-// `salesperson`, `leadType` and
-// `contactAddress` stand in for `user_id`, `type` and the address fields,
-// which Twenty reserves. Stage and Tags are not here: the install hook makes
+// `salesperson`, `leadType` and `contactAddress` stand in for the user, type and
+// address fields, whose names Twenty reserves. Stage and Tags are not here: the install hook makes
 // them as staff lists.
 export default defineObject({
   universalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,

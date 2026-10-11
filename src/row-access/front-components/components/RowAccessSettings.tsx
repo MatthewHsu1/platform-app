@@ -9,21 +9,11 @@ import { ThemeProvider } from 'twenty-ui/theme';
 
 import { getRowAccessSettingsStyles } from 'src/row-access/constants/row-access-settings-styles.constant';
 import { OwnerFieldSelect } from 'src/row-access/front-components/components/OwnerFieldSelect';
-import {
-  type RowAccessSettingsData,
-  saveRowAccessConfig,
-  useRowAccessSettings,
-} from 'src/row-access/front-components/hooks/use-row-access-settings';
+import { saveRowAccessConfig, useRowAccessSettings } from 'src/row-access/front-components/hooks/use-row-access-settings';
 import { type RowAccessConfig } from 'src/row-access/types/row-access-config.type';
-import {
-  listRowAccessRuleWarnings,
-  normalizeRowAccessConfig,
-  removeRule,
-  type RowAccessRuleWarning,
-  setRuleEnabled,
-  setRuleOwnerField,
-  setSeeAllRole,
-} from 'src/row-access/utils/update-row-access-config.util';
+import { listRowAccessRuleWarnings, normalizeRowAccessConfig, removeRule, setRuleEnabled, setRuleOwnerField, setSeeAllRole } from 'src/row-access/utils/update-row-access-config.util';
+import { type RowAccessSettingsData } from 'src/row-access/types/row-access-settings-data.type';
+import { type RowAccessRuleWarning } from 'src/row-access/types/row-access-rule-warning.type';
 
 const ADMIN_ROLE_LABEL = 'Admin';
 
@@ -62,7 +52,7 @@ const RowAccessSettingsForm = ({ data }: { data: RowAccessSettingsData }) => {
 
     setIsSaving(false);
 
-    enqueueSnackbar({
+    void enqueueSnackbar({
       message: isSaved
         ? 'Row access saved. It applies within about 10 seconds.'
         : 'Could not save row access.',
@@ -251,7 +241,7 @@ const RowAccessSettingsForm = ({ data }: { data: RowAccessSettingsData }) => {
           variant="solid"
           color="accent"
           disabled={isSaving}
-          onClick={handleSave}
+          onClick={() => void handleSave()}
         >
           {isSaving ? 'Saving…' : 'Save'}
         </Button>

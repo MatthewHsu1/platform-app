@@ -1,9 +1,7 @@
 import { type MetadataObject } from 'src/row-access/types/metadata-object.type';
-import {
-  type OwnerCandidateObject,
-  type RuleObject,
-} from 'src/row-access/types/owner-candidate-object.type';
+import { type OwnerCandidateObject } from 'src/row-access/types/owner-candidate-object.type';
 import { isRuleObjectAllowed } from 'src/row-access/utils/is-rule-object-allowed.util';
+import { type RuleObject } from 'src/row-access/types/rule-object.type';
 
 const WORKSPACE_MEMBER_NAME_SINGULAR = 'workspaceMember';
 

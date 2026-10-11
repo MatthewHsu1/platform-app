@@ -1,41 +1,21 @@
 import { LEAD_TYPE, WON_STATUS } from 'src/crm/crm-options.constant';
+import { type LeadToConvert } from 'src/crm/lead/actions/utils/types/lead-to-convert.type';
+import { type Phones } from 'src/crm/lead/actions/utils/types/phones.type';
 
-type Phones = {
-  primaryPhoneNumber: string | null;
-  primaryPhoneCountryCode: string | null;
-  primaryPhoneCallingCode: string | null;
-};
-
-export type LeadToConvert = {
-  id: string;
-  name: string | null;
-  leadType: string | null;
-  wonStatus: string | null;
-  personId: string | null;
-  companyId: string | null;
-  contactName: string | null;
-  partnerName: string | null;
-  jobPosition: string | null;
-  emailFrom: { primaryEmail: string | null } | null;
-  phone: Phones | null;
-  website: { primaryLinkUrl: string | null } | null;
-  contactAddress: Record<string, string | null> | null;
-};
-
-export type CompanyInput = {
+type CompanyInput = {
   name: string;
   address?: Record<string, string | null>;
   domainName?: { primaryLinkUrl: string };
 };
 
-export type PersonInput = {
+type PersonInput = {
   name: { firstName: string; lastName: string };
   emails?: { primaryEmail: string };
   phones?: Phones;
   jobTitle?: string;
 };
 
-export type LeadConversionPlan =
+type LeadConversionPlan =
   | { kind: 'refuse'; reason: string }
   | {
       kind: 'convert';
