@@ -45,6 +45,7 @@ export const pickingContacts = (transferContact: Contact | null, firstMoveContac
 
   return {
     partnerName: contactName(partner),
+    hasTransferPartner: transferContact !== null,
     partnerAddress: contactAddress(partner),
     commercialPartnerName: company?.name ?? '',
     commercialPartnerAddress: company?.address ?? '',

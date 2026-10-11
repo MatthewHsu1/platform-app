@@ -15,6 +15,8 @@ export type PickingPrintData = {
   dateDone: string | null;
   // The transfer's contact, else the first move's.
   partnerName: string;
+  // Whether the transfer has a contact of its own (the partner above is not the first move's).
+  hasTransferPartner: boolean;
   partnerAddress: string;
   // The company a person contact belongs to; empty when the contact is a company or a person of none.
   commercialPartnerName: string;

@@ -41,6 +41,7 @@ describe('pickingContacts', () => {
   it('names the company behind a person and delivers to the first move\'s contact', () => {
     expect(pickingContacts(ann, depot)).toEqual({
       partnerName: 'Ann Lee',
+      hasTransferPartner: true,
       partnerAddress: '1 Main St',
       commercialPartnerName: 'Gym A',
       commercialPartnerAddress: '1 Main St',
@@ -52,6 +53,7 @@ describe('pickingContacts', () => {
   it('falls back to the first move\'s contact when the transfer has none, a company being its own', () => {
     expect(pickingContacts(null, depot)).toMatchObject({
       partnerName: 'Gym A Depot',
+      hasTransferPartner: false,
       commercialPartnerName: '',
       deliveryPartnerName: 'Gym A Depot',
     });

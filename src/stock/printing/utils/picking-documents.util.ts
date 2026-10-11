@@ -64,7 +64,7 @@ const table = (columns: string[], rows: PrintTableCell[][]): TableBlock => ({
   widths: columns.map((_, index) => (index === 0 ? 3 : 2)),
 });
 
-// Check digit of a GTIN number (EAN-8, UPC-A, EAN-13): weights 3 and 1 from the right.
+// Check digit of a GTIN number (EAN-8, EAN-13): weights 3 and 1 from the right.
 const hasGtinCheckDigit = (digits: string) => {
   const body = [...digits.slice(0, -1)].reverse();
   const total = body.reduce((sum, digit, index) => sum + Number(digit) * (index % 2 === 0 ? 3 : 1), 0);
@@ -72,13 +72,17 @@ const hasGtinCheckDigit = (digits: string) => {
   return (10 - (total % 10)) % 10 === Number(digits[digits.length - 1]);
 };
 
-// A product barcode prints as the retail code its digits make, else as Code 128.
+// A product barcode of 8 or 13 digits with a valid check digit prints as EAN-8 or EAN-13, anything
+// else as Code 128. Thirteen digits starting with 0 are a 12-digit code written long, not EAN-13.
 export const productBarcodeSymbology = (value: string): BarcodeBlock['symbology'] => {
   if (!/^\d+$/.test(value) || !hasGtinCheckDigit(value)) {
     return 'code128';
   }
+  if (value.length === 13 && !value.startsWith('0')) {
+    return 'ean13';
+  }
 
-  return value.length === 13 ? 'ean13' : value.length === 12 ? 'upca' : value.length === 8 ? 'ean8' : 'code128';
+  return value.length === 8 ? 'ean8' : 'code128';
 };
 
 // Code 128 holds printable ASCII only; a name in another script prints as text instead of failing the page.
@@ -119,6 +123,9 @@ const shouldPrintDeliveryAddress = (picking: PickingPrintData) =>
 const hasCustomerCompany = (picking: PickingPrintData) =>
   picking.pickingTypeCode === PICKING_TYPE_CODE.OUTGOING && picking.partnerName !== '' && picking.commercialPartnerName !== '';
 
+// The picking operations name the customer and the vendor from the transfer's own contact only.
+const hasOwnCustomerCompany = (picking: PickingPrintData) => picking.hasTransferPartner && hasCustomerCompany(picking);
+
 const vendorName = (picking: PickingPrintData) => picking.commercialPartnerName || picking.partnerName;
 const vendorAddress = (picking: PickingPrintData) =>
   picking.commercialPartnerName === ''
@@ -131,7 +138,7 @@ const pickingOperationsFields = (picking: PickingPrintData, timeZone: string): F
     'Delivery Address:',
     contact(picking.deliveryPartnerName, picking.deliveryPartnerAddress),
   ),
-  ...field(hasCustomerCompany(picking), 'Customer Address:', picking.commercialPartnerName),
+  ...field(hasOwnCustomerCompany(picking), 'Customer Address:', picking.commercialPartnerName),
   ...field(picking.origin !== '', 'Order:', picking.origin),
   ['Warehouse:', picking.warehouseName],
   ...field(picking.pickingTypeCode === PICKING_TYPE_CODE.INTERNAL && picking.partnerName !== '', 'Contact', picking.partnerName),
@@ -144,7 +151,11 @@ const pickingOperationsFields = (picking: PickingPrintData, timeZone: string): F
     dayInTimeZone(picking.scheduledDate, timeZone),
   ),
   ...field(picking.warningText !== '', 'Instructions:', picking.warningText.trim()),
-  ...field(picking.pickingTypeCode === PICKING_TYPE_CODE.INCOMING && picking.partnerName !== '', 'Vendor:', vendorName(picking)),
+  ...field(
+    picking.pickingTypeCode === PICKING_TYPE_CODE.INCOMING && picking.hasTransferPartner && picking.partnerName !== '',
+    'Vendor:',
+    vendorName(picking),
+  ),
 ];
 
 const operationsTable = (picking: PickingPrintData): TableBlock | null => {

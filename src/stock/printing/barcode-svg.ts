@@ -6,7 +6,6 @@ const ENCODER: Record<BarcodeBlock['symbology'], string> = {
   code128: 'code128',
   ean13: 'ean13',
   ean8: 'ean8',
-  upca: 'upca',
   qrcode: 'qrcode',
   datamatrix: 'datamatrix',
 };

@@ -56,6 +56,7 @@ const picking = (overrides: Partial<PickingPrintData>): PickingPrintData => ({
   scheduledDate: '2026-10-08T10:00:00.000Z',
   dateDone: null,
   partnerName: 'Gym A',
+  hasTransferPartner: true,
   partnerAddress: '1 Main St',
   commercialPartnerName: '',
   commercialPartnerAddress: '',
@@ -492,6 +493,17 @@ describe('buildDeliverySlip', () => {
     );
   });
 
+  it('names customer and vendor on the picking operations only from the transfer\'s own contact', () => {
+    const viaMove = { hasTransferPartner: false, partnerName: 'Ann Lee', commercialPartnerName: 'Gym A' };
+    const deliveryFields = fieldsOf(buildPickingOperations([picking(viaMove)], {}, UTC).blocks).map(([label]) => label);
+    const receiptFields = fieldsOf(buildPickingOperations([picking({ ...viaMove, pickingTypeCode: 'INCOMING' })], {}, UTC).blocks).map(
+      ([label]) => label,
+    );
+
+    expect(deliveryFields).toEqual(['Delivery Address:', 'Order:', 'Warehouse:', 'Status:', 'Operator:', 'Scheduled Date:']);
+    expect(receiptFields).toEqual(['Order:', 'Warehouse:', 'Status:', 'Operator:', 'Scheduled Date:']);
+  });
+
   it('names the vendor by the company of the person on a receipt', () => {
     const receipt = picking({ pickingTypeCode: 'INCOMING', partnerName: 'Bo Chan', commercialPartnerName: 'Supplier B', commercialPartnerAddress: '5 Port Rd' });
 
@@ -543,13 +555,14 @@ describe('buildReturnSlip', () => {
 });
 
 describe('productBarcodeSymbology', () => {
-  it('prints a number with a valid check digit as the retail code of its length', () => {
+  it('prints 8 or 13 digits with a valid check digit as EAN-8 or EAN-13', () => {
     expect(productBarcodeSymbology('4006381333931')).toBe('ean13');
-    expect(productBarcodeSymbology('036000291452')).toBe('upca');
     expect(productBarcodeSymbology('96385074')).toBe('ean8');
   });
 
   it('prints anything else as Code 128', () => {
+    expect(productBarcodeSymbology('036000291452')).toBe('code128');
+    expect(productBarcodeSymbology('0036000291452')).toBe('code128');
     expect(productBarcodeSymbology('4006381333932')).toBe('code128');
     expect(productBarcodeSymbology('TM-100')).toBe('code128');
     expect(productBarcodeSymbology('123456')).toBe('code128');
