@@ -48,7 +48,7 @@ registerPrintable<PackageRow>({
   objectPlural: 'stockPackages',
   read: (recordIds, _options, find) =>
     findInOrder<PackageRow>(find, stockPackages, recordIds, PACKAGE_SELECTION),
-  build: (rows) => ({ kind: 'zpl', text: zplPackageLabels(rows.map((row) => packageLabel(row))) }),
+  build: (rows, _options, context) => ({ kind: 'zpl', text: zplPackageLabels(rows.map((row) => packageLabel(row)), context.timeZone) }),
   fileName: () => 'Package Barcode (ZPL)',
 });
 
@@ -59,7 +59,7 @@ registerPrintable<HistoryRow>({
   objectPlural: 'stockPackageHistories',
   read: (recordIds, _options, find) =>
     findInOrder<HistoryRow>(find, stockPackageHistories, recordIds, `id packageId packageName package { id deletedAt ${PACKAGE_SELECTION} }`),
-  build: (rows) => {
+  build: (rows, _options, context) => {
     const seen = new Set<string>();
     const packages = rows.filter((row) => {
       const key = row.packageId ?? row.id;
@@ -78,6 +78,7 @@ registerPrintable<HistoryRow>({
         packages.map((row) =>
           packageLabel({ name: row.package?.name ?? row.packageName, packDate: row.package?.packDate ?? null, packageType: row.package?.packageType ?? null }),
         ),
+        context.timeZone,
       ),
     };
   },

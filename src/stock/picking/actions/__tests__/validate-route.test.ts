@@ -52,7 +52,16 @@ describe('the Validate route', () => {
       status: 200,
       body: { kind: 'needsAnswer', question: 'backorder', pickingIds: ['a', 'b'] },
     });
-    expect(calls).toEqual([{ pickingIds: ['a', 'b'], options: { skipExpired: false, skipBatchHook: true } }]);
+    expect(calls).toEqual([{ pickingIds: ['a', 'b'], options: { skipExpired: false, skipBatchHook: true, printTimeZone: 'UTC' } }]);
+  });
+
+  it("hands Validate the browser's time zone for the dates of its prints, and UTC for a name that is not a zone", async () => {
+    const { calls, post } = route(() => ({ kind: 'done', backorderIds: [], printouts: [] }));
+
+    await post({ pickingIds: ['a'], timeZone: 'America/Denver' });
+    await post({ pickingIds: ['b'], timeZone: 'Mars/Olympus' });
+
+    expect(calls.map((call) => call.options.printTimeZone)).toEqual(['America/Denver', 'UTC']);
   });
 
   // Ticked transfers get a backorder, unticked ones none; the other selected transfers
@@ -60,19 +69,19 @@ describe('the Validate route', () => {
   it('runs the ticked and the unticked transfers apart and merges what they return', async () => {
     const { calls, post } = route((pickingIds, options) =>
       options.cancelBackorder === true
-        ? { kind: 'done', backorderIds: [], printouts: ['print-c'], showReceptionReport: ['c'] }
-        : { kind: 'done', backorderIds: [`bo-${pickingIds[0]}`], printouts: ['print-a'] },
+        ? { kind: 'done', backorderIds: [], printouts: [{ report: 'deliverySlip', pass: 'print-c' }], showReceptionReport: ['c'] }
+        : { kind: 'done', backorderIds: [`bo-${pickingIds[0]}`], printouts: [{ report: 'deliverySlip', pass: 'print-a' }] },
     );
 
     expect(
       await post({ pickingIds: ['a', 'b', 'c'], backorderAnswer: { createBackorderIds: ['a'], noBackorderIds: ['c', 'x'] } }),
     ).toEqual({
       status: 200,
-      body: { kind: 'done', backorderIds: ['bo-a'], printouts: ['print-a', 'print-c'], showReceptionReport: ['c'] },
+      body: { kind: 'done', backorderIds: ['bo-a'], printouts: [{ report: 'deliverySlip', pass: 'print-a' }, { report: 'deliverySlip', pass: 'print-c' }], showReceptionReport: ['c'] },
     });
     expect(calls).toEqual([
-      { pickingIds: ['a', 'b'], options: { cancelBackorder: false, skipExpired: true, logEveryTransfer: false, skipBatchHook: true } },
-      { pickingIds: ['c'], options: { cancelBackorder: true, skipExpired: true, logEveryTransfer: false, skipBatchHook: true } },
+      { pickingIds: ['a', 'b'], options: { cancelBackorder: false, skipExpired: true, logEveryTransfer: false, skipBatchHook: true, printTimeZone: 'UTC' } },
+      { pickingIds: ['c'], options: { cancelBackorder: true, skipExpired: true, logEveryTransfer: false, skipBatchHook: true, printTimeZone: 'UTC' } },
     ]);
   });
 
@@ -82,8 +91,8 @@ describe('the Validate route', () => {
     await post({ pickingIds: ['a', 'b'], backorderAnswer: { createBackorderIds: [], noBackorderIds: ['a'], noBackorderButton: true } });
 
     expect(calls).toEqual([
-      { pickingIds: ['b'], options: { cancelBackorder: false, skipExpired: true, logEveryTransfer: true, skipBatchHook: true } },
-      { pickingIds: ['a'], options: { cancelBackorder: true, skipExpired: true, logEveryTransfer: true, skipBatchHook: true } },
+      { pickingIds: ['b'], options: { cancelBackorder: false, skipExpired: true, logEveryTransfer: true, skipBatchHook: true, printTimeZone: 'UTC' } },
+      { pickingIds: ['a'], options: { cancelBackorder: true, skipExpired: true, logEveryTransfer: true, skipBatchHook: true, printTimeZone: 'UTC' } },
     ]);
   });
 

@@ -6,8 +6,12 @@ import { DISCARD_EXPIRED_LINES_ROUTE_PATH } from 'src/product-expiry/actions/pro
 import { readExpiryQuestion } from 'src/product-expiry/actions/read-expiry-question';
 import { describeRouteError } from 'src/shared/describe-route-error';
 import { textOrNull } from 'src/shared/utils/text-or-null.util';
+import { LinkList } from 'src/shared/front-components/link-list';
 import { useRunOnce } from 'src/shared/front-components/pop-up';
 import { postAppRoute } from 'src/shared/front-components/post-app-route';
+import { printViewUrl } from 'src/stock/printing/print-view-url';
+import { type PrintLink } from 'src/stock/printing/types/print-link.type';
+import { ReceptionReport } from 'src/stock/reports/reception/reception-widget.front-component';
 import { queryAsUser } from 'src/stock/stock-front-graphql';
 import { readStockStyles } from 'src/stock/stock-theme';
 import { type ValidateRouteBody } from 'src/stock/picking/types/validate-route-body.type';
@@ -19,7 +23,8 @@ type Screen =
   | { kind: 'running' }
   | { kind: 'backorder'; listed: boolean; rows: { id: string; name: string; createBackorder: boolean }[] }
   | ({ kind: 'expiredLots'; pickingIds: string[] } & Awaited<ReturnType<typeof readExpiryQuestion>>)
-  | { kind: 'error'; message: string };
+  | { kind: 'error'; message: string }
+  | { kind: 'done'; links: PrintLink[]; receptionPickingIds: string[] };
 
 // The Validate pop-ups. `body` names what is validated (transfers or a batch);
 // each question's answer is posted with it again. Without `showTransfers` the
@@ -49,7 +54,9 @@ export const ValidateFlow = ({
     setScreen({ kind: 'running' });
     setAnswer(next);
     try {
-      const result = await postAppRoute<ValidateRouteResult>(routePath, { ...body, ...next });
+      // Dates on the prints Validate makes show as the user's calendar shows them.
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const result = await postAppRoute<ValidateRouteResult>(routePath, { ...body, ...next, timeZone });
 
       if (result.kind === 'done') {
         await enqueueSnackbar({
@@ -59,7 +66,14 @@ export const ValidateFlow = ({
               : t(text.validated),
           variant: 'success',
         });
-        close();
+        const receptionPickingIds = result.showReceptionReport ?? [];
+
+        // The pop-up stays open for the prints to open and the reception report to allocate from.
+        if (result.printouts.length === 0 && receptionPickingIds.length === 0) {
+          close();
+          return;
+        }
+        setScreen({ kind: 'done', links: result.printouts, receptionPickingIds });
         return;
       }
       if (result.question === 'backorder') {
@@ -120,6 +134,38 @@ export const ValidateFlow = ({
     return (
       <div style={styles.panel}>
         <div style={styles.error}>{screen.message}</div>
+        <div style={styles.buttons}>
+          <Button size="sm" variant="outline" onClick={close}>
+            {t(text.close)}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen.kind === 'done') {
+    const links = (
+      <LinkList
+        title={t(text.printoutsTitle)}
+        links={screen.links.map((link) => {
+          const name = text.printNames[link.report];
+
+          return { name: name === undefined ? link.report : t(name), url: printViewUrl(link.pass) };
+        })}
+      />
+    );
+
+    if (screen.receptionPickingIds.length > 0) {
+      return (
+        <div>
+          {screen.links.length > 0 ? <div style={styles.panel}>{links}</div> : null}
+          <ReceptionReport pickingIds={screen.receptionPickingIds} />
+        </div>
+      );
+    }
+    return (
+      <div style={styles.panel}>
+        {links}
         <div style={styles.buttons}>
           <Button size="sm" variant="outline" onClick={close}>
             {t(text.close)}

@@ -88,8 +88,6 @@ const blockHtml = (block: PrintBlock, barcodeSvg: (block: BarcodeBlock) => strin
       return tableHtml(block, barcodeSvg);
     case 'barcode':
       return barcodeHtml(block, barcodeSvg);
-    case 'image':
-      return `<img src="data:image/png;base64,${Buffer.from(block.png).toString('base64')}" style="width: ${size(block.widthMm)}mm" alt="">`;
     case 'signature':
       return `<div class="signature"><h2>${SIGNATURE_PAGE_TEXTS.heading}</h2>${
         block.png === null

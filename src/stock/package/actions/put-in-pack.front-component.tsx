@@ -22,6 +22,11 @@ export const PUT_IN_PACK_TEXT: PutInPackText = {
   packageLabel: msg('Package'),
   newPackage: msg('New package'),
   packing: msg('Packing…'),
+  printoutsTitle: msg('Printouts'),
+  printNames: {
+    packageBarcodeSmall: msg('Package Barcode (PDF)'),
+    packageBarcodeZpl: msg('Package Barcode (ZPL)'),
+  },
 };
 
 const PutInPack = () => <PutInPackFlow text={PUT_IN_PACK_TEXT} />;

@@ -3,10 +3,23 @@ import { msg, useSelectedRecordIds } from 'twenty-sdk/front-component';
 
 import { ValidateFlow } from 'src/stock/picking/actions/validate-flow';
 import { type ValidateText } from 'src/stock/picking/types/validate-text.type';
+import { type PrintLinkNames } from 'src/stock/printing/types/print-link-names.type';
 import {
   VALIDATE_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
   VALIDATE_ROUTE_PATH,
 } from 'src/stock/stock-universal-identifiers.constant';
+
+// The prints an operation type can make at Validate, named as their print buttons name them.
+export const VALIDATE_PRINT_NAMES: PrintLinkNames = {
+  deliverySlip: msg('Delivery Slip'),
+  returnSlip: msg('Return Slip'),
+  receptionReport: msg('Reception Report'),
+  receptionReportLabels: msg('Reception Report Label'),
+  productLabels: msg('Product Labels'),
+  lotLabelPdf: msg('Lot/Serial Number (PDF)'),
+  lotLabelZpl: msg('Lot/Serial Number (ZPL)'),
+  pickingPackages: msg('Packages'),
+};
 
 const TEXT: ValidateText = {
   validated: msg('Validated.'),
@@ -31,6 +44,8 @@ const TEXT: ValidateText = {
   createBackorder: msg('Create Backorder'),
   noBackorder: msg('No Backorder'),
   discard: msg('Discard'),
+  printoutsTitle: msg('Printouts'),
+  printNames: VALIDATE_PRINT_NAMES,
 };
 
 const ValidatePickings = () => {

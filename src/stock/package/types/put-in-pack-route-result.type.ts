@@ -1,7 +1,8 @@
 import { type PackageChoice } from 'src/stock/package/types/package-choice.type';
+import { type PrintLink } from 'src/stock/printing/types/print-link.type';
 
 export type PutInPackRouteResult =
-  | { kind: 'packed'; packageId: string; printouts: string[] }
+  | { kind: 'packed'; packageId: string; printouts: PrintLink[] }
   | { kind: 'askDestination'; lineIds: string[]; locationDestIds: string[] }
   | {
       kind: 'askPackage';

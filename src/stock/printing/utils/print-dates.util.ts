@@ -11,10 +11,20 @@ export const isTimeZone = (value: string) => {
   }
 };
 
-// The calendar day of a moment as the reader's clock shows it, written YYYY-MM-DD.
+const CALENDAR_DAY = /^\d{4}-\d{2}-\d{2}$/;
+export const DEFAULT_PRINT_TIME_ZONE = 'UTC';
+
+// The zone a print shows its dates in: the one the browser sent, else UTC.
+export const printTimeZoneOf = (value: unknown) => (typeof value === 'string' && isTimeZone(value) ? value : DEFAULT_PRINT_TIME_ZONE);
+
+// The calendar day of a moment as the reader's clock shows it, written YYYY-MM-DD. A date without a
+// time (a pack date) is already a calendar day and prints as it is.
 export const dayInTimeZone = (value: string | null, timeZone: string) => {
   if (value === null || value === '') {
     return '';
+  }
+  if (CALENDAR_DAY.test(value)) {
+    return value;
   }
   const date = new Date(value);
 

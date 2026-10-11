@@ -9,4 +9,6 @@ export type ValidateOptions = {
   logEveryTransfer?: boolean;
   // The caller runs the batch hook itself, once for a click that validates in several calls.
   skipBatchHook?: boolean;
+  // The zone of the user's browser, for the dates on the prints Validate makes.
+  printTimeZone?: string;
 };

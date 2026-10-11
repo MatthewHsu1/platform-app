@@ -136,7 +136,7 @@ export const makeBatchValidate = (deps: BatchValidateDeps) => {
   // a resume first finishes those runs, then redoes the batch's part. A click
   // that takes a stopped run over finishes that run's plan, with the answer
   // stored in it.
-  const runBatchValidate = async (batchId: string, runId: string, answer: BatchValidateAnswer | null) => {
+  const runBatchValidate = async (batchId: string, runId: string, answer: BatchValidateAnswer | null, printTimeZone?: string) => {
     const journal = await deps.openJournal(claimKey('batchValidate', batchId), runId);
 
     if (answer === null && !journal.committed) {
@@ -166,6 +166,7 @@ export const makeBatchValidate = (deps: BatchValidateDeps) => {
         ...plan.answer,
         pickingsToDetach: plan.pickingsToDetach,
         batchesToValidate: [batchId],
+        printTimeZone,
       });
     }
     if (answer === null || journal.resumed) {
@@ -186,8 +187,9 @@ export const makeBatchValidate = (deps: BatchValidateDeps) => {
   // Batch Validate: validates the batch's transfers that have quantities and
   // lets the others leave the batch. A backorder or expired-lot question comes
   // back once for the whole batch; the pop-up calls again with the answer.
-  const validateBatch = async (batchId: string, answer: BatchValidateAnswer): Promise<ValidateRouteResult> => {
-    const outcome = await deps.withClaim(claimKey('batchValidate', batchId), (runId) => runBatchValidate(batchId, runId, answer));
+  // `printTimeZone`: the user's browser zone, for the dates on the prints Validate makes.
+  const validateBatch = async (batchId: string, answer: BatchValidateAnswer, printTimeZone?: string): Promise<ValidateRouteResult> => {
+    const outcome = await deps.withClaim(claimKey('batchValidate', batchId), (runId) => runBatchValidate(batchId, runId, answer, printTimeZone));
 
     if (outcome.kind === 'held') {
       throw new StockUserError(CLAIM_HELD_MESSAGE);

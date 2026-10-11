@@ -9,6 +9,5 @@ export type PrintBlock =
   | { kind: 'fields'; rows: [string, string][] }
   | { kind: 'table'; columns: string[]; rows: PrintTableCell[][]; widths: number[] }
   | BarcodeBlock
-  | { kind: 'image'; png: Uint8Array; widthMm: number }
   | SignatureBlock
   | { kind: 'pageBreak' };

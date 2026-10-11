@@ -1,13 +1,9 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
-import { isUuid } from 'src/shared/utils/is-uuid.util';
-import { createPrintPass } from 'src/stock/printing/create-print-pass';
+import { createCheckedPrintPass } from 'src/stock/printing/create-print-pass';
 import { PRINT_MESSAGES } from 'src/stock/printing/print-messages.constant';
-import { AFTER_PRINT, OPTION_RECORDS, printOptionsParserOf } from 'src/stock/printing/printable-objects';
-import { type PrintReportKey } from 'src/stock/printing/types/print-report-key.type';
 import { isTimeZone } from 'src/stock/printing/utils/print-dates.util';
 import { isOverIdLimit, isPrintOptionsSizeAllowed, PRINT_OPTION_MAX_IDS } from 'src/stock/printing/utils/print-options.util';
-import { filterReadableIds } from 'src/stock/stock-access';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';
 import { StockUserError } from 'src/stock/stock-errors';
 import {
@@ -46,52 +42,19 @@ const readTimeZone = (value: unknown) => {
   return value;
 };
 
-// An option that names records (a pricelist, the unfolded lines of a report) is kept only when the
-// clicking user may read every one of them: the page reads them later without the user.
-const checkOptionRecords = async (report: PrintReportKey, options: Record<string, unknown>) => {
-  for (const [key, of] of Object.entries(OPTION_RECORDS[report] ?? {})) {
-    const value = options[key];
-
-    if (value === undefined) {
-      continue;
-    }
-    const ids: unknown[] = Array.isArray(value) ? value : [value];
-    const isIdList = ids.every(isUuid);
-
-    if (
-      !isIdList ||
-      (await filterReadableIds(of.objectSingular, of.objectPlural, ids as string[])).length !== new Set(ids).size
-    ) {
-      throw new StockUserError(PRINT_MESSAGES.optionsNotValid);
-    }
-  }
-};
-
 // Answers a one-time link to the print page; the page itself is served by the public print view route.
 const handler = stockRouteHandler(async (body) => {
   const { report, objectSingular } = body;
-  const parseOptions =
-    typeof report === 'string' && typeof objectSingular === 'string' ? printOptionsParserOf(objectSingular, report) : undefined;
 
-  if (parseOptions === undefined) {
+  if (typeof report !== 'string' || typeof objectSingular !== 'string') {
     throw new StockUserError(PRINT_MESSAGES.chooseReport);
   }
-  const options = parseOptions(readOptions(body.options));
-
-  if (options === null) {
-    throw new StockUserError(PRINT_MESSAGES.optionsNotValid);
-  }
-  const reportKey = report as PrintReportKey;
-
-  await checkOptionRecords(reportKey, options);
-  const created = await createPrintPass({
-    report: reportKey,
-    objectSingular: objectSingular as string,
+  const created = await createCheckedPrintPass({
+    report,
+    objectSingular,
     recordIds: readIds(body, 'recordIds'),
-    options,
+    options: readOptions(body.options),
     timeZone: readTimeZone(body.timeZone),
-    // Some prints change the record at the click, as marking a transfer printed does.
-    beforeStore: AFTER_PRINT[reportKey],
   });
 
   if (created === null) {

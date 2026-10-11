@@ -6,6 +6,7 @@ import {
   STOCK_PICKING_BATCH_ROUTE_PATHS,
 } from 'src/stock-picking-batch/stock-picking-batch-universal-identifiers.constant';
 import { ValidateFlow } from 'src/stock/picking/actions/validate-flow';
+import { VALIDATE_PRINT_NAMES } from 'src/stock/picking/actions/validate-pickings.front-component';
 import { type ValidateText } from 'src/stock/picking/types/validate-text.type';
 
 const TEXT: ValidateText = {
@@ -31,6 +32,8 @@ const TEXT: ValidateText = {
   createBackorder: msg('Create Backorder'),
   noBackorder: msg('No Backorder'),
   discard: msg('Discard'),
+  printoutsTitle: msg('Printouts'),
+  printNames: VALIDATE_PRINT_NAMES,
 };
 
 // The batch counts as one transfer: its questions answer for all its transfers.

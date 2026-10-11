@@ -9,6 +9,11 @@ describe('print dates', () => {
     expect(dayInTimeZone('2026-10-10T22:30:00.000Z', 'Asia/Tokyo')).toBe('2026-10-11');
   });
 
+  it('prints a calendar day as it is, whatever the reader\'s zone', () => {
+    expect(dayInTimeZone('2026-10-08', 'America/Denver')).toBe('2026-10-08');
+    expect(dayInTimeZone('2026-10-08', 'Asia/Tokyo')).toBe('2026-10-08');
+  });
+
   it('prints nothing for a missing date', () => {
     expect(dayInTimeZone(null, 'America/Denver')).toBe('');
   });

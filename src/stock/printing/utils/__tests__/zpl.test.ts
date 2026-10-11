@@ -115,13 +115,13 @@ describe('zplLotLabels', () => {
 
 describe('template labels', () => {
   it('package: name and its barcode', () => {
-    expect(compact(zplPackageLabels([{ name: 'PACK0000007', packDate: null, packageTypeName: '' }]))).toBe(
+    expect(compact(zplPackageLabels([{ name: 'PACK0000007', packDate: null, packageTypeName: '' }], 'UTC'))).toBe(
       compact('\n^XA\n^FO100,50\n^A0N,44,33^FDPACK0000007^FS\n^FO100,100^BY3\n^BCN,100,Y,N,N\n^FDPACK0000007^FS\n^XZ\n'),
     );
   });
 
   it('package named with a valid SSCC: the SSCC, pack date and type as text beside a DataMatrix of the GS1 code', () => {
-    expect(compact(zplPackageLabels([{ name: '106141411234567897', packDate: '2026-10-08', packageTypeName: 'Pallet' }]))).toBe(
+    expect(compact(zplPackageLabels([{ name: '106141411234567897', packDate: '2026-10-08', packageTypeName: 'Pallet' }], 'UTC'))).toBe(
       compact(
         '\n^XA\n^FO310,50\n^A0N,44,33^FDSSCC: 106141411234567897^FS\n^FO310,100^BY3\n^A0N,44,33^FDPack Date: 2026-10-08^FS\n^FO310,150^BY3\n^A0N,44,33^FDPackage Type: Pallet^FS\n^FO100,50^BY3\n^BXN,10,200\n^FD0010614141123456789713261008^FS\n^XZ\n',
       ),
@@ -129,7 +129,7 @@ describe('template labels', () => {
   });
 
   it('package named with 18 digits but a wrong check digit: the plain label', () => {
-    expect(compact(zplPackageLabels([{ name: '106141411234567890', packDate: null, packageTypeName: '' }]))).toBe(
+    expect(compact(zplPackageLabels([{ name: '106141411234567890', packDate: null, packageTypeName: '' }], 'UTC'))).toBe(
       compact('\n^XA\n^FO100,50\n^A0N,44,33^FD106141411234567890^FS\n^FO100,100^BY3\n^BCN,100,Y,N,N\n^FD106141411234567890^FS\n^XZ\n'),
     );
   });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSelectedObjectMetadata, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
+import { enqueueSnackbar, useSelectedObjectMetadata, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 import { Button } from 'twenty-ui/primitives/input';
 
 import { randomId } from 'src/shared/utils/random-id.util';
@@ -10,7 +10,10 @@ import {
 } from 'src/stock/package/actions/package-actions-universal-identifiers.constant';
 import { type PutInPackRouteResult } from 'src/stock/package/types/put-in-pack-route-result.type';
 import { type PutInPackText } from 'src/stock/package/types/put-in-pack-text.type';
+import { LinkList } from 'src/shared/front-components/link-list';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
+import { printViewUrl } from 'src/stock/printing/print-view-url';
+import { type PrintLink } from 'src/stock/printing/types/print-link.type';
 import { queryAsUser } from 'src/stock/stock-front-graphql';
 import { readStockStyles } from 'src/stock/stock-theme';
 import { ChoiceSelect, FieldRow, PopupPanel } from 'src/stock/tracking-controls';
@@ -45,6 +48,7 @@ export const PutInPackFlow = ({ moveLineIds, text }: { moveLineIds?: string[]; t
   const [destinationId, setDestinationId] = useState('');
   const [packageTypeId, setPackageTypeId] = useState('');
   const [packageId, setPackageId] = useState('');
+  const [printouts, setPrintouts] = useState<PrintLink[]>([]);
   // One id per opening: a Confirm sent again after an error reuses the package the first one made.
   const [runId] = useState(randomId);
 
@@ -64,13 +68,23 @@ export const PutInPackFlow = ({ moveLineIds, text }: { moveLineIds?: string[]; t
       ...baseBody,
       ...extra,
       runId,
+      // Dates on the package label show as the user's calendar shows them.
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
 
     if (result === null) {
       return;
     }
     if (result.kind === 'packed') {
-      await finishWith(t(text.packed));
+      if (result.printouts.length === 0) {
+        await finishWith(t(text.packed));
+        return;
+      }
+      // The pop-up stays open for the label to open.
+      await enqueueSnackbar({ message: t(text.packed), variant: 'success' });
+      setDestinationAsk(null);
+      setPackageAsk(null);
+      setPrintouts(result.printouts);
       return;
     }
     try {
@@ -105,6 +119,25 @@ export const PutInPackFlow = ({ moveLineIds, text }: { moveLineIds?: string[]; t
         busy={false}
         closeLabel={t(text.close)}
       />
+    );
+  }
+  if (printouts.length > 0) {
+    return (
+      <div style={styles.panel}>
+        <LinkList
+          title={t(text.printoutsTitle)}
+          links={printouts.map((link) => {
+            const name = text.printNames[link.report];
+
+            return { name: name === undefined ? link.report : t(name), url: printViewUrl(link.pass) };
+          })}
+        />
+        <div style={styles.buttons}>
+          <Button size="sm" variant="outline" onClick={closePopUp}>
+            {t(text.close)}
+          </Button>
+        </div>
+      </div>
     );
   }
   if (destinationAsk !== null) {

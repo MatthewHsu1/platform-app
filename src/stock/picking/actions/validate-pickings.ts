@@ -8,6 +8,7 @@ import { recomputePickingState } from 'src/stock/picking/recompute-picking-state
 import { autoprint, receptionReportToShow } from 'src/stock/printing/autoprint';
 import { settleAllocations } from 'src/stock/reports/reception/allocation-holds';
 import { sendDeliveryConfirmation } from 'src/stock/printing/send-delivery-confirmation';
+import { DEFAULT_PRINT_TIME_ZONE } from 'src/stock/printing/utils/print-dates.util';
 import { recomputeReserved } from 'src/stock/quant/recompute-reserved';
 import { sourceKeyOf } from 'src/stock/quant/quant-key';
 import { afterValidateBatch } from 'src/stock-picking-batch/after-validate-batch';
@@ -23,6 +24,7 @@ import { type PreparedValidate } from 'src/stock/picking/types/prepared-validate
 import { type ValidateOptions } from 'src/stock/picking/types/validate-options.type';
 import { type ValidateResult } from 'src/stock/picking/types/validate-result.type';
 import { type ValidateRunStore } from 'src/stock/picking/types/validate-run-store.type';
+import { type PrintLink } from 'src/stock/printing/types/print-link.type';
 import { type MoveLineRow } from 'src/stock/types/move-line-row.type';
 import { type MoveRow } from 'src/stock/types/move-row.type';
 import { type PickingRow } from 'src/stock/types/picking-row.type';
@@ -46,7 +48,7 @@ type ValidatePickingsDeps = {
   ) => Promise<string | null>;
   retryWaitingMoves: (doneMoveIds: string[]) => Promise<void>;
   logLessQuantities: (pickingIds: string[], locale: string | null) => Promise<void>;
-  autoprint: (pickingIds: string[]) => Promise<string[]>;
+  autoprint: (pickingIds: string[], timeZone: string) => Promise<PrintLink[]>;
   receptionReportToShow: (pickingIds: string[]) => Promise<string[]>;
   afterValidateBatch: (args: { pickingIds: string[]; batchesToValidate: string[]; pickingsToDetach: string[] }) => Promise<void>;
   sendDeliveryConfirmation: (pickingIds: string[]) => Promise<void>;
@@ -291,7 +293,7 @@ export const makeValidatePickings = (deps: ValidatePickingsDeps) => {
       });
     }
     doneIds.push(...validatedIds);
-    const printouts = await deps.autoprint(doneIds);
+    const printouts = await deps.autoprint(doneIds, options.printTimeZone ?? DEFAULT_PRINT_TIME_ZONE);
     const showReceptionReport = await deps.receptionReportToShow(doneIds);
 
     if (held) {

@@ -6,6 +6,7 @@ import { packLines, packPackages, readHeadedPackages, readOpenLinesInto, resolve
 import { stockPackages } from 'src/stock/package/package-records';
 import { stockPackageTypes } from 'src/stock/routing-records';
 import { printPackageLabel } from 'src/stock/package/print-package-label';
+import { printTimeZoneOf } from 'src/stock/printing/utils/print-dates.util';
 import { putawayDestinations } from 'src/stock/putaway/apply-putaway';
 import { filterReadableIds } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
@@ -354,9 +355,14 @@ export const putLinesInPack = async (body: Record<string, unknown>): Promise<Put
         );
 
   await packLines(plan.lineIds, packageId, singleDestination);
+  // The package is made whatever happens to its label.
   const printouts =
     pickingType?.autoPrintPackageLabel === true
-      ? await printPackageLabel(packageId, pickingType.packageLabelToPrint === PACKAGE_LABEL_TO_PRINT.ZPL ? 'ZPL' : 'PDF')
+      ? await printPackageLabel(
+          packageId,
+          pickingType.packageLabelToPrint === PACKAGE_LABEL_TO_PRINT.ZPL ? 'ZPL' : 'PDF',
+          printTimeZoneOf(body.timeZone),
+        ).catch(() => [])
       : [];
 
   return { kind: 'packed', packageId, printouts };

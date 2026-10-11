@@ -275,16 +275,6 @@ export const renderPdf = async (output: PrintDocument, barcodePng: BarcodePng): 
         cursor.y -= barcode.height + 3 * MM;
         break;
       }
-      case 'image': {
-        const image = await pdf.embedPng(block.png);
-        const width = Math.min(block.widthMm * MM, usable);
-        const height = (image.height / image.width) * width;
-
-        ensure(height);
-        cursor.page.drawImage(image, { x: MARGIN, y: cursor.y - height, width, height });
-        cursor.y -= height + GAP;
-        break;
-      }
       case 'signature':
         await drawSignature(block);
         break;

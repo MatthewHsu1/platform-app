@@ -1,5 +1,7 @@
 import { type MessageDescriptor } from 'twenty-sdk/front-component';
 
+import { type PrintLinkNames } from 'src/stock/printing/types/print-link-names.type';
+
 // The translation extractor reads only front-component files, so each Validate button hands its text to the shared pop-up.
 export type ValidateText = {
   validated: MessageDescriptor;
@@ -22,4 +24,7 @@ export type ValidateText = {
   createBackorder: MessageDescriptor;
   noBackorder: MessageDescriptor;
   discard: MessageDescriptor;
+  // The prints the operation types make at Validate.
+  printoutsTitle: MessageDescriptor;
+  printNames: PrintLinkNames;
 };

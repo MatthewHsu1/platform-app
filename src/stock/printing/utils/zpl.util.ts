@@ -1,5 +1,6 @@
 import { type ZplProductLabel } from 'src/stock/printing/types/zpl-product-label.type';
 import { type ZplTemplate } from 'src/stock/printing/types/zpl-template.type';
+import { dayInTimeZone } from 'src/stock/printing/utils/print-dates.util';
 import { isValidSscc, ssccElementString } from 'src/stock/printing/utils/sscc.util';
 
 // Label printers read these files as they are: field data is printed raw, and line breaks between
@@ -58,7 +59,7 @@ export const zplLotLabels = (lots: { productDisplayName: string; lotName: string
 
 // A package named with a valid SSCC gets its name and details as text beside a DataMatrix of the
 // GS1 code; any other package gets its name and a Code 128 of it.
-export const zplPackageLabels = (packages: { name: string; packDate: string | null; packageTypeName: string }[]) =>
+export const zplPackageLabels = (packages: { name: string; packDate: string | null; packageTypeName: string }[], timeZone: string) =>
   packages
     .map((pack) =>
       isValidSscc(pack.name)
@@ -67,7 +68,7 @@ export const zplPackageLabels = (packages: { name: string; packDate: string | nu
             '^FO310,50',
             `^A0N,44,33^FDSSCC: ${pack.name}^FS`,
             '^FO310,100^BY3',
-            pack.packDate ? `^A0N,44,33^FDPack Date: ${pack.packDate}^FS` : '',
+            pack.packDate ? `^A0N,44,33^FDPack Date: ${dayInTimeZone(pack.packDate, timeZone)}^FS` : '',
             '^FO310,150^BY3',
             pack.packageTypeName ? `^A0N,44,33^FDPackage Type: ${pack.packageTypeName}^FS` : '',
             '^FO100,50^BY3',

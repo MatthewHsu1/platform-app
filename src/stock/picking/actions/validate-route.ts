@@ -1,4 +1,5 @@
 import { CLAIM_HELD_MESSAGE } from 'src/shared/claims/claim';
+import { printTimeZoneOf } from 'src/stock/printing/utils/print-dates.util';
 import { StockUserError } from 'src/stock/stock-errors';
 import { readIds } from 'src/stock/stock-route';
 import { type ValidateOptions } from 'src/stock/picking/types/validate-options.type';
@@ -31,12 +32,13 @@ export const makeValidateRoute =
   async (body: Record<string, unknown>): Promise<Record<string, unknown>> => {
     const pickingIds = await deps.readPickingIds(body);
     const skipExpired = body.skipExpired === true;
+    const printTimeZone = printTimeZoneOf(body.timeZone);
     const answer =
       typeof body.backorderAnswer === 'object' && body.backorderAnswer !== null ? (body.backorderAnswer as Record<string, unknown>) : null;
     const results: ValidateResult[] = [];
 
     if (answer === null) {
-      results.push(await deps.validatePickings(pickingIds, { skipExpired, skipBatchHook: true }));
+      results.push(await deps.validatePickings(pickingIds, { skipExpired, skipBatchHook: true, printTimeZone }));
     } else {
       // The groups run one after the other, so the expired-lot question is asked once for the whole selection
       // first: otherwise one group could be done before another asks it.
@@ -52,10 +54,10 @@ export const makeValidateRoute =
       const logEveryTransfer = answer.noBackorderButton === true;
 
       if (withBackorderIds.length > 0) {
-        results.push(await deps.validatePickings(withBackorderIds, { cancelBackorder: false, skipExpired: true, logEveryTransfer, skipBatchHook: true }));
+        results.push(await deps.validatePickings(withBackorderIds, { cancelBackorder: false, skipExpired: true, logEveryTransfer, skipBatchHook: true, printTimeZone }));
       }
       if (noBackorderIds.length > 0) {
-        results.push(await deps.validatePickings(noBackorderIds, { cancelBackorder: true, skipExpired: true, logEveryTransfer, skipBatchHook: true }));
+        results.push(await deps.validatePickings(noBackorderIds, { cancelBackorder: true, skipExpired: true, logEveryTransfer, skipBatchHook: true, printTimeZone }));
       }
     }
 

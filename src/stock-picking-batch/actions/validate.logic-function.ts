@@ -8,8 +8,11 @@ import {
 import { readBatchValidateAnswer } from 'src/stock-picking-batch/utils/batch-validate-answer.util';
 import { validateBatch } from 'src/stock-picking-batch/validate-batch';
 import { stockRouteHandler } from 'src/stock/stock-route';
+import { printTimeZoneOf } from 'src/stock/printing/utils/print-dates.util';
 
-const handler = stockRouteHandler(async (body) => validateBatch(await readRequestedBatchId(body), readBatchValidateAnswer(body)));
+const handler = stockRouteHandler(async (body) =>
+  validateBatch(await readRequestedBatchId(body), readBatchValidateAnswer(body), printTimeZoneOf(body.timeZone)),
+);
 
 export default defineLogicFunction({
   universalIdentifier: STOCK_PICKING_BATCH_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS.validate,
