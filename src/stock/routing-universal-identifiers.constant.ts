@@ -226,34 +226,8 @@ export const ROUTING_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS = {
 
 export const PUSH_FILTER_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER = '2cf7f6de-f632-49d2-9843-13c95d57dd98';
 export const STOCK_RULE_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
-  layout: 'e077174f-6375-4001-8c0b-af17df40fd0c',
-  tabGeneral: 'fdb61bfa-9fc9-4836-b6a3-c67ebde08cd9',
-  tabPushFilter: '1aedc9fa-78d3-470b-b49d-c1aea5727155',
-  tabTimeline: '8cdf24cf-3091-4499-a32b-1c76b6b45772',
-  tabNotes: '4cef3f8c-66f3-401e-9f74-6b4e6fce591c',
-  widgetPushFilter: '998d70d1-544d-44ff-874f-6b44a33ce71c',
-  widgetTimeline: 'abede5d6-eae0-4c1c-a437-c2d147b8e98b',
-  widgetNotes: '6e7f8e92-253a-4d98-9533-fe85afad06ad',
-  generalWidgets: {
-    name: 'a33d707f-92d8-4f75-8359-f204b9fcf89e',
-    action: '99f4bd48-553a-47d2-92ab-d9852b0e0f9e',
-    locationSrc: '874d0613-9acc-4176-b7b5-d7b49e5e46bf',
-    locationDest: '3d3cf6c1-4045-44ff-9947-0fe9359ef38d',
-    pickingType: 'd9ebdbba-28e6-4fc0-a409-c7b67d4c730e',
-    procureMethod: '5be8cf3d-9b0b-4c36-87b3-03dc3118508d',
-    auto: '78cea680-e4b3-4da4-92c2-c120240b028c',
-    route: 'c0874399-012a-4681-bd40-280d7a8c4d02',
-    warehouse: '69ba52dc-40ed-4bd0-8de2-297d729031cb',
-    sequence: '8ed4d937-9d1a-47b0-8db3-e21378674536',
-    delay: '39714b3c-cf24-4a27-9e27-283270334977',
-    locationDestFromRule: 'a65612be-7a63-4955-ab1c-c6c30ca97691',
-    partnerAddress: '8ef1ab30-b576-4766-90d5-c5ea461e93a1',
-    partnerAddressPerson: '67b79140-0972-4f05-a73b-87d2a03e1427',
-    propagateCancel: '3fb9a1b5-a53b-41e6-a1ac-ae18d14040ff',
-    propagateCarrier: '2c4cffa0-fe48-4a10-a484-3f1df4ffe257',
-    active: '93eedc44-eebb-42c1-a3ab-bc804e7726d4',
-    ruleMessage: '97a515ec-db60-4051-8189-c53786b7d307',
-  },
+  tabPushFilter: '527b0a4e-2454-410a-9a34-41c81ac424e7',
+  widgetPushFilter: '05c255e0-c57e-4463-8807-59d476cffa8c',
 } as const;
 
 export const REPLENISHMENT_HORIZON_DAYS_VARIABLE_UNIVERSAL_IDENTIFIER = 'dd8435f4-2b74-4bf6-b820-ce420138cb75';
