@@ -1,2 +1,2 @@
 // Each printable module registers itself when imported here.
-export {};
+import 'src/stock/printing/printables/picking-printables';
