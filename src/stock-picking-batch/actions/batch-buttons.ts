@@ -8,6 +8,7 @@ import { planBatchCancel, planBatchCheckAvailability, planBatchConfirm } from 's
 import { assignPickings } from 'src/stock/picking/actions/assign-pickings';
 import { unreservePickings } from 'src/stock/picking/actions/unreserve-pickings';
 import { filterReadableIds } from 'src/stock/stock-access';
+import { holdTransfers } from 'src/stock/reports/reception/allocation-holds';
 import { StockUserError } from 'src/stock/stock-errors';
 import { MOVE_STATE } from 'src/stock/stock-options.constant';
 import { NOTHING_TO_PACK } from 'src/stock/utils/plan-put-in-pack.util';
@@ -45,7 +46,7 @@ export const checkBatchAvailability = async (batchId: string) => {
   if (refusal !== null) {
     throw new StockUserError(BATCH_MESSAGES[refusal]);
   }
-  await assignPickings(pickingIds);
+  await holdTransfers(pickingIds, () => assignPickings(pickingIds));
 };
 
 // The transfers leave the batch and stay as they are. They leave before the

@@ -6,6 +6,7 @@ import { logLessQuantities } from 'src/stock/picking/actions/log-less-quantities
 import { prepareValidate } from 'src/stock/picking/actions/prepare-validate';
 import { recomputePickingState } from 'src/stock/picking/recompute-picking-state';
 import { autoprint, receptionReportToShow } from 'src/stock/printing/autoprint';
+import { settleAllocations } from 'src/stock/reports/reception/allocation-holds';
 import { sendDeliveryConfirmation } from 'src/stock/printing/send-delivery-confirmation';
 import { recomputeReserved } from 'src/stock/quant/recompute-reserved';
 import { sourceKeyOf } from 'src/stock/quant/quant-key';
@@ -32,6 +33,8 @@ type ValidatePickingsDeps = {
   withClaim: <TResult>(key: string, run: (runId: string) => Promise<TResult>) => Promise<{ kind: 'done'; result: TResult } | { kind: 'held' }>;
   openJournal: (key: string, runId: string) => Promise<ClaimJournal>;
   heldClaimKeys: (keys: string[]) => Promise<string[]>;
+  // Finishes, or frees, a stopped allocation on these transfers.
+  settleAllocations: (pickingIds: string[]) => Promise<void>;
   runStore: ValidateRunStore;
   doneMoves: (moveIds: string[], options: DoneMovesOptions) => Promise<DoneMovesResult>;
   createBackorder: (
@@ -64,9 +67,18 @@ type RunPlan = RunRequest & {
   pickingTypeCode: PickingTypeCode | null;
   now: string;
 };
-type RunOutcome = { done: boolean; backorderId: string | null; batchesToValidate: string[]; pickingsToDetach: string[] };
+type RunOutcome = {
+  done: boolean;
+  backorderId: string | null;
+  batchesToValidate: string[];
+  pickingsToDetach: string[];
+  allocating?: boolean;
+};
 
 const SKIPPED: RunOutcome = { done: false, backorderId: null, batchesToValidate: [], pickingsToDetach: [] };
+const ALLOCATING: RunOutcome = { ...SKIPPED, allocating: true };
+
+const allocationKeys = (pickingIds: string[]) => pickingIds.map((pickingId) => claimKey('allocate', pickingId));
 
 export const makeValidatePickings = (deps: ValidatePickingsDeps) => {
   // `request` null: a resume, which finishes only a run that passed its commit point; a run that
@@ -76,6 +88,11 @@ export const makeValidatePickings = (deps: ValidatePickingsDeps) => {
 
     if (request === null && !journal.committed) {
       return SKIPPED;
+    }
+    // Checked once this transfer is held, so an allocation that starts now
+    // sees this run and waits, and one already running is waited for.
+    if (request !== null && !journal.resumed && (await deps.heldClaimKeys(allocationKeys([pickingId]))).length > 0) {
+      return ALLOCATING;
     }
     const plan = await journal.step<RunPlan>(
       'validate:plan',
@@ -203,6 +220,11 @@ export const makeValidatePickings = (deps: ValidatePickingsDeps) => {
   };
 
   const validatePickings = async (pickingIds: string[], options: ValidateOptions): Promise<ValidateResult> => {
+    // A transfer an allocation is changing is not validated until it ends.
+    await deps.settleAllocations(pickingIds);
+    if ((await deps.heldClaimKeys(allocationKeys(pickingIds))).length > 0) {
+      return { kind: 'refused', reason: CLAIM_HELD_MESSAGE };
+    }
     const stopped = await stoppedDoneIds(pickingIds);
     const remaining = pickingIds.filter((id) => !stopped.includes(id));
     const prepared =
@@ -249,7 +271,7 @@ export const makeValidatePickings = (deps: ValidatePickingsDeps) => {
         }),
       );
 
-      if (outcome.kind === 'held') {
+      if (outcome.kind === 'held' || outcome.result.allocating === true) {
         held = true;
         continue;
       }
@@ -334,6 +356,7 @@ export const { validatePickings, resumeValidate } = makeValidatePickings({
   withClaim,
   openJournal,
   heldClaimKeys,
+  settleAllocations,
   runStore: graphqlValidateRunStore,
   doneMoves,
   createBackorder,
