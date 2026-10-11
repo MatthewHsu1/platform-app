@@ -14,17 +14,15 @@ import {
   templateAttributeValues,
   variantCombinationLinks,
 } from 'src/product/variant/product-records';
-import {
-  type AttributeValueRow,
-  type LineRow,
-  type LineValueLinkRow,
-  type TemplateAttributeValueRecord,
-} from 'src/product/variant/template-state.type';
 import { findMany, includingDeleted } from 'src/shared/triggers/records';
 import { type ErrorCollector, retryOnConflict } from 'src/shared/triggers/retry-on-conflict';
 import { DEFAULT_CURRENCY_CODE } from 'src/shared/currency.constant';
+import { type AttributeValueRow } from 'src/product/variant/types/attribute-value-row.type';
+import { type LineRow } from 'src/product/variant/types/line-row.type';
+import { type LineValueLinkRow } from 'src/product/variant/types/line-value-link-row.type';
+import { type TemplateAttributeValueRecord } from 'src/product/variant/types/template-attribute-value-record.type';
 
-export type LineRecord = LineRow & { deletedAt: string | null };
+type LineRecord = LineRow & { deletedAt: string | null };
 
 const LINE_RECORD_SELECTION = `${LINE_SELECTION} deletedAt`;
 
@@ -36,7 +34,7 @@ export const findLineIncludingDeleted = async (lineId: string) => {
   return line;
 };
 
-// T7 for one line. Returns the product to reconcile and the values it took
+// Syncs one attribute line. Returns the product to reconcile and the values it took
 // off, which are deleted once no variant uses them.
 const syncLine = async (lineId: string) => {
   const found = await findMany<{

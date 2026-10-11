@@ -1,20 +1,7 @@
 import { floatRound } from 'src/shared/utils/float-round.util';
-import { computePrice, computeQuantity, type ResolvedUom } from 'src/uom/utils/uom.util';
-
-export type SellerLine = {
-  id: string;
-  createdAt: string;
-  partnerId: string;
-  sequence: number;
-  minQty: number;
-  price: number;
-  discount: number;
-  productUomId: string;
-  productTmplId: string;
-  productId: string | null;
-  dateStart: string | null;
-  dateEnd: string | null;
-};
+import { type ResolvedUom } from 'src/uom/utils/types/resolved-uom.type';
+import { computePrice, computeQuantity } from 'src/uom/utils/uom.util';
+import { type SellerLine } from 'src/product/utils/types/seller-line.type';
 
 // Dates compare with both ends inclusive; the asked date may carry a time.
 const isInDates = (line: SellerLine, date: string) => {

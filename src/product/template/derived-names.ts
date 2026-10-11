@@ -1,10 +1,10 @@
 import { productComboItems } from 'src/product/combo/combo-records';
 import { productPricelistItems } from 'src/product/pricelist/pricelist-records';
-import { type AppliedOn } from 'src/product/product-options.constant';
 import { productSupplierinfos } from 'src/product/supplierinfo/supplierinfo-records';
 import { planDerivedNames } from 'src/product/utils/plan-derived-names.util';
 import { productProducts, productTemplates } from 'src/product/variant/product-records';
 import { type Records } from 'src/shared/triggers/records';
+import { type AppliedOn } from 'src/product/types/applied-on.type';
 
 type StoredSeller = {
   id: string;
@@ -44,7 +44,7 @@ const namesOf = async (of: Records, ids: (string | null)[]) => {
   return new Map(rows.map((row) => [row.id, row.name]));
 };
 
-const rename = async (of: Records, renames: { id: string; name: string }[]) => {
+const rename = async (of: Records, renames: { id: string; name: string | null }[]) => {
   for (const { id, name } of renames) {
     await of.update(id, { name });
   }

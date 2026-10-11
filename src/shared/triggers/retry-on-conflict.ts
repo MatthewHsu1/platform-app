@@ -1,5 +1,8 @@
-const CONFLICT_MESSAGES = [
-  'A duplicate entry was detected',
+// Twenty's message for a unique index clash.
+export const DUPLICATE_ENTRY_MESSAGE = 'A duplicate entry was detected';
+
+export const CONFLICT_MESSAGES = [
+  DUPLICATE_ENTRY_MESSAGE,
   'Record not found',
   // Postgres picks one of two runs writing the same rows to fail.
   'deadlock detected',

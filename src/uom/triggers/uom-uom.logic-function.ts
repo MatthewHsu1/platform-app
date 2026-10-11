@@ -21,7 +21,7 @@ import {
 
 type UomRecord = {
   id: string;
-  name: string;
+  name: string | null;
   relativeUomId: string | null;
   relativeFactor: number;
   seedKey: string | null;

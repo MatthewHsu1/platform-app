@@ -2,10 +2,7 @@ import { productComboLinks } from 'src/product/combo/combo-records';
 import { productPricelistItems } from 'src/product/pricelist/pricelist-records';
 import { productSupplierinfos } from 'src/product/supplierinfo/supplierinfo-records';
 import { productsRefusedForDelete } from 'src/product/utils/combo-guards.util';
-import {
-  type ProductDeleteCascadeKind,
-  planProductDeleteCascade,
-} from 'src/product/utils/plan-product-delete-cascade.util';
+import { planProductDeleteCascade } from 'src/product/utils/plan-product-delete-cascade.util';
 import {
   attributeLines,
   exclusionLinks,
@@ -15,10 +12,12 @@ import {
   productTemplates,
   templateAttributeValues,
 } from 'src/product/variant/product-records';
-import { variantIdsInUse } from 'src/product/variant/apply-variant-plan';
+import { variantHolders } from 'src/product/variant/apply-variant-plan';
 import { restoreWithNote } from 'src/shared/triggers/put-back';
 import { type Records, records } from 'src/shared/triggers/records';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
+import { RESTRICT_DELETE_MESSAGE } from 'src/stock/stock-messages';
+import { type ProductDeleteCascadeKind } from 'src/product/utils/types/product-delete-cascade-kind.type';
 
 const tagLinks = records('productTagProductTemplateRel', 'productTagProductTemplateRels');
 const packagingLinks = records('productTemplateUomUomRel', 'productTemplateUomUomRels');
@@ -109,10 +108,10 @@ export const deleteProductRows = async (templateIds: string[]) => {
   errors.throwIfAny();
 };
 
-// A product cannot be deleted while a combo option holds one of its
-// variants, whoever asks. The
-// product comes back with a note; returns the products that stay. The app
-// itself only deletes a product with no variant left.
+// A product cannot be deleted while a combo option or a lot/serial number
+// holds one of its variants, whoever asks. The product comes back with a note;
+// returns the products that stay. The app itself only deletes a product with
+// no variant left.
 export const restoreHeldProducts = async (deletedIds: string[]) => {
   if (deletedIds.length === 0) {
     return new Set<string>();
@@ -131,9 +130,10 @@ export const restoreHeldProducts = async (deletedIds: string[]) => {
       ]);
     }
   }
+  const { comboItems, lots } = await variantHolders(variants.map((variant) => variant.id));
   const refused = productsRefusedForDelete({
     variantIdsByProduct,
-    heldIds: await variantIdsInUse(variants.map((variant) => variant.id)),
+    heldIds: new Set([...comboItems, ...lots]),
   });
 
   for (const recordId of refused) {
@@ -141,7 +141,9 @@ export const restoreHeldProducts = async (deletedIds: string[]) => {
       objectSingular: 'productTemplate',
       objectPlural: 'productTemplates',
       recordId,
-      reason: 'A combo option holds one of its variants, so it cannot be deleted.',
+      reason: (variantIdsByProduct.get(recordId) ?? []).some((variantId) => comboItems.has(variantId))
+        ? 'A combo option holds one of its variants, so it cannot be deleted.'
+        : RESTRICT_DELETE_MESSAGE,
     });
   }
   return new Set(refused);

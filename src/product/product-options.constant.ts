@@ -42,6 +42,3 @@ export const COMPUTE_PRICE = {
   FORMULA: 'FORMULA',
 } as const;
 
-export type AppliedOn = (typeof APPLIED_ON)[keyof typeof APPLIED_ON];
-export type PricelistBase = (typeof PRICELIST_BASE)[keyof typeof PRICELIST_BASE];
-export type ComputePrice = (typeof COMPUTE_PRICE)[keyof typeof COMPUTE_PRICE];

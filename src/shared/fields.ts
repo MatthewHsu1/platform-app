@@ -219,3 +219,10 @@ export const selectField = (
   defaultValue: `'${defaultValue}'`,
   options: options.map((option, position) => ({ ...option, position })),
 });
+
+// Printed reports kept on a record: the newest 60.
+export const printoutsField = (universalIdentifier: string) =>
+  appWritten({
+    ...filesField(universalIdentifier, 'printouts', 'Printouts', 'IconPrinter'),
+    universalSettings: { maxNumberOfValues: 60 },
+  });

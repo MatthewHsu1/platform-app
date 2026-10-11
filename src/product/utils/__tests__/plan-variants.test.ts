@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  combinationKey,
-  planVariants,
-  type VariantLine,
-} from 'src/product/utils/plan-variants.util';
+import { combinationKey, planVariants } from 'src/product/utils/plan-variants.util';
+import { type VariantLine } from 'src/product/utils/types/variant-line.type';
 
 const size: VariantLine = {
   id: 'size',

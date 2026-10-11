@@ -11,7 +11,7 @@ import { planVariants } from 'src/product/utils/plan-variants.util';
 import { staffEditOf } from 'src/product/utils/plan-template-variant-sync.util';
 import { buildVariantPlanInput, hasDynamicLine } from 'src/product/utils/variant-plan-input.util';
 import { variantsRefusedForDelete } from 'src/product/utils/combo-guards.util';
-import { variantIdsInUse } from 'src/product/variant/apply-variant-plan';
+import { variantHolders } from 'src/product/variant/apply-variant-plan';
 import { productPricelistItems } from 'src/product/pricelist/pricelist-records';
 import { productSupplierinfos } from 'src/product/supplierinfo/supplierinfo-records';
 import { packagingBarcodes, productProducts, productTemplates } from 'src/product/variant/product-records';
@@ -19,12 +19,13 @@ import { putBackBarcodeClash } from 'src/product/variant/barcode-check';
 import { readTemplateState } from 'src/product/variant/read-template-state';
 import { reconcileTemplates } from 'src/product/variant/reconcile-variants';
 import { refreshDerivedNames } from 'src/product/template/derived-names';
-import { type Currency } from 'src/product/variant/template-state.type';
 import { isApplicationWrite, isStaffChange } from 'src/shared/triggers/actor';
 import { addNote, restoreWithNote } from 'src/shared/triggers/put-back';
 import { records } from 'src/shared/triggers/records';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { errorCollector, forEachReportingErrors } from 'src/shared/triggers/retry-on-conflict';
+import { RESTRICT_DELETE_MESSAGE } from 'src/stock/stock-messages';
+import { type Currency } from 'src/product/variant/types/currency.type';
 
 type VariantEventRecord = {
   id: string;
@@ -40,7 +41,7 @@ type VariantEventRecord = {
   updatedBy?: { source?: string | null } | null;
 };
 
-// T13: the product is deleted with its last variant, unless the product
+// The product is deleted with its last variant, unless the product
 // makes variants on demand (a DYNAMIC attribute).
 const deleteProductWithoutVariants = async (templateId: string) => {
   const state = await readTemplateState(templateId);
@@ -55,8 +56,9 @@ const deleteProductWithoutVariants = async (templateId: string) => {
   }
 };
 
-// T12 for a staff archive or unarchive . The
-// variant cleanup archives with a plain write, which leaves the product alone, so the app's writes are skipped.
+// A staff archive or unarchive follows to the product. The variant cleanup
+// archives with a plain write, which leaves the product alone, so the app's
+// writes are skipped.
 const syncProductActive = async (templateId: string) => {
   const [template] = await productTemplates.find<{ id: string; active: boolean }>(
     { id: { eq: templateId } },
@@ -104,13 +106,15 @@ const deleteRowsOfVariants = async (variantIds: string[]) => {
   errors.throwIfAny();
 };
 
-// A variant a combo item holds cannot be deleted, whoever asks. Twenty has deleted it, so it comes back. The app itself never deletes
-// a held variant: it archives one instead.
+// A variant a combo item or a lot/serial number holds cannot be deleted,
+// whoever asks. Twenty has deleted it, so it comes back. The app itself never
+// deletes a held variant: it archives one instead.
 const restoreHeldVariants = async (events: { recordId: string }[]) => {
   const deletedIds = events.map((event) => event.recordId);
+  const { comboItems, lots } = await variantHolders(deletedIds);
   const refused = variantsRefusedForDelete({
     deletedIds,
-    heldIds: await variantIdsInUse(deletedIds),
+    heldIds: new Set([...comboItems, ...lots]),
   });
 
   for (const recordId of refused) {
@@ -118,7 +122,9 @@ const restoreHeldVariants = async (events: { recordId: string }[]) => {
       objectSingular: 'productProduct',
       objectPlural: 'productProducts',
       recordId,
-      reason: 'A combo option holds this variant, so it cannot be deleted.',
+      reason: comboItems.has(recordId)
+        ? 'A combo option holds this variant, so it cannot be deleted.'
+        : RESTRICT_DELETE_MESSAGE,
     });
   }
   return new Set(refused);
@@ -128,7 +134,7 @@ const HAND_MADE_REASON =
   'A variant made by hand was removed. Each variant is one combination of the product attribute values, made by the app; this one repeated a combination or had none.';
 
 // A variant must be a new combination (unique product +
-// combination), so the create never happened: the row is destroyed (R21).
+// combination), so the create never happened: the row is destroyed.
 // The product is then reconciled at once, which also settles a restored one.
 const settleStaffVariants = async (templateId: string, createdIds: string[]) => {
   const state = await readTemplateState(templateId);
@@ -201,7 +207,7 @@ const handler = async (
   const errors = errorCollector();
   const putBackIds = new Set<string>();
 
-  // T9: a barcode must be unique. The put-back is an app write, so
+  // A barcode must be unique. The put-back is an app write, so
   // the edit below is built as if the refused barcode was never saved.
   for (const event of events) {
     const before = 'before' in event.properties ? event.properties.before : undefined;

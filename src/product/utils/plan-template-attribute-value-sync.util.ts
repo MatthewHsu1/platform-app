@@ -1,4 +1,4 @@
-export type TemplateAttributeValueRow = { id: string; valueId: string; ptavActive: boolean };
+type TemplateAttributeValueRow = { id: string; valueId: string; ptavActive: boolean };
 
 // One product attribute value
 // per value on the line. An archived line offers no values.

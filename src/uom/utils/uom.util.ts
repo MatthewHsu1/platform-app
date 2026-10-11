@@ -1,15 +1,7 @@
 import { floatRound, type RoundingMethod } from 'src/shared/utils/float-round.util';
 import { resolveTree } from 'src/shared/utils/resolve-tree.util';
-
-export type UomRow = {
-  id: string;
-  name: string;
-  relativeUomId: string | null;
-  relativeFactor: number;
-  seedKey: string | null;
-};
-
-export type ResolvedUom = { id: string; name: string; factor: number; rootId: string; parentPath: string };
+import { type ResolvedUom } from 'src/uom/utils/types/resolved-uom.type';
+import { type UomRow } from 'src/uom/utils/types/uom-row.type';
 
 const UNPROTECTED_SEED_KEYS = new Set([
   'uom.product_uom_hour',
@@ -46,7 +38,7 @@ export const resolveUoms = (rows: UomRow[]) => {
     const self = chain[chain.length - 1];
     resolved.set(id, {
       id,
-      name: self.name,
+      name: self.name ?? '',
       factor: chain.reduce((factor, link) => factor * link.relativeFactor, 1),
       rootId: chain[0].id,
       parentPath: `${chain.map((link) => link.id).join('/')}/`,

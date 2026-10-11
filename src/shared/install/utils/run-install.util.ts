@@ -43,7 +43,7 @@ const versionParts = (version: string) =>
 // Default and seed rows go in once, when a module is first installed (fresh,
 // or on an upgrade from before the module's first version). Later runs skip
 // them so rows staff delete stay deleted.
-const isNewModule = (previousVersion: string | undefined, firstVersion: string) => {
+export const isNewModule = (previousVersion: string | undefined, firstVersion: string) => {
   if (previousVersion === undefined || previousVersion.length === 0) {
     return true;
   }

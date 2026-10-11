@@ -1,9 +1,8 @@
-import { type TemplateState } from 'src/product/variant/template-state.type';
-import {
-  type ExistingVariant,
-  type VariantExclusion,
-  type VariantLine,
-} from 'src/product/utils/plan-variants.util';
+import { type TemplateState } from 'src/product/variant/types/template-state.type';
+import { type ExistingVariant } from 'src/product/utils/types/existing-variant.type';
+import { type VariantExclusion } from 'src/product/utils/types/variant-exclusion.type';
+import { type VariantLine } from 'src/product/utils/types/variant-line.type';
+
 
 const indexedIds = (combinationIndices: string | null) =>
   (combinationIndices ?? '').split(',').filter((id) => id !== '');

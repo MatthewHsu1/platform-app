@@ -1,7 +1,7 @@
 import { leavesNoVariant, noVariantLeftNote } from 'src/product/utils/leaves-no-variant.util';
 import { planVariantDetails } from 'src/product/utils/plan-variant-details.util';
 import { planVariants } from 'src/product/utils/plan-variants.util';
-import { fieldsNotEdited, type SyncedField } from 'src/product/utils/plan-template-variant-sync.util';
+import { fieldsNotEdited } from 'src/product/utils/plan-template-variant-sync.util';
 import {
   buildVariantPlanInput,
   hasDynamicLine,
@@ -20,31 +20,28 @@ import {
   variantCombinationLinks,
 } from 'src/product/variant/product-records';
 import { readTemplateState } from 'src/product/variant/read-template-state';
-import {
-  type StaffEdit,
-  syncStaffEdit,
-  syncTemplateVariantFields,
-} from 'src/product/variant/sync-template-variant-fields';
-import { type TemplateState } from 'src/product/variant/template-state.type';
-import { type UndoResult } from 'src/product/variant/undo-changes';
+import { syncStaffEdit, syncTemplateVariantFields } from 'src/product/variant/sync-template-variant-fields';
 import { addNote } from 'src/shared/triggers/put-back';
 import {
   type ErrorCollector,
   forEachReportingErrors,
   retryOnConflict,
 } from 'src/shared/triggers/retry-on-conflict';
+import { type SyncedField } from 'src/product/utils/types/synced-field.type';
+import { type StaffEdit } from 'src/product/variant/types/staff-edit.type';
+import { type TemplateState } from 'src/product/variant/types/template-state.type';
+import { type UndoResult } from 'src/product/variant/types/undo-result.type';
 
-export type ReconcileOptions = {
-  // T2: create, restore, archive and delete variants.
+type ReconcileOptions = {
+  // Create, restore, archive and delete variants.
   variants?: boolean;
-  // T3: which side wins for which fields. After T2 the product follows its
-  // variant; on product create the product's values go to its new variant.
+  // Which side wins for which fields. After the variants are reconciled the
+  // product follows its variant; on product create the product's values go to its new variant.
   sync?: { source: 'template' | 'variant'; fields: SyncedField[] };
-  // T3 for a staff save of synced fields on the product or its variant.
+  // Staff save of synced fields on the product or its variant.
   edit?: StaffEdit;
   // A save that would leave the product without any variant is refused.
-  // Twenty has saved, so
-  // the trigger undoes the change that started this run.
+  // Twenty has already saved, so the trigger undoes the change that started this run.
   undoChange?: (templateId: string) => Promise<UndoResult>;
 };
 
@@ -166,7 +163,7 @@ const reconcileTemplate = async (templateId: string, options: ReconcileOptions) 
   }
 };
 
-// T2 + T3 + T4 + names, one product at a time so two products never mix.
+// Each product is reconciled on its own so two products never mix.
 // With a collector the caller goes on and reports at its end; without one a
 // failure is reported once every product has had its turn.
 export const reconcileTemplates = async (

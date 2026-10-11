@@ -82,4 +82,10 @@ describe('pricelistItemName', () => {
     expect(pricelistItemName({ appliedOn: 'PRODUCT', ...names })).toBe('Shirt');
     expect(pricelistItemName({ appliedOn: 'PRODUCT_VARIANT', ...names })).toBe('Shirt (Red)');
   });
+
+  // An empty name reads back as null, so the rule's stored name and this one compare equal.
+  it('gives no name to a product rule whose product has no name', () => {
+    expect(pricelistItemName({ appliedOn: 'PRODUCT', categoryName: null, productName: null, variantName: null })).toBeNull();
+    expect(pricelistItemName({ appliedOn: 'PRODUCT_VARIANT', categoryName: null, productName: null, variantName: '' })).toBeNull();
+  });
 });

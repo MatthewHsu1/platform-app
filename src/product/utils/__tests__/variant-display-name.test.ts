@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  variantDisplayName,
-  type VariantNameValue,
-} from 'src/product/utils/variant-display-name.util';
+import { variantDisplayName } from 'src/product/utils/variant-display-name.util';
+import { type VariantNameValue } from 'src/product/utils/types/variant-name-value.type';
 
 const value = (
   name: string,
@@ -83,5 +81,11 @@ describe('variantDisplayName', () => {
         ],
       }),
     ).toBe('Shirt (L, Red)');
+  });
+
+  it('is empty for a product without a name or reference', () => {
+    expect(
+      variantDisplayName({ templateName: '', defaultCode: null, templateAttributeValues: [] }),
+    ).toBe('');
   });
 });

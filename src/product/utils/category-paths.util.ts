@@ -1,12 +1,13 @@
 import { resolveTree } from 'src/shared/utils/resolve-tree.util';
+import { textOrNull } from 'src/shared/utils/text-or-null.util';
 
-export const resolveCategories = (rows: { id: string; name: string; parentId: string | null }[]) => {
+export const resolveCategories = (rows: { id: string; name: string | null; parentId: string | null }[]) => {
   const { chains, cycles } = resolveTree(rows);
-  const resolved = new Map<string, { completeName: string; parentPath: string }>();
+  const resolved = new Map<string, { completeName: string | null; parentPath: string }>();
 
   for (const [id, chain] of chains) {
     resolved.set(id, {
-      completeName: chain.map((link) => link.name).join(' / '),
+      completeName: textOrNull(chain.map((link) => link.name ?? '').join(' / ')),
       parentPath: `${chain.map((link) => link.id).join('/')}/`,
     });
   }

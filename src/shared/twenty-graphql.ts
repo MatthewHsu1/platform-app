@@ -17,7 +17,7 @@ const TOKEN_ENV_NAME_BY_CALLER: Record<GraphqlCaller, string> = {
 
 // Twenty allows an app 500 requests a minute (APPLICATION_API_RATE_LIMITING_LIMIT).
 // A burst, such as a product import, waits for the window instead of failing.
-const RATE_LIMIT_MESSAGE = 'Rate limit exceeded';
+export const RATE_LIMIT_MESSAGE = 'Rate limit exceeded';
 const RATE_LIMIT_WAIT_MS = 5_000;
 const RATE_LIMIT_ATTEMPTS = 24;
 

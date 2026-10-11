@@ -1,16 +1,11 @@
-import {
-  planEditSync,
-  planTemplateVariantSync,
-  type SyncedField,
-  type SyncValues,
-  syncValuesOf,
-} from 'src/product/utils/plan-template-variant-sync.util';
+import { planEditSync, planTemplateVariantSync, syncValuesOf } from 'src/product/utils/plan-template-variant-sync.util';
 import { productProducts, productTemplates } from 'src/product/variant/product-records';
-import {
-  type Currency,
-  type TemplateState,
-} from 'src/product/variant/template-state.type';
 import { DEFAULT_CURRENCY_CODE } from 'src/shared/currency.constant';
+import { type SyncedField } from 'src/product/utils/types/synced-field.type';
+import { type SyncValues } from 'src/product/utils/types/sync-values.type';
+import { type Currency } from 'src/product/variant/types/currency.type';
+import { type TemplateState } from 'src/product/variant/types/template-state.type';
+import { type StaffEdit } from 'src/product/variant/types/staff-edit.type';
 
 const toWriteData = (data: Partial<SyncValues>, standardPrice: Currency | null) => {
   const { standardPrice: amountMicros, ...rest } = data;
@@ -50,8 +45,8 @@ const applySync = async (
 const liveVariants = (state: TemplateState) =>
   state.variants.filter((variant) => variant.deletedAt === null);
 
-// T3 on product create and after T2. Returns whether it wrote anything, so
-// the caller reads the rows again.
+// Copies synced fields between product and variant on product create and after
+// variants are reconciled. Returns whether it wrote anything, so the caller reads the rows again.
 export const syncTemplateVariantFields = (
   state: TemplateState,
   source: 'template' | 'variant',
@@ -71,13 +66,7 @@ export const syncTemplateVariantFields = (
     }),
   );
 
-export type StaffEdit = {
-  source: 'template' | 'variant';
-  edits: Partial<Record<SyncedField, { before: unknown; after: unknown }>>;
-  savedAt: string;
-};
-
-// T3 for a staff save on one side (R22).
+// A staff save on one side wins on the fields it changed.
 export const syncStaffEdit = (state: TemplateState, edit: StaffEdit) =>
   applySync(
     state,

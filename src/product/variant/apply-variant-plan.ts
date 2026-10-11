@@ -1,28 +1,44 @@
 import { productComboItems } from 'src/product/combo/combo-records';
 import { variantDetailsFor } from 'src/product/utils/plan-variant-details.util';
-import { combinationKey, type VariantPlan } from 'src/product/utils/plan-variants.util';
+import { combinationKey } from 'src/product/utils/plan-variants.util';
 import { variantCombinations } from 'src/product/utils/variant-plan-input.util';
 import {
   productProducts,
   variantCombinationLinks,
 } from 'src/product/variant/product-records';
-import { type TemplateState } from 'src/product/variant/template-state.type';
+import { findMany } from 'src/shared/triggers/records';
+import { stockLots } from 'src/stock/lot/lot-records';
+import { type VariantPlan } from 'src/product/utils/types/variant-plan.type';
+import { type TemplateState } from 'src/product/variant/types/template-state.type';
 
-export type AppliedVariantPlan = Extract<VariantPlan, { kind: 'apply' }>;
+type AppliedVariantPlan = Extract<VariantPlan, { kind: 'apply' }>;
 
 // A variant is archived, not deleted, only when a row with a restricting
 // reference points at it. Vendor prices, pricelist rules and packaging
-// barcodes cascade, so they never block the delete; combo items do.
-export const variantIdsInUse = async (variantIds: string[]): Promise<Set<string>> => {
+// barcodes cascade, so they never block the delete; combo items and
+// lots/serial numbers do.
+export const variantHolders = async (variantIds: string[]) => {
   if (variantIds.length === 0) {
-    return new Set();
+    return { comboItems: new Set<string>(), lots: new Set<string>() };
   }
-  const items = await productComboItems.find<{ productId: string | null }>(
-    { productId: { in: variantIds } },
-    'productId',
-  );
+  const { items, lots } = await findMany<{
+    items: { productId: string | null }[];
+    lots: { productId: string | null }[];
+  }>({
+    items: { of: productComboItems, filter: { productId: { in: variantIds } }, selection: 'productId' },
+    lots: { of: stockLots, filter: { productId: { in: variantIds } }, selection: 'productId' },
+  });
 
-  return new Set(items.flatMap((item) => item.productId ?? []));
+  return {
+    comboItems: new Set(items.flatMap((item) => item.productId ?? [])),
+    lots: new Set(lots.flatMap((lot) => lot.productId ?? [])),
+  };
+};
+
+export const variantIdsInUse = async (variantIds: string[]): Promise<Set<string>> => {
+  const { comboItems, lots } = await variantHolders(variantIds);
+
+  return new Set([...comboItems, ...lots]);
 };
 
 const linkRows = (variantId: string, templateAttributeValueIds: string[]) =>
@@ -37,7 +53,7 @@ export const hasVariantWork = (plan: AppliedVariantPlan) =>
   plan.extend.length > 0 ||
   plan.removeOrArchive.length > 0;
 
-// Order matters for the unique (product, combination) index and for T13: a
+// Order matters for the unique (product, combination) index and for deleting the product with its last variant: a
 // deleted variant comes back before its combination changes, and new
 // variants exist before old ones go.
 export const applyVariantPlan = async (

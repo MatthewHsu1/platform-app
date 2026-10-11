@@ -1,0 +1,27 @@
+import { defineLogicFunction } from 'twenty-sdk/define';
+
+import { afterValidateBatch } from 'src/stock-picking-batch/after-validate-batch';
+import { expiredLotsToConfirm } from 'src/stock/lot/validate-tracking-checks';
+import { readRequestedPickingIds } from 'src/stock/picking/actions/read-requested-picking-ids';
+import { validatePickings } from 'src/stock/picking/actions/validate-pickings';
+import { makeValidateRoute } from 'src/stock/picking/actions/validate-route';
+import { stockRouteHandler } from 'src/stock/stock-route';
+import {
+  VALIDATE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
+  VALIDATE_ROUTE_PATH,
+} from 'src/stock/stock-universal-identifiers.constant';
+
+const handler = stockRouteHandler(makeValidateRoute({ readPickingIds: readRequestedPickingIds, validatePickings, expiredLotsToConfirm, afterValidateBatch }));
+
+export default defineLogicFunction({
+  universalIdentifier: VALIDATE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
+  name: 'validate-pickings',
+  description: 'Validates transfers: moves the stock of their picked lines, makes backorders, and asks first when Validate would.',
+  timeoutSeconds: 300,
+  handler,
+  httpRouteTriggerSettings: {
+    path: VALIDATE_ROUTE_PATH,
+    httpMethod: 'POST',
+    isAuthRequired: true,
+  },
+});

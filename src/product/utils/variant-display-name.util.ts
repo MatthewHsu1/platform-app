@@ -1,17 +1,5 @@
-import { type CreateVariantMode } from 'src/product/utils/plan-variants.util';
+import { type VariantNameValue } from 'src/product/utils/types/variant-name-value.type';
 
-export type VariantNameValue = {
-  name: string;
-  isActive: boolean;
-  lineId: string;
-  lineSequence: number;
-  attributeSequence: number;
-  attributeId: string;
-  valueSequence: number;
-  lineCreateVariant: CreateVariantMode;
-  lineActiveValueCount: number;
-  lineTotalValueCount: number;
-};
 
 export const variantDisplayName = ({
   templateName,

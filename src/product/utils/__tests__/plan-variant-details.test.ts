@@ -40,6 +40,25 @@ describe('planVariantDetails', () => {
     expect(plan.exclusions).toEqual([{ id: 'redNoL', data: { name: 'Red excludes L' } }]);
   });
 
+  it('leaves the name of a line empty when its attribute has no name, and writes nothing for it', () => {
+    const state = shirtState();
+    state.attributes.set('size', { id: 'size', name: null, sequence: 20, createVariant: 'ALWAYS' });
+    state.lines = state.lines.map((line) => (line.id === 'lineSize' ? { ...line, valueCount: 3 } : line));
+
+    expect(planVariantDetails(state).lines).toEqual([{ id: 'lineColor', data: { name: 'Color', valueCount: 2 } }]);
+  });
+
+  it('stores no name for an exclusion about a value that has none, and clears an old one', () => {
+    const state = shirtState();
+    state.exclusionLinks = [];
+    state.exclusions = [
+      { id: 'blank', name: null, productTemplateAttributeValueId: 'ghost', productTmplId: 'shirt' },
+      { id: 'old', name: 'Old', productTemplateAttributeValueId: 'ghost', productTmplId: 'shirt' },
+    ];
+
+    expect(planVariantDetails(state).exclusions).toEqual([{ id: 'old', data: { name: null } }]);
+  });
+
   it('writes nothing on the second pass', () => {
     const state = shirtState();
     state.variants = [

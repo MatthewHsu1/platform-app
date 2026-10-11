@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { resolveUoms } from 'src/uom/utils/uom.util';
-import { selectSeller, type SellerLine } from 'src/product/utils/select-seller.util';
+import { selectSeller } from 'src/product/utils/select-seller.util';
+import { type SellerLine } from 'src/product/utils/types/seller-line.type';
 
 const { resolved } = resolveUoms([
   { id: 'Units', name: 'Units', relativeUomId: null, relativeFactor: 1, seedKey: null },

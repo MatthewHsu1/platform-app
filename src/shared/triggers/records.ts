@@ -1,21 +1,15 @@
 import { requireData, twentyGraphql } from 'src/shared/twenty-graphql';
+import { emptyTextToNull } from 'src/shared/utils/empty-text-to-null.util';
+import { chunks } from 'src/shared/utils/chunks.util';
 
 const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
 const PAGE_SIZE = 200;
 // Twenty's MUTATION_MAXIMUM_AFFECTED_RECORDS default.
-const MUTATION_MAXIMUM_RECORDS = 100;
+export const MUTATION_MAXIMUM_RECORDS = 100;
 
 type Connection<TRecord> = {
   edges: { node: TRecord }[];
   pageInfo: { hasNextPage: boolean; endCursor: string | null };
-};
-
-const chunks = <TItem>(items: TItem[]) => {
-  const result: TItem[][] = [];
-  for (let start = 0; start < items.length; start += MUTATION_MAXIMUM_RECORDS) {
-    result.push(items.slice(start, start + MUTATION_MAXIMUM_RECORDS));
-  }
-  return result;
 };
 
 // Twenty hides soft-deleted rows unless the filter names deletedAt.
@@ -23,8 +17,50 @@ export const includingDeleted = (filter: Record<string, unknown>) => ({
   and: [filter, { or: [{ deletedAt: { is: 'NULL' } }, { deletedAt: { is: 'NOT_NULL' } }] }],
 });
 
+const isObject = (value: unknown): value is { in?: unknown } & Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const isEmptyInList = (condition: unknown) =>
+  isObject(condition) && Array.isArray(condition.in) && condition.in.length === 0;
+
+const pruneParts = (parts: unknown[]) =>
+  parts.map((part) => (isObject(part) ? pruneEmptyLists(part) : part));
+
+// Twenty refuses `in: []`. A field required to be in an empty list matches no
+// row: the whole filter (null), or just that branch of an `or`. Inside `not`
+// it excludes nothing, so it goes through for Twenty to answer.
+export const pruneEmptyLists = (filter: Record<string, unknown>): Record<string, unknown> | null => {
+  const pruned: Record<string, unknown> = {};
+
+  for (const [field, condition] of Object.entries(filter)) {
+    if (field === 'and' && Array.isArray(condition)) {
+      const parts = pruneParts(condition);
+      if (parts.includes(null)) {
+        return null;
+      }
+      pruned[field] = parts;
+    } else if (field === 'or' && Array.isArray(condition) && condition.length > 0) {
+      const branches = pruneParts(condition).filter((branch) => branch !== null);
+      if (branches.length === 0) {
+        return null;
+      }
+      pruned[field] = branches;
+    } else if (field !== 'and' && field !== 'or' && field !== 'not' && isEmptyInList(condition)) {
+      return null;
+    } else {
+      pruned[field] = condition;
+    }
+  }
+
+  return pruned;
+};
+
 export const records = (objectSingular: string, objectPlural: string) => {
   const find = async <TRecord>(filter: Record<string, unknown>, selection: string): Promise<TRecord[]> => {
+    const sendable = pruneEmptyLists(filter);
+    if (sendable === null) {
+      return [];
+    }
     const found: TRecord[] = [];
     let after: string | null = null;
 
@@ -38,7 +74,7 @@ export const records = (objectSingular: string, objectPlural: string) => {
                 pageInfo { hasNextPage endCursor }
               }
             }`,
-          { filter, after },
+          { filter: sendable, after },
         ),
         `Find ${objectPlural}`,
       );
@@ -46,7 +82,7 @@ export const records = (objectSingular: string, objectPlural: string) => {
       after = data[objectPlural].pageInfo.hasNextPage ? data[objectPlural].pageInfo.endCursor : null;
     } while (after !== null);
 
-    return found;
+    return emptyTextToNull(found, selection);
   };
 
   // Returns the ids the mutation reached: a row another run has already
@@ -59,7 +95,7 @@ export const records = (objectSingular: string, objectPlural: string) => {
     const reached: string[] = [];
     const mutation = `${operation}${capitalize(objectPlural)}`;
 
-    for (const part of chunks([...new Set(ids)])) {
+    for (const part of chunks([...new Set(ids)], MUTATION_MAXIMUM_RECORDS)) {
       const data = requireData(
         await twentyGraphql<Record<string, { id: string }[] | null>>(
           'application',
@@ -102,7 +138,7 @@ export const records = (objectSingular: string, objectPlural: string) => {
 
     // The same values on many rows, one request per 100 rows.
     updateMany: async (ids: string[], data: Record<string, unknown>) => {
-      for (const part of chunks([...new Set(ids)])) {
+      for (const part of chunks([...new Set(ids)], MUTATION_MAXIMUM_RECORDS)) {
         requireData(
           await twentyGraphql(
             'application',
@@ -119,7 +155,7 @@ export const records = (objectSingular: string, objectPlural: string) => {
     createMany: async (data: Record<string, unknown>[]) => {
       const ids: string[] = [];
 
-      for (const part of chunks(data)) {
+      for (const part of chunks(data, MUTATION_MAXIMUM_RECORDS)) {
         const created = requireData(
           await twentyGraphql<Record<string, { id: string }[]>>(
             'application',
@@ -181,12 +217,28 @@ export type FindSpec = { of: Records; filter: Record<string, unknown>; selection
 export const findMany = async <TResult extends Record<string, unknown[]>>(
   specs: { [TKey in keyof TResult]: FindSpec },
 ): Promise<TResult> => {
-  const entries = Object.entries(specs) as [string, FindSpec][];
-  const lists = entries.map(([, spec]) => spec.of.objectPlural);
+  const allEntries = Object.entries(specs) as [string, FindSpec][];
+  const lists = allEntries.map(([, spec]) => spec.of.objectPlural);
   if (new Set(lists).size !== lists.length) {
     throw new Error(`findMany names a list twice: ${lists.join(', ')}`);
   }
-  const variables = Object.fromEntries(entries.map(([alias, spec]) => [alias, spec.filter]));
+  const result: Record<string, unknown[]> = {};
+  const entries: [string, FindSpec][] = [];
+  const variables: Record<string, unknown> = {};
+
+  for (const [alias, spec] of allEntries) {
+    const sendable = pruneEmptyLists(spec.filter);
+    if (sendable === null) {
+      result[alias] = [];
+    } else {
+      entries.push([alias, { ...spec, filter: sendable }]);
+      variables[alias] = sendable;
+    }
+  }
+  if (entries.length === 0) {
+    return result as TResult;
+  }
+
   const data = requireData(
     await twentyGraphql<Record<string, Connection<unknown>>>(
       'application',
@@ -206,12 +258,14 @@ export const findMany = async <TResult extends Record<string, unknown[]>>(
     ),
     `Find ${entries.map(([, spec]) => spec.of.objectPlural).join(', ')}`,
   );
-  const result: Record<string, unknown[]> = {};
 
   for (const [alias, spec] of entries) {
     result[alias] = data[alias].pageInfo.hasNextPage
       ? await spec.of.find(spec.filter, spec.selection)
-      : data[alias].edges.map((edge) => edge.node);
+      : emptyTextToNull(
+          data[alias].edges.map((edge) => edge.node),
+          spec.selection,
+        );
   }
 
   return result as TResult;

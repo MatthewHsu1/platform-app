@@ -99,7 +99,7 @@ describe('syncValuesOf', () => {
   });
 });
 
-describe('planEditSync (R22)', () => {
+describe('planEditSync', () => {
   const t1 = '2026-10-08T10:00:01.000Z';
   const t2 = '2026-10-08T10:00:02.000Z';
 

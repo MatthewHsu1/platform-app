@@ -11,8 +11,8 @@ import {
   resolveUoms,
   unitDeleteRefusal,
   unitsReachedByDelete,
-  type UomRow,
 } from 'src/uom/utils/uom.util';
+import { type UomRow } from 'src/uom/utils/types/uom-row.type';
 
 const row = (id: string, relativeFactor: number, relativeUomId: string | null = null): UomRow => ({
   id,

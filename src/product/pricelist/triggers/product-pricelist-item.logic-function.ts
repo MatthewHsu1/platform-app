@@ -7,17 +7,14 @@ import {
 import { productPricelistItems } from 'src/product/pricelist/pricelist-records';
 import { PRODUCT_PRICING_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS } from 'src/product/product-universal-identifiers.constant';
 import { findLoopThroughRule } from 'src/product/utils/pricelist-price.util';
-import {
-  planPricelistItem,
-  type PricelistItemValues,
-  pricelistItemName,
-} from 'src/product/utils/plan-pricelist-item.util';
+import { planPricelistItem, pricelistItemName } from 'src/product/utils/plan-pricelist-item.util';
 import { productProducts, productTemplates } from 'src/product/variant/product-records';
 import { isApplicationWrite } from 'src/shared/triggers/actor';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { addNote, putBack } from 'src/shared/triggers/put-back';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
 import { sameValue } from 'src/shared/utils/same-value.util';
+import { type PricelistItemValues } from 'src/product/utils/types/pricelist-item-values.type';
 
 type ItemEventRecord = PricelistItemValues & {
   id: string;

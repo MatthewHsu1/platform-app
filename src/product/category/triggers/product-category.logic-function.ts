@@ -16,7 +16,7 @@ import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
 
 type CategoryRecord = {
   id: string;
-  name: string;
+  name: string | null;
   parentId: string | null;
   completeName: string | null;
   parentPath: string | null;

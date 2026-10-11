@@ -1,22 +1,6 @@
-export type UndoableChange =
-  | {
-      kind:
-        | 'lineCreated'
-        | 'lineArchived'
-        | 'lineDeleted'
-        | 'lineValueLinkCreated'
-        | 'lineValueLinkDeleted'
-        | 'exclusionCreated'
-        | 'exclusionLinkCreated';
-      recordId: string;
-    }
-  | {
-      kind: 'exclusionUpdated';
-      recordId: string;
-      before: { productTmplId: string | null; productTemplateAttributeValueId: string | null };
-    };
+import { type UndoableChange } from 'src/product/utils/types/undoable-change.type';
 
-export type UndoAction =
+type UndoAction =
   | { recordId: string; action: 'destroy' | 'restore' }
   | { recordId: string; action: 'update'; data: Record<string, unknown> };
 

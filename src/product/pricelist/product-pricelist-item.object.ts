@@ -21,7 +21,7 @@ import {
 
 // The name is written by code ("All products",
 // "Category: Goods", the product name), so the object carries its own name
-// field. Each relation points at the inverse field named in the spec.
+// field. Each relation points at its inverse field on the related object.
 export default defineObject({
   universalIdentifier: PRODUCT_PRICELIST_ITEM_OBJECT_UNIVERSAL_IDENTIFIER,
   nameSingular: 'productPricelistItem',

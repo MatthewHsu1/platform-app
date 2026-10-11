@@ -16,20 +16,18 @@ import {
   templateAttributeValues,
   VARIANT_SELECTION,
 } from 'src/product/variant/product-records';
-import {
-  type AttributeRow,
-  type AttributeValueRow,
-  type CombinationRow,
-  type ExclusionLinkRow,
-  type ExclusionRow,
-  type LineRow,
-  type LineValueLinkRow,
-  type TemplateAttributeValueRecord,
-  type TemplateRow,
-  type TemplateState,
-  type VariantRow,
-} from 'src/product/variant/template-state.type';
 import { findMany, includingDeleted } from 'src/shared/triggers/records';
+import { type AttributeRow } from 'src/product/variant/types/attribute-row.type';
+import { type AttributeValueRow } from 'src/product/variant/types/attribute-value-row.type';
+import { type CombinationRow } from 'src/product/variant/types/combination-row.type';
+import { type ExclusionLinkRow } from 'src/product/variant/types/exclusion-link-row.type';
+import { type ExclusionRow } from 'src/product/variant/types/exclusion-row.type';
+import { type LineRow } from 'src/product/variant/types/line-row.type';
+import { type LineValueLinkRow } from 'src/product/variant/types/line-value-link-row.type';
+import { type TemplateAttributeValueRecord } from 'src/product/variant/types/template-attribute-value-record.type';
+import { type TemplateRow } from 'src/product/variant/types/template-row.type';
+import { type TemplateState } from 'src/product/variant/types/template-state.type';
+import { type VariantRow } from 'src/product/variant/types/variant-row.type';
 
 type Nested<TRecord> = { edges: { node: TRecord }[] } | null;
 

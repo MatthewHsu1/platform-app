@@ -6,7 +6,7 @@ export type CascadeChild = { of: Records; field: string };
 
 // These rows are deleted with their parent. A soft delete
 // cascades nothing in Twenty, so they go to the trash here, as app writes.
-// Restore is not supported for them, so a parent restored later does not bring them back.
+// A restored parent brings them back only where its trigger calls restoreCascaded.
 export const cascadeDelete = async ({
   parents,
   parentIds,

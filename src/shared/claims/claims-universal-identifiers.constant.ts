@@ -1,0 +1,10 @@
+export const PLATFORM_CLAIM_OBJECT_UNIVERSAL_IDENTIFIER = 'bd693a8c-9e75-44fa-8791-bd5d8d85784b';
+export const PLATFORM_CLAIM_FIELD_UNIVERSAL_IDENTIFIERS = {
+  key: '9d477093-3c09-4575-82b2-ebb8e9da9c1a',
+  runId: '165d625d-4246-43d6-809c-83ebdb10cebf',
+  startedAt: 'fe2378ac-a8c6-4207-ac2e-44daea17cec8',
+  finishedAt: 'a3fd4538-a147-4df6-914d-5cff0866009d',
+  progress: 'f63d1210-8dd3-4f90-8ee0-f82cc623e42f',
+} as const;
+export const PLATFORM_CLAIM_KEY_INDEX_UNIVERSAL_IDENTIFIER = '082c9626-96f7-40ee-ad53-aa02afbe8172';
+export const PLATFORM_CLAIM_KEY_INDEX_FIELD_UNIVERSAL_IDENTIFIER = '16867881-23e3-4270-be94-5f5a1a20fc4d';

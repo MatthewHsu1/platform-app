@@ -1,45 +1,12 @@
-import { type AppliedOn, type ComputePrice, type PricelistBase } from 'src/product/product-options.constant';
 import { floatRound } from 'src/shared/utils/float-round.util';
 import { isCategoryUnder } from 'src/product/utils/category-paths.util';
-import { computePrice, computeQuantity, type ResolvedUom } from 'src/uom/utils/uom.util';
-
-export type PricelistRule = {
-  id: string;
-  createdAt: string;
-  appliedOn: AppliedOn;
-  categPath: string | null;
-  categCompleteName: string | null;
-  productTmplId: string | null;
-  productId: string | null;
-  minQuantity: number;
-  dateStart: string | null;
-  dateEnd: string | null;
-  base: PricelistBase;
-  basePricelistId: string | null;
-  computePrice: ComputePrice;
-  fixedPrice: number;
-  percentPrice: number;
-  priceDiscount: number;
-  priceMarkup: number;
-  priceRound: number;
-  priceSurcharge: number;
-  priceMinMargin: number;
-  priceMaxMargin: number;
-};
-
-export type Pricelist = { id: string; name: string; currencyCode: string; rules: PricelistRule[] };
-
-export type PricedProduct = {
-  templateId: string;
-  variantId: string | null;
-  templateVariantIds: string[];
-  categPath: string | null;
-  uom: ResolvedUom;
-  currencyCode: string;
-  listPrice: number;
-  priceExtra: number;
-  standardPrice: number;
-};
+import { type ResolvedUom } from 'src/uom/utils/types/resolved-uom.type';
+import { computePrice, computeQuantity } from 'src/uom/utils/uom.util';
+import { type AppliedOn } from 'src/product/types/applied-on.type';
+import { type PricelistBase } from 'src/product/types/pricelist-base.type';
+import { type PricelistRule } from 'src/product/utils/types/pricelist-rule.type';
+import { type Pricelist } from 'src/product/utils/types/pricelist.type';
+import { type PricedProduct } from 'src/product/utils/types/priced-product.type';
 
 const APPLIED_ON_RANK: Record<AppliedOn, number> = {
   PRODUCT_VARIANT: 0,

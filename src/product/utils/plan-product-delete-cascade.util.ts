@@ -1,18 +1,5 @@
-export type ProductDeleteCascadeRows = {
-  exclusionLinks: string[];
-  exclusions: string[];
-  valueLinks: string[];
-  templateAttributeValues: string[];
-  lines: string[];
-  variants: string[];
-  sellers: string[];
-  pricelistRules: string[];
-  tagLinks: string[];
-  packagingLinks: string[];
-  comboLinks: string[];
-};
-
-export type ProductDeleteCascadeKind = keyof ProductDeleteCascadeRows;
+import { type ProductDeleteCascadeKind } from 'src/product/utils/types/product-delete-cascade-kind.type';
+import { type ProductDeleteCascadeRows } from 'src/product/utils/types/product-delete-cascade-rows.type';
 
 // Children go before the rows they hang on, so a line is never deleted while
 // its values are still there for the line trigger to find.

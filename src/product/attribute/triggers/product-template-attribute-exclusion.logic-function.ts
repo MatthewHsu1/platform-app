@@ -7,11 +7,11 @@ import {
 import { templatesOfExclusions } from 'src/product/attribute/exclusion-templates';
 import { PRODUCT_VARIANT_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS } from 'src/product/product-universal-identifiers.constant';
 import { reconcileTemplates } from 'src/product/variant/reconcile-variants';
-import { type UndoableChange } from 'src/product/utils/plan-undo-change.util';
 import { undoChangesOf } from 'src/product/variant/undo-changes';
 import { isApplicationWrite } from 'src/shared/triggers/actor';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
+import { type UndoableChange } from 'src/product/utils/types/undoable-change.type';
 
 type ExclusionEventRecord = {
   id: string;

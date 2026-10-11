@@ -15,13 +15,13 @@ import { staffEditOf, SYNCED_FIELDS } from 'src/product/utils/plan-template-vari
 import { productProducts, productTemplates, uoms } from 'src/product/variant/product-records';
 import { putBackBarcodeClash } from 'src/product/variant/barcode-check';
 import { reconcileTemplates } from 'src/product/variant/reconcile-variants';
-import { type Currency } from 'src/product/variant/template-state.type';
 import { isApplicationWrite } from 'src/shared/triggers/actor';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { putBack } from 'src/shared/triggers/put-back';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
 import { UOM_SEED_KEY_UNIT } from 'src/uom/uom-universal-identifiers.constant';
 import { sameValue } from 'src/shared/utils/same-value.util';
+import { type Currency } from 'src/product/variant/types/currency.type';
 
 type TemplateEventRecord = {
   id: string;
@@ -42,7 +42,7 @@ type TemplateEventRecord = {
 
 const NAME_FIELDS = ['name', 'listPrice', 'defaultCode'] as const;
 
-// T1: the default unit is Units.
+// A product saved without a unit gets Units, the unit a count of items is in.
 const fillDefaultUnit = async (templateIds: string[]) => {
   if (templateIds.length === 0) {
     return;
@@ -55,7 +55,7 @@ const fillDefaultUnit = async (templateIds: string[]) => {
   await productTemplates.updateMany(templateIds, { uomId: unit.id });
 };
 
-// T11: clears the combo choices of a product that stops being a combo.
+// Clears the combo choices of a product that stops being a combo.
 const clearComboChoices = async (templateIds: string[]) => {
   if (templateIds.length === 0) {
     return;
@@ -83,7 +83,7 @@ const putBackSaleCombo = async (before: TemplateEventRecord, after: TemplateEven
   }
 };
 
-// T9 for a barcode typed on the product: it is written to the
+// A barcode typed on the product: it is written to the
 // single variant, where a clash is refused.
 const putBackProductBarcode = (
   templateId: string,
@@ -111,7 +111,7 @@ const reconcileChanged = async (
   );
   let variants = false;
 
-  // T12: a product write archives every variant with the product, and
+  // A product write archives every variant with the product, and
   // reconciles variants on unarchive when none is active.
   if (activeChanged && !last.active) {
     await productProducts.updateMany(

@@ -2,6 +2,7 @@ import { type InstallObject } from 'src/shared/install/install-spec.type';
 import { type InstallApi } from 'src/shared/install/utils/run-install.util';
 import { records } from 'src/shared/triggers/records';
 import { requireData, twentyGraphql, twentyMetadata } from 'src/shared/twenty-graphql';
+import { textOrNull } from 'src/shared/utils/text-or-null.util';
 
 const FLAG_OFF_MESSAGE = 'Feature flag "IS_VALIDATION_RULES_ENABLED" is not enabled';
 
@@ -54,9 +55,7 @@ export const twentyInstallApi: InstallApi = {
       `List ${object.namePlural}`,
     );
 
-    return data[object.namePlural].edges.flatMap(({ node }) =>
-      node.name === null ? [] : [node.name],
-    );
+    return data[object.namePlural].edges.flatMap(({ node }) => textOrNull(node.name) ?? []);
   },
 
   createRecords: async (object, names) => {

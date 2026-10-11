@@ -1,25 +1,7 @@
-export type CreateVariantMode = 'ALWAYS' | 'DYNAMIC' | 'NO_VARIANT';
-export type VariantLine = {
-  id: string;
-  sequence: number;
-  createVariant: CreateVariantMode;
-  templateAttributeValueIds: string[];
-  inactiveTemplateAttributeValueIds: string[];
-};
-export type VariantExclusion = {
-  sourceTemplateAttributeValueId: string;
-  excludedTemplateAttributeValueIds: string[];
-};
-export type ExistingVariant = { id: string; templateAttributeValueIds: string[]; active: boolean };
-export type VariantPlan =
-  | { kind: 'refuse'; reason: string }
-  | {
-      kind: 'apply';
-      create: string[][];
-      activate: string[];
-      extend: { variantId: string; templateAttributeValueIds: string[] }[];
-      removeOrArchive: string[];
-    };
+import { type VariantLine } from 'src/product/utils/types/variant-line.type';
+import { type VariantExclusion } from 'src/product/utils/types/variant-exclusion.type';
+import { type ExistingVariant } from 'src/product/utils/types/existing-variant.type';
+import { type VariantPlan } from 'src/product/utils/types/variant-plan.type';
 
 const DEFAULT_LIMIT = 1000;
 

@@ -1,8 +1,9 @@
-import { type AppliedOn } from 'src/product/product-options.constant';
 import { pricelistItemName } from 'src/product/utils/plan-pricelist-item.util';
 import { supplierinfoName } from 'src/product/utils/plan-supplierinfo.util';
+import { textOrNull } from 'src/shared/utils/text-or-null.util';
+import { type AppliedOn } from 'src/product/types/applied-on.type';
 
-export type NamedSeller = {
+type NamedSeller = {
   id: string;
   name: string | null;
   productTmplId: string | null;
@@ -10,7 +11,7 @@ export type NamedSeller = {
   vendorName: string | null;
 };
 
-export type NamedPricelistRule = {
+type NamedPricelistRule = {
   id: string;
   name: string | null;
   appliedOn: AppliedOn;
@@ -19,9 +20,9 @@ export type NamedPricelistRule = {
   categoryName: string | null;
 };
 
-export type NamedComboItem = { id: string; name: string | null; productId: string | null };
+type NamedComboItem = { id: string; name: string | null; productId: string | null };
 
-type Rename = { id: string; name: string };
+type Rename = { id: string; name: string | null };
 
 const nameOf = (names: Map<string, string | null>, id: string | null) =>
   id === null ? null : (names.get(id) ?? null);
@@ -44,11 +45,11 @@ export const planDerivedNames = ({
 }) => {
   const changed = <TRow extends { id: string; name: string | null }>(
     rows: TRow[],
-    compute: (row: TRow) => string,
+    compute: (row: TRow) => string | null,
   ): Rename[] =>
     rows.flatMap((row) => {
-      const name = compute(row);
-      return name === (row.name ?? '') ? [] : [{ id: row.id, name }];
+      const name = textOrNull(compute(row));
+      return name === textOrNull(row.name) ? [] : [{ id: row.id, name }];
     });
 
   return {
@@ -66,6 +67,6 @@ export const planDerivedNames = ({
         variantName: nameOf(variantNames, rule.productId),
       }),
     ),
-    comboItems: changed(comboItems, (item) => nameOf(variantNames, item.productId) ?? ''),
+    comboItems: changed(comboItems, (item) => nameOf(variantNames, item.productId)),
   };
 };

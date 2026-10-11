@@ -8,12 +8,12 @@ import { PRODUCT_VARIANT_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS } from 'src/produc
 import { groupTemplateIds } from 'src/product/utils/group-template-ids.util';
 import { templateAttributeValues } from 'src/product/variant/product-records';
 import { reconcileTemplates } from 'src/product/variant/reconcile-variants';
-import { type Currency } from 'src/product/variant/template-state.type';
 import { isApplicationWrite } from 'src/shared/triggers/actor';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { putBack } from 'src/shared/triggers/put-back';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
 import { sameValue } from 'src/shared/utils/same-value.util';
+import { type Currency } from 'src/product/variant/types/currency.type';
 
 type TemplateAttributeValueEventRecord = {
   id: string;

@@ -1,8 +1,4 @@
-import {
-  isExclusionOfRefusedSave,
-  planUndoChange,
-  type UndoableChange,
-} from 'src/product/utils/plan-undo-change.util';
+import { isExclusionOfRefusedSave, planUndoChange } from 'src/product/utils/plan-undo-change.util';
 import {
   attributeLines,
   exclusionLinks,
@@ -10,6 +6,8 @@ import {
   lineValueLinks,
 } from 'src/product/variant/product-records';
 import { type Records } from 'src/shared/triggers/records';
+import { type UndoableChange } from 'src/product/utils/types/undoable-change.type';
+import { type UndoResult } from 'src/product/variant/types/undo-result.type';
 
 const RECORDS_BY_KIND: Record<UndoableChange['kind'], Records> = {
   lineCreated: attributeLines,
@@ -89,8 +87,6 @@ const undo = async (change: UndoableChange) => {
       return 1;
   }
 };
-
-export type UndoResult = { attempted: number; undone: number };
 
 // The staff changes of one trigger batch, by product, for
 // reconcileTemplates' undoChange.

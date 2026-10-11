@@ -1,0 +1,27 @@
+export type OrderpointRow = {
+  id: string;
+  name: string | null;
+  trigger: 'AUTO' | 'MANUAL';
+  active: boolean;
+  snoozedUntil: string | null;
+  productId: string | null;
+  locationId: string | null;
+  warehouseId: string | null;
+  routeId: string | null;
+  replenishmentUomId: string | null;
+  productMinQty: number;
+  productMaxQty: number;
+  qtyToOrderManual: number | null;
+  qtyOnHand: number | null;
+  qtyForecast: number | null;
+  qtyToOrderComputed: number | null;
+  qtyToOrder: number | null;
+  leadDays: number | null;
+  leadHorizonDate: string | null;
+  deadlineDate: string | null;
+  unwantedReplenish: boolean | null;
+  showSupplyWarning: boolean | null;
+  effectiveRouteId: string | null;
+  autoCreated: boolean;
+  productCategoryId: string | null;
+};

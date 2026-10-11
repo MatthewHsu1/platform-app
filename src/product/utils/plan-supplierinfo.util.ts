@@ -1,4 +1,6 @@
-export type SupplierinfoValues = {
+import { textOrNull } from 'src/shared/utils/text-or-null.util';
+
+type SupplierinfoValues = {
   name: string | null;
   productUomId: string | null;
   productTmplId: string | null;
@@ -6,7 +8,7 @@ export type SupplierinfoValues = {
 };
 
 export const supplierinfoName = (vendorName: string | null, productName: string | null) =>
-  [vendorName, productName].filter((part) => part !== null && part !== '').join(' – ');
+  textOrNull([vendorName, productName].filter((part) => part !== null && part !== '').join(' – '));
 
 // The product comes from the variant, the
 // unit from the product when empty. The name is "vendor – product".

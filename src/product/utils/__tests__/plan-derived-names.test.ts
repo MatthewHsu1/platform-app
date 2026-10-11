@@ -81,4 +81,24 @@ describe('planDerivedNames', () => {
       }),
     ).toEqual({ sellers: [], pricelistRules: [], comboItems: [] });
   });
+
+  it('treats an empty stored name as no name and clears a stored name whose source is empty', () => {
+    const emptyTemplates = new Map([['shirt', '']]);
+    const plan = planDerivedNames({
+      sellers: [],
+      pricelistRules: [
+        { id: 'r1', name: '', appliedOn: 'PRODUCT', productTmplId: 'shirt', productId: null, categoryName: null },
+        { id: 'r2', name: 'Old', appliedOn: 'PRODUCT', productTmplId: 'shirt', productId: null, categoryName: null },
+      ],
+      comboItems: [
+        { id: 'c1', name: '', productId: 'shirt-red' },
+        { id: 'c2', name: 'Old', productId: 'shirt-red' },
+      ],
+      templateNames: emptyTemplates,
+      variantNames: new Map([['shirt-red', '']]),
+    });
+
+    expect(plan.pricelistRules).toEqual([{ id: 'r2', name: null }]);
+    expect(plan.comboItems).toEqual([{ id: 'c2', name: null }]);
+  });
 });

@@ -3,13 +3,13 @@ import {
   isLiveTemplateAttributeValue,
   variantCombinations,
 } from 'src/product/utils/variant-plan-input.util';
-import { type VariantNameValue, variantDisplayName } from 'src/product/utils/variant-display-name.util';
-import {
-  type TemplateAttributeValueRecord,
-  type TemplateState,
-} from 'src/product/variant/template-state.type';
+import { variantDisplayName } from 'src/product/utils/variant-display-name.util';
 import { DEFAULT_CURRENCY_CODE } from 'src/shared/currency.constant';
 import { sameValue } from 'src/shared/utils/same-value.util';
+import { textOrNull } from 'src/shared/utils/text-or-null.util';
+import { type VariantNameValue } from 'src/product/utils/types/variant-name-value.type';
+import { type TemplateAttributeValueRecord } from 'src/product/variant/types/template-attribute-value-record.type';
+import { type TemplateState } from 'src/product/variant/types/template-state.type';
 
 type Change = { id: string; data: Record<string, unknown> };
 
@@ -88,11 +88,13 @@ const detailsContext = (state: TemplateState) => {
     );
 
     return {
-      name: variantDisplayName({
-        templateName: state.template.name ?? '',
-        defaultCode,
-        templateAttributeValues: records.map(nameValue),
-      }),
+      name: textOrNull(
+        variantDisplayName({
+          templateName: state.template.name ?? '',
+          defaultCode,
+          templateAttributeValues: records.map(nameValue),
+        }),
+      ),
       priceExtra: { amountMicros: priceExtraMicros, currencyCode },
       lstPrice: { amountMicros: listPriceMicros + priceExtraMicros, currencyCode },
       combinationIndices: combinationKey(templateAttributeValueIds),
@@ -135,7 +137,7 @@ export const planVariantDetails = (state: TemplateState) => {
     });
 
   const lines = state.lines.flatMap((line) => {
-    const name = attributeOfLine(line.id)?.name ?? '';
+    const name = textOrNull(attributeOfLine(line.id)?.name);
     const valueCount = state.lineValueLinks.filter(
       (link) => link.productTemplateAttributeLineId === line.id,
     ).length;
@@ -177,7 +179,7 @@ export const planVariantDetails = (state: TemplateState) => {
         })
         .map(valueName);
       const source = valueName(exclusion.productTemplateAttributeValueId);
-      const name = excluded.length > 0 ? `${source} excludes ${excluded.join(', ')}` : source;
+      const name = textOrNull(excluded.length > 0 ? `${source} excludes ${excluded.join(', ')}` : source);
 
       return exclusion.name === name ? [] : [{ id: exclusion.id, data: { name } }];
     });

@@ -11,10 +11,10 @@ import {
   readAttributeValueId,
 } from 'src/product/attribute/actions/attribute-value-action-route';
 import { jsonResponse } from 'src/shared/route-response';
-import { type Currency } from 'src/product/variant/template-state.type';
 import { DEFAULT_CURRENCY_CODE } from 'src/shared/currency.constant';
 import { describeGraphqlErrors, twentyGraphql } from 'src/shared/twenty-graphql';
 import { sameValue } from 'src/shared/utils/same-value.util';
+import { type Currency } from 'src/product/variant/types/currency.type';
 
 // Every product attribute value of the value takes
 // the value's default extra price.

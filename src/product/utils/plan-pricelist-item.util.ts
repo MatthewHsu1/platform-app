@@ -1,16 +1,7 @@
-import { type AppliedOn, type ComputePrice, type PricelistBase } from 'src/product/product-options.constant';
+import { type AppliedOn } from 'src/product/types/applied-on.type';
+import { textOrNull } from 'src/shared/utils/text-or-null.util';
+import { type PricelistItemValues } from 'src/product/utils/types/pricelist-item-values.type';
 
-export type PricelistItemValues = {
-  appliedOn: AppliedOn;
-  categId: string | null;
-  productTmplId: string | null;
-  productId: string | null;
-  base: PricelistBase;
-  basePricelistId: string | null;
-  computePrice: ComputePrice;
-  priceDiscount: number;
-  priceMarkup: number;
-};
 
 const TARGETS_CLEARED_BY_LEVEL: Record<PricelistItemValues['appliedOn'], (keyof PricelistItemValues)[]> = {
   GLOBAL: ['productId', 'productTmplId', 'categId'],
@@ -81,10 +72,10 @@ export const pricelistItemName = ({
     return `Category: ${categoryName ?? ''}`;
   }
   if (appliedOn === 'PRODUCT') {
-    return productName ?? '';
+    return textOrNull(productName);
   }
   if (appliedOn === 'PRODUCT_VARIANT') {
-    return variantName ?? '';
+    return textOrNull(variantName);
   }
   return 'All products';
 };

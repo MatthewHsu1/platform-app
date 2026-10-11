@@ -1,14 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { resolveUoms } from 'src/uom/utils/uom.util';
-import {
-  findLoopThroughRule,
-  pricelistPrice,
-  sortPricelistRules,
-  type Pricelist,
-  type PricedProduct,
-  type PricelistRule,
-} from 'src/product/utils/pricelist-price.util';
+import { findLoopThroughRule, pricelistPrice, sortPricelistRules } from 'src/product/utils/pricelist-price.util';
+import { type Pricelist } from 'src/product/utils/types/pricelist.type';
+import { type PricedProduct } from 'src/product/utils/types/priced-product.type';
+import { type PricelistRule } from 'src/product/utils/types/pricelist-rule.type';
 
 const { resolved } = resolveUoms([
   { id: 'Units', name: 'Units', relativeUomId: null, relativeFactor: 1, seedKey: null },

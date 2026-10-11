@@ -1,8 +1,7 @@
 import { isApplicationWrite } from 'src/shared/triggers/actor';
 import { sameValue } from 'src/shared/utils/same-value.util';
-
-export type SyncedField = 'defaultCode' | 'barcode' | 'standardPrice' | 'weight' | 'volume';
-export type SyncValues = Record<SyncedField, unknown>;
+import { type SyncedField } from 'src/product/utils/types/synced-field.type';
+import { type SyncValues } from 'src/product/utils/types/sync-values.type';
 
 type SyncRow = {
   defaultCode: string | null;
@@ -81,7 +80,7 @@ export const planTemplateVariantSync = ({
 
 type Saved = { updatedAt: string };
 
-// A staff save on one side (R22). Per field: the other side still holding the
+// A staff save on one side. Per field: the other side still holding the
 // old value takes the new one; the other side holding a third value was saved
 // too, and the later save wins on both sides, as saves apply in order.
 export const planEditSync = ({
@@ -168,7 +167,7 @@ export const staffEditOf = <TRow extends SavedRow>(
     : { source, edits, savedAt: last.updatedAt ?? '' };
 };
 
-// After T2 the product follows its variant, except on the fields a staff save
+// After variants are reconciled the product follows its variant, except on the fields a staff save
 // in the same run changed: that save already went to the variant, before the
 // variants are reconciled.
 export const fieldsNotEdited = (edit: { edits: Partial<Record<SyncedField, unknown>> } | undefined) =>

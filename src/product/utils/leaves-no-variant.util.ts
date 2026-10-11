@@ -1,4 +1,5 @@
-import { type VariantPlan } from 'src/product/utils/plan-variants.util';
+import { type VariantPlan } from 'src/product/utils/types/variant-plan.type';
+
 
 // Deleting the last variant deletes the product and then fails with "no possible
 // variant", which undoes the whole save. A variant that

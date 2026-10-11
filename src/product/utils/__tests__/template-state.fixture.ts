@@ -1,8 +1,7 @@
-import {
-  type TemplateAttributeValueRecord,
-  type TemplateState,
-  type VariantRow,
-} from 'src/product/variant/template-state.type';
+import { type TemplateAttributeValueRecord } from 'src/product/variant/types/template-attribute-value-record.type';
+import { type TemplateState } from 'src/product/variant/types/template-state.type';
+import { type VariantRow } from 'src/product/variant/types/variant-row.type';
+
 
 const usd = (amount: number) => ({ amountMicros: amount * 1_000_000, currencyCode: 'USD' });
 
@@ -42,7 +41,7 @@ export const variant = (id: string, overrides: Partial<VariantRow> = {}): Varian
 
 const value = (id: string, name: string, sequence: number) => [id, { id, name, sequence, defaultExtraPrice: usd(0) }] as const;
 
-// Shirt from the spec's walk-through: Size S, M, L (L costs 2.00 more) and
+// Shirt example: Size S, M, L (L costs 2.00 more) and
 // Color Red, Blue, sales price 20.00, one variant per combination.
 export const shirtState = (): TemplateState => ({
   template: {

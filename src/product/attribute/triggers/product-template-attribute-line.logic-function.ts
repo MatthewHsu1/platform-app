@@ -14,13 +14,13 @@ import {
   syncLineValues,
 } from 'src/product/attribute/sync-line-values';
 import { PRODUCT_VARIANT_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS } from 'src/product/product-universal-identifiers.constant';
-import { type UndoableChange } from 'src/product/utils/plan-undo-change.util';
 import { reconcileTemplates } from 'src/product/variant/reconcile-variants';
 import { undoChangesOf } from 'src/product/variant/undo-changes';
 import { isApplicationWrite, isStaffChange } from 'src/shared/triggers/actor';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { putBack } from 'src/shared/triggers/put-back';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
+import { type UndoableChange } from 'src/product/utils/types/undoable-change.type';
 
 type LineEventRecord = {
   id: string;

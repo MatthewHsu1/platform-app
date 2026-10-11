@@ -29,6 +29,18 @@ describe('planSupplierinfo', () => {
     ).toEqual({ name: 'Acme – Shirt' });
   });
 
+  it('writes nothing for a vendor price with no vendor and an unnamed product', () => {
+    expect(
+      planSupplierinfo({
+        stored: { name: null, productUomId: 'units', productTmplId: 't1', productId: null },
+        templateIdOfProduct: null,
+        templateUomId: 'units',
+        vendorName: null,
+        productName: '',
+      }),
+    ).toEqual({});
+  });
+
   it('writes nothing when everything already matches', () => {
     expect(
       planSupplierinfo({

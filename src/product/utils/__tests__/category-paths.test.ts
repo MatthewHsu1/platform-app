@@ -12,6 +12,12 @@ describe('resolveCategories', () => {
     expect(resolved.get('b')).toEqual({ completeName: 'Goods / Parts / Belts', parentPath: 'g/p/b/' });
     expect(resolved.get('g')).toEqual({ completeName: 'Goods', parentPath: 'g/' });
   });
+
+  // An empty full name is stored as no value, so the next pass compares equal.
+  it('gives no full name to a category whose names are all empty', () => {
+    const { resolved } = resolveCategories([{ id: 'x', name: null, parentId: null }]);
+    expect(resolved.get('x')).toEqual({ completeName: null, parentPath: 'x/' });
+  });
 });
 
 describe('isCategoryUnder', () => {
