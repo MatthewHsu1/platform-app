@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  categoryChain,
+  categoryTotalRouteIds,
   productRoutesReport,
   ROUTE_COLOR_COUNT,
   routeRowSegments,
@@ -9,13 +11,15 @@ import {
 import { type RoutesReportCell } from 'src/stock/utils/types/routes-report-cell.type';
 import { type RoutesReportRule } from 'src/stock/utils/types/routes-report-rule.type';
 
-// Two warehouses' worth of locations: one-step delivery (WH/Stock → Customers)
-// and two-step reception (Vendors → WH/Input → WH/Stock).
+// One-step delivery (WH/Stock → Customers), two-step reception
+// (Vendors → WH/Input → WH/Stock), and a second warehouse resupplied from WH.
 const locations = new Map([
   ['vendors', { id: 'vendors', name: 'Partners/Vendors', usage: 'SUPPLIER', warehouseId: null }],
   ['input', { id: 'input', name: 'WH/Input', usage: 'INTERNAL', warehouseId: 'wh' }],
   ['stock', { id: 'stock', name: 'WH/Stock', usage: 'INTERNAL', warehouseId: 'wh' }],
   ['shelf', { id: 'shelf', name: 'WH/Stock/Shelf 2', usage: 'INTERNAL', warehouseId: 'wh' }],
+  ['bin', { id: 'bin', name: 'WH/Stock/Bin', usage: 'INTERNAL', warehouseId: 'wh' }],
+  ['stock2', { id: 'stock2', name: 'WH2/Stock', usage: 'INTERNAL', warehouseId: 'wh2' }],
   ['customers', { id: 'customers', name: 'Partners/Customers', usage: 'CUSTOMER', warehouseId: null }],
 ]);
 
@@ -133,6 +137,52 @@ describe('productRoutesReport', () => {
     expect(kinds(report.rows[0].cells)).toEqual(['origin', 'destination', null]);
   });
 
+  it('lays out each chosen warehouse in turn, a resupplied warehouse after the one feeding it', () => {
+    const report = productRoutesReport({
+      routes: [
+        { id: 'receive', name: 'Receive in 2 steps', ruleIds: ['in', 'store'] },
+        { id: 'resupply', name: 'Supply WH2 from WH', ruleIds: ['supply'] },
+        { id: 'deliver', name: 'WH2: Deliver in 1 step', ruleIds: ['out2'] },
+      ],
+      rules: [
+        rule({ id: 'in', routeId: 'receive', locationSrcId: 'vendors', pickingTypeDefaultDestId: 'input' }),
+        rule({ id: 'store', routeId: 'receive', action: 'PUSH', locationSrcId: 'input', locationDestId: 'stock' }),
+        rule({ id: 'supply', routeId: 'resupply', locationSrcId: 'stock', pickingTypeDefaultDestId: 'stock2', warehouseId: 'wh2' }),
+        rule({ id: 'out2', routeId: 'deliver', locationSrcId: 'stock2', pickingTypeDefaultDestId: 'customers', warehouseId: 'wh2' }),
+      ],
+      locations,
+      warehouseIds: ['wh', 'wh2'],
+      orderpoints: [],
+      putaways: [],
+    });
+
+    expect(report.locations.map((location) => location.id)).toEqual(['vendors', 'input', 'stock', 'stock2', 'customers']);
+    expect(report.rows.map((row) => [row.ruleId, row.colorIndex, kinds(row.cells)])).toEqual([
+      ['in', 0, ['origin', 'destination', null, null, null]],
+      ['store', 0, [null, 'origin', 'destination', null, null]],
+      ['supply', 1, [null, null, 'origin', 'destination', null]],
+      ['out2', 2, [null, null, null, 'origin', 'destination']],
+    ]);
+  });
+
+  it('starts again from the sources when no rule leads into a warehouse, before customers', () => {
+    const report = productRoutesReport({
+      routes: [{ id: 'loop', name: 'Loop', ruleIds: ['down', 'up', 'bin', 'ship'] }],
+      rules: [
+        rule({ id: 'down', routeId: 'loop', action: 'PUSH', locationSrcId: 'stock', locationDestId: 'shelf' }),
+        rule({ id: 'up', routeId: 'loop', action: 'PUSH', locationSrcId: 'shelf', locationDestId: 'stock' }),
+        rule({ id: 'bin', routeId: 'loop', action: 'PUSH', locationSrcId: 'shelf', locationDestId: 'bin' }),
+        rule({ id: 'ship', routeId: 'loop', locationSrcId: 'shelf', pickingTypeDefaultDestId: 'customers' }),
+      ],
+      locations,
+      warehouseIds: ['wh'],
+      orderpoints: [],
+      putaways: [],
+    });
+
+    expect(report.locations.map((location) => location.id)).toEqual(['stock', 'shelf', 'bin', 'customers']);
+  });
+
   it('marks the source over the destination when a rule starts and ends in the same location', () => {
     const report = productRoutesReport({
       routes: [{ id: 'loop', name: 'Loop', ruleIds: ['same'] }],
@@ -163,12 +213,8 @@ describe('routeRowSegments', () => {
     expect(routeRowSegments([destination, origin])).toEqual([{ span: 2, cell: origin }]);
   });
 
-  it('shows a lone mark in its own cell', () => {
-    expect(routeRowSegments([null, origin, null])).toEqual([
-      { span: 1, cell: null },
-      { span: 1, cell: origin },
-      { span: 1, cell: null },
-    ]);
+  it('leaves the row short after a lone mark, as nothing closes its line', () => {
+    expect(routeRowSegments([null, origin, null])).toEqual([{ span: 1, cell: null }]);
   });
 });
 
@@ -189,5 +235,54 @@ describe('ruleSegmentMarks', () => {
   it('draws a rule running right to left with the arrows pointing left', () => {
     expect(ruleSegmentMarks('origin', 'PULL', 'MAKE_TO_STOCK')).toEqual({ before: ['LEFT'], after: [] });
     expect(ruleSegmentMarks('origin', 'PULL_PUSH', 'MAKE_TO_ORDER')).toEqual({ before: ['LEFT'], after: ['LEFT', 'POINTS'] });
+  });
+});
+
+describe('categoryTotalRouteIds', () => {
+  const route = (id: string, sequence: number) => ({ id, sequence, createdAt: '2026-10-01T00:00:00.000Z' });
+
+  it('lists the own routes, then each parent level going up, every level in route order', () => {
+    expect(
+      categoryTotalRouteIds({
+        categoryIds: ['child', 'parent', 'grandparent'],
+        links: [
+          { productCategoryId: 'grandparent', stockRouteId: 'b' },
+          { productCategoryId: 'parent', stockRouteId: 'a' },
+          { productCategoryId: 'child', stockRouteId: 'own2' },
+          { productCategoryId: 'child', stockRouteId: 'own1' },
+          { productCategoryId: 'grandparent', stockRouteId: 'own1' },
+        ],
+        routes: new Map([
+          ['a', route('a', 20)],
+          ['b', route('b', 10)],
+          ['own1', route('own1', 5)],
+          ['own2', route('own2', 30)],
+        ]),
+      }),
+    ).toEqual(['own1', 'own2', 'a', 'b']);
+  });
+
+  it('leaves out routes that are archived or unreadable', () => {
+    expect(
+      categoryTotalRouteIds({
+        categoryIds: ['child', 'parent'],
+        links: [
+          { productCategoryId: 'parent', stockRouteId: 'archived' },
+          { productCategoryId: 'parent', stockRouteId: 'a' },
+        ],
+        routes: new Map([['a', route('a', 1)]]),
+      }),
+    ).toEqual(['a']);
+  });
+});
+
+describe('categoryChain', () => {
+  it('reads the stored root-first path as the category and its parents, nearest first', () => {
+    expect(categoryChain('self', 'root/parent/self/')).toEqual(['self', 'parent', 'root']);
+  });
+
+  it('falls back to the category alone when the path is empty or not yet its own', () => {
+    expect(categoryChain('self', '')).toEqual(['self']);
+    expect(categoryChain('self', 'root/other/')).toEqual(['self']);
   });
 });

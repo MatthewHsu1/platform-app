@@ -20,8 +20,8 @@ type RuleLocation = { rule: RoutesReportRule; source: string | null; destination
 
 const union = (...lists: (string | null)[][]) => [...new Set(lists.flat().filter((id): id is string => id !== null))];
 
-// A pull rule hands the goods to its operation type's destination; push rules
-// move them to the rule's own destination.
+// A pull rule hands the goods to its operation type's destination; other
+// rules move them to the rule's own destination.
 const ruleLocation = (rule: RoutesReportRule): RuleLocation => ({
   rule,
   source: rule.locationSrcId,
@@ -172,31 +172,72 @@ export const productRoutesReport = ({
 };
 
 // A rule's row as table cells: the cells from its first mark to its second
-// become one cell that carries the second mark; the others stay empty.
+// become one cell that carries the second mark; the others stay empty. A mark
+// nothing closes (a rule that starts and ends in one place) draws no line, and
+// the row ends there.
 export const routeRowSegments = (cells: RoutesReportCell[]): RoutesReportSegment[] => {
   const segments: RoutesReportSegment[] = [];
-  let open: { span: number; cell: RoutesReportCell } | null = null;
+  // The cells covered since the line's first mark; null while no line is open.
+  let openSpan: number | null = null;
 
   for (const cell of cells) {
-    if (open === null) {
+    if (openSpan === null) {
       if (cell === null) {
         segments.push({ span: 1, cell: null });
       } else {
-        open = { span: 1, cell };
+        openSpan = 1;
       }
     } else if (cell === null) {
-      open.span += 1;
+      openSpan += 1;
     } else {
-      segments.push({ span: open.span + 1, cell });
-      open = null;
+      segments.push({ span: openSpan + 1, cell });
+      openSpan = null;
     }
-  }
-  if (open !== null) {
-    segments.push({ span: 1, cell: open.cell }, ...Array.from({ length: open.span - 1 }, () => ({ span: 1, cell: null })));
   }
 
   return segments;
 };
+
+const compareText = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
+
+// Route order: sequence, with creation time standing in for the creation order
+// ids do not give.
+export const byRouteSequence = (
+  left: { id: string; sequence: number | null; createdAt: string },
+  right: { id: string; sequence: number | null; createdAt: string },
+) => (left.sequence ?? 0) - (right.sequence ?? 0) || compareText(left.createdAt, right.createdAt) || compareText(left.id, right.id);
+
+// A category with its parents going up, nearest first, from its stored path
+// ("root/…/self/"). A path that does not end at the category gives the
+// category alone.
+export const categoryChain = (categoryId: string, parentPath: string | null) => {
+  const chain = (parentPath ?? '').split('/').filter((id) => id.length > 0).reverse();
+
+  return chain[0] === categoryId ? chain : [categoryId];
+};
+
+// A category's routes as a product sees them: its own, then each parent's
+// level by level going up, every level in route order. A route already listed
+// keeps its first place; archived and unreadable routes (absent from `routes`)
+// are left out.
+export const categoryTotalRouteIds = <TRoute extends { id: string; sequence: number | null; createdAt: string }>({
+  categoryIds,
+  links,
+  routes,
+}: {
+  categoryIds: string[];
+  links: { productCategoryId: string; stockRouteId: string }[];
+  routes: Map<string, TRoute>;
+}) =>
+  union(
+    ...categoryIds.map((categoryId) =>
+      links
+        .filter((link) => link.productCategoryId === categoryId)
+        .flatMap((link) => routes.get(link.stockRouteId) ?? [])
+        .sort(byRouteSequence)
+        .map((route) => route.id),
+    ),
+  );
 
 const pulls = (action: RuleAction) => action === RULE_ACTION.PULL || action === RULE_ACTION.PULL_PUSH;
 const pushes = (action: RuleAction) => action === RULE_ACTION.PUSH || action === RULE_ACTION.PULL_PUSH;

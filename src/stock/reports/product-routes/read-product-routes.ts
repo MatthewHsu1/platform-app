@@ -9,7 +9,7 @@ import { StockUserError } from 'src/stock/stock-errors';
 import { findReadableAsPerson } from 'src/stock/stock-person-writes';
 import { type RuleAction } from 'src/stock/types/rule-action.type';
 import { type RuleProcureMethod } from 'src/stock/types/rule-procure-method.type';
-import { productRoutesReport } from 'src/stock/utils/product-routes-report.util';
+import { byRouteSequence, categoryChain, categoryTotalRouteIds, productRoutesReport } from 'src/stock/utils/product-routes-report.util';
 import { type RoutesReportRule } from 'src/stock/utils/types/routes-report-rule.type';
 
 type Ordered = { id: string; sequence: number | null; createdAt: string };
@@ -36,10 +36,6 @@ type OrderpointRow = {
 type PutawayRow = Ordered & { locationInId: string | null; locationOut: { completeName: string | null; name: string | null } | null };
 
 const compareText = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
-
-// Sequence order; creation time stands in for the creation order ids do not give.
-const bySequence = (left: Ordered, right: Ordered) =>
-  (left.sequence ?? 0) - (right.sequence ?? 0) || compareText(left.createdAt, right.createdAt) || compareText(left.id, right.id);
 
 // The product list order: internal reference with the empty ones last, then name.
 const byCodeAndName = (
@@ -88,7 +84,7 @@ const readWarehouses = async () => {
       { active: { eq: true } },
       'id name sequence createdAt',
     )
-  ).sort(bySequence);
+  ).sort(byRouteSequence);
 
   if (warehouses.length === 0) {
     throw new StockUserError(PRODUCT_ROUTES_MESSAGES.noWarehouse);
@@ -96,32 +92,45 @@ const readWarehouses = async () => {
   return warehouses;
 };
 
-const readLinkedRouteIds = async (filter: Record<string, unknown>, objectPlural: string, filterType: string, selection: string) =>
-  findReadableAsPerson<{ stockRouteId: string | null; stockWarehouseId?: string | null; inherited?: boolean | null }>(
-    objectPlural,
-    filterType,
-    filter,
-    selection,
+type RouteLink = { stockRouteId: string | null };
+
+// The category and its parents going up, nearest first.
+const readCategoryChain = async (categId: string | null) => {
+  if (categId === null) {
+    return [];
+  }
+  const [category] = await findReadableAsPerson<{ id: string; parentPath: string | null }>(
+    'productCategories',
+    'ProductCategoryFilterInput',
+    { id: { eq: categId } },
+    'id parentPath',
   );
 
+  return category === undefined ? [] : categoryChain(category.id, category.parentPath);
+};
+
 // The routes in the order the report lists them: the product's, then its
-// category's (own before inherited), then each chosen warehouse's. Archived
-// routes do not show.
+// category's and each parent category's, then each chosen warehouse's.
+// Archived routes do not show.
 const readRoutes = async (templateId: string, categId: string | null, warehouseIds: string[]) => {
+  const categoryIds = await readCategoryChain(categId);
   const [productLinks, categoryLinks, warehouseLinks] = await Promise.all([
-    readLinkedRouteIds({ productTemplateId: { eq: templateId } }, 'stockRouteProducts', 'StockRouteProductFilterInput', 'stockRouteId'),
-    categId === null
-      ? []
-      : readLinkedRouteIds(
-          { productCategoryId: { eq: categId } },
-          'stockRouteCategTotals',
-          'StockRouteCategTotalFilterInput',
-          'stockRouteId inherited',
-        ),
-    readLinkedRouteIds(
-      { stockWarehouseId: { in: warehouseIds } },
+    findReadableAsPerson<RouteLink>(
+      'stockRouteProducts',
+      'StockRouteProductFilterInput',
+      { productTemplateId: { eq: templateId } },
+      'stockRouteId',
+    ),
+    findReadableAsPerson<RouteLink & { productCategoryId: string | null }>(
+      'stockRouteCategs',
+      'StockRouteCategFilterInput',
+      { productCategoryId: { in: categoryIds } },
+      'productCategoryId stockRouteId',
+    ),
+    findReadableAsPerson<RouteLink & { stockWarehouseId: string | null }>(
       'stockRouteWarehouses',
       'StockRouteWarehouseFilterInput',
+      { stockWarehouseId: { in: warehouseIds } },
       'stockRouteId stockWarehouseId',
     ),
   ]);
@@ -138,12 +147,20 @@ const readRoutes = async (templateId: string, categId: string | null, warehouseI
       )
     ).map((route) => [route.id, route]),
   );
-  const inOrder = (links: { stockRouteId: string | null }[]) =>
-    links.flatMap((link) => (link.stockRouteId === null ? [] : (routes.get(link.stockRouteId) ?? []))).sort(bySequence);
+  const inOrder = (links: RouteLink[]) =>
+    links.flatMap((link) => (link.stockRouteId === null ? [] : (routes.get(link.stockRouteId) ?? []))).sort(byRouteSequence);
+  const categoryRouteIds = categoryTotalRouteIds({
+    categoryIds,
+    links: categoryLinks.flatMap((link) =>
+      link.productCategoryId === null || link.stockRouteId === null
+        ? []
+        : [{ productCategoryId: link.productCategoryId, stockRouteId: link.stockRouteId }],
+    ),
+    routes,
+  });
   const groups = [
     inOrder(productLinks),
-    inOrder(categoryLinks.filter((link) => link.inherited !== true)),
-    inOrder(categoryLinks.filter((link) => link.inherited === true)),
+    categoryRouteIds.flatMap((id) => routes.get(id) ?? []),
     ...warehouseIds.map((warehouseId) => inOrder(warehouseLinks.filter((link) => link.stockWarehouseId === warehouseId))),
   ];
 
@@ -160,7 +177,7 @@ const readRules = async (routeIds: string[]) => {
         'id name sequence createdAt routeId action procureMethod locationSrcId locationDestId pickingTypeId warehouseId',
       ),
     )
-  ).sort(bySequence);
+  ).sort(byRouteSequence);
   const pickingTypeIds = [...new Set(rules.flatMap((rule) => rule.pickingTypeId ?? []))];
   const pickingTypes = new Map(
     (
@@ -211,7 +228,7 @@ const readVariantRules = async (variantId: string | null) =>
             { productId: { eq: variantId }, active: { eq: true } },
             'id sequence createdAt locationInId locationOut { deletedAt completeName name }',
           )
-        ).sort(bySequence),
+        ).sort(byRouteSequence),
       };
 
 export const readProductRoutes = async (body: Record<string, unknown>): Promise<ProductRoutesAnswer> => {
