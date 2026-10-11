@@ -99,3 +99,26 @@ export const OVERVIEW_COUNT_VIEW_UNIVERSAL_IDENTIFIERS = {
   late: '51194025-2600-4b66-b76c-92b1c25fcd1b',
   backorders: '24068fff-b295-4f5e-9fed-de0975cfbc00',
 };
+
+export const RECORD_FACTS_ROUTE_PATH = '/stock/facts';
+
+export const RECORD_FACTS_UNIVERSAL_IDENTIFIERS = {
+  logicFunction: 'ad341d68-b9e1-4a6e-9a3a-813c365b1cbf',
+  pickingFacts: '4c640ca7-91df-4599-9853-42dd639f60c9',
+  pickingResultPackages: '0c64d694-3d0a-49ae-b765-42d00abb70ce',
+  moveLots: '4b1debd4-ca29-4ea1-a30d-920f3324be3e',
+  productInventoryFacts: '0ff31471-6b48-40b8-94d1-598aa5c8edf9',
+  variantQuants: '0294eb86-9e5f-4816-9d47-05863bf96fd5',
+  packageContent: '1bd221ef-250a-4dbb-b757-43425ba79d3c',
+  packageTransfers: 'c317db12-d2f6-4fb7-b3d3-395c1808872e',
+  pickingFactsWidget: '94cfd3d0-791d-4fb2-bdf4-39f3b24b3978',
+  pickingResultPackagesWidget: 'e3e84a5c-3ded-4b47-9a54-c4bfb55631ee',
+  moveLotsTab: 'e30b4722-bc62-431e-8198-fb7a4d331539',
+  moveLotsWidget: '2f6c8bc7-84c4-4899-8c4f-40cca54ffb36',
+  productInventoryFactsWidget: '219cbac2-c124-46c6-aca4-5ce90f7147b9',
+  variantQuantsWidget: '35e6b0bf-ef3f-41d0-b4a0-4de25a62e11f',
+  packageContentTab: 'efb73beb-d4ce-40a4-9972-158250f673cb',
+  packageContentWidget: '682d55e0-3aed-4737-8334-837e10284941',
+  packageTransfersTab: 'abd9687a-27de-4c93-bc68-c45f0b32693f',
+  packageTransfersWidget: '0155bab6-e6cd-4fcb-aad3-488ad922af82',
+};

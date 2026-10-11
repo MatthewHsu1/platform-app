@@ -1,18 +1,16 @@
-import { walkPackageTree } from 'src/stock/package/walk-package-tree';
+import { readOpenLinePackageChain, readReturnIds } from 'src/stock/picking/read-picking-related';
 import { STATUS_TARGETS_MESSAGES } from 'src/stock/reports/status/status-targets-messages.constant';
 import { filterReadableIds } from 'src/stock/stock-access';
 import { StockUserError } from 'src/stock/stock-errors';
 import { MOVE_STATE, PICKING_STATE } from 'src/stock/stock-options.constant';
 import { findReadableAsPerson } from 'src/stock/stock-person-writes';
 import { todayUtc } from 'src/stock/stock-settings';
-import { type MoveState } from 'src/stock/types/move-state.type';
 import { type PickingState } from 'src/stock/types/picking-state.type';
 import {
   inInternalWarehouseLocation,
   isNotSnoozed,
   mainPackageIds,
   nextTransferIds,
-  openLinePackageIds,
   statusTarget,
 } from 'src/stock/utils/status-targets.util';
 import { type StatusButton } from 'src/stock/utils/types/status-button.type';
@@ -26,8 +24,6 @@ const idsOf = (rows: { id: string }[]) => rows.map((row) => row.id);
 
 const readIdsAsPerson = async (objectPlural: string, filterType: string, filter: Record<string, unknown>) =>
   idsOf(await findReadableAsPerson<{ id: string }>(objectPlural, filterType, filter, 'id'));
-
-const returnIdsOf = (pickingId: string) => readIdsAsPerson('stockPickings', 'StockPickingFilterInput', { returnPickingId: { eq: pickingId } });
 
 const found = (objectNameSingular: string) => (ids: string[]): Found => ({ objectNameSingular, ids });
 
@@ -52,19 +48,7 @@ const pickingPackages = async (pickingId: string, pickingState: PickingState | n
 
     return found('stockPackageHistory')(mainPackageIds([...histories.values()]));
   }
-  const lines = await findReadableAsPerson<{ state: MoveState; resultPackageId: string | null }>(
-    'stockMoveLines',
-    'StockMoveLineFilterInput',
-    { pickingId: { eq: pickingId } },
-    'state resultPackageId',
-  );
-  const packages = await walkPackageTree<{ id: string; packageDestId: string | null }>({
-    startIds: openLinePackageIds(lines),
-    up: ['packageDestId'],
-    down: [],
-    selection: 'id packageDestId',
-  });
-
+  const packages = await readOpenLinePackageChain(pickingId);
   const mainIds = mainPackageIds([...packages.values()].map((row) => ({ id: row.id, containerId: row.packageDestId })));
 
   return found('stockPackage')(await filterReadableIds('stockPackage', 'stockPackages', mainIds));
@@ -87,7 +71,7 @@ const pickingNextTransferIds = async (pickingId: string) => {
 
   return nextTransferIds({
     destinationPickingIds: destinationMoves.flatMap((move) => (move.pickingId ? [move.pickingId] : [])),
-    returnIds: await returnIdsOf(pickingId),
+    returnIds: await readReturnIds(pickingId),
   });
 };
 
@@ -114,7 +98,7 @@ const variantLocationIds = async (productId: string) => {
 
 // What each button opens: the records its list shows by default.
 const TARGETS: Record<StatusButton, Target> = {
-  pickingReturns: { source: 'picking', find: async (pickingId) => found('stockPicking')(await returnIdsOf(pickingId)) },
+  pickingReturns: { source: 'picking', find: async (pickingId) => found('stockPicking')(await readReturnIds(pickingId)) },
   pickingScraps: {
     source: 'picking',
     find: async (pickingId) => found('stockScrap')(await readIdsAsPerson('stockScraps', 'StockScrapFilterInput', { pickingId: { eq: pickingId } })),
