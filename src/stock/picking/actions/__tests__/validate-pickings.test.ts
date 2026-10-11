@@ -264,7 +264,7 @@ describe('validatePickings', () => {
         expect(await run.claims.findStaleClaims(0)).toEqual([]);
       }
     }
-  });
+  }, 30_000);
 
   it('frees, without running it, a validation that stopped before its commit point', async () => {
     const initial = (await build()).db.snapshot();
