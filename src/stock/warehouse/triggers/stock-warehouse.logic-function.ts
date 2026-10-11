@@ -10,7 +10,7 @@ import { handleWarehouseCreated } from 'src/stock/warehouse/rules/warehouse-crea
 import { handleWarehouseDeletes } from 'src/stock/warehouse/rules/warehouse-delete';
 import { handleWarehouseFlowsChanged } from 'src/stock/warehouse/rules/warehouse-flows-changed';
 import { handleWarehousePartner } from 'src/stock/warehouse/rules/warehouse-partner';
-import { handleWarehouseRenamed } from 'src/stock/warehouse/rules/warehouse-renamed';
+import { handleWarehouseTypeNames } from 'src/stock/warehouse/rules/warehouse-type-names';
 import { type WarehouseEventRecord } from 'src/stock/warehouse/types/warehouse-event-record.type';
 
 const cascadeOrderpoints = cascadeOrderpointsWithParent(stockWarehouses, 'warehouseId');
@@ -22,9 +22,9 @@ const handler = async (payload: DatabaseEventBatchPayload<ObjectRecordEvent<Ware
   await handleWarehouseCreated(events, operation, errors);
   await handleWarehouseActive(events, operation, errors);
   await handleWarehouseFlowsChanged(events, operation, errors);
-  await handleWarehouseRenamed(events, operation, errors);
   await handleWarehousePartner(events, operation, errors);
   await handleWarehouseDeletes(events, operation, errors);
+  await handleWarehouseTypeNames(events, operation, errors);
   await cascadeOrderpoints(events, operation, errors);
 
   errors.throwIfAny();
@@ -35,7 +35,7 @@ export default defineLogicFunction({
   universalIdentifier: STOCK_WAREHOUSE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   name: 'platform-stock-warehouse',
   description:
-    'Builds and rebuilds a warehouse\'s locations, sequences and operation types, archives them with the warehouse, gives its address the transit location, renames the full names of its operation types with it, deletes its operation types, and deletes or restores its reordering rules, with it, and puts back archiving with open operations and deleting a warehouse in use.',
+    'Builds and rebuilds a warehouse\'s locations, sequences and operation types, archives them with the warehouse, gives its address the transit location, renames the full names of its operation types with it and when it is trashed or restored, deletes its operation types, and deletes or restores its reordering rules, with it, and puts back archiving with open operations and deleting a warehouse in use.',
   timeoutSeconds: 300,
   handler,
   databaseEventTriggerSettings: { eventName: 'stockWarehouse.*', batchMode: true },

@@ -11,8 +11,8 @@ import {
   STOCK_WAREHOUSE_ORDERPOINT_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/stock/stock-universal-identifiers.constant';
 
-// The first expiry, first out strategy, seed locations, the serial number, package, scrap and reordering rule
-// sequences and the validation rules of the Inventory module; the first warehouse is made by stock-post-install.
+// The first expiry, first out strategy, the serial number, package, reordering rule and scrap sequences, the
+// seed locations and the validation rules of the Inventory module; the first warehouse is made by stock-post-install.
 export const STOCK_INSTALL: ModuleInstallSpec = {
   firstVersion: '2.3.0',
   staffLists: [],
@@ -28,17 +28,6 @@ export const STOCK_INSTALL: ModuleInstallSpec = {
       ],
     },
     {
-      objectUniversalIdentifier: STOCK_LOCATION_OBJECT_UNIVERSAL_IDENTIFIER,
-      rows: [
-        { seedKey: STOCK_SEED_KEYS.suppliers, values: { name: 'Vendors', usage: LOCATION_USAGE.SUPPLIER, active: true } },
-        { seedKey: STOCK_SEED_KEYS.customers, values: { name: 'Customers', usage: LOCATION_USAGE.CUSTOMER, active: true } },
-        { seedKey: STOCK_SEED_KEYS.inventory, values: { name: 'Inventory adjustment', usage: LOCATION_USAGE.INVENTORY, active: true } },
-        { seedKey: STOCK_SEED_KEYS.production, values: { name: 'Production', usage: LOCATION_USAGE.PRODUCTION, active: true } },
-        { seedKey: STOCK_SEED_KEYS.scrap, values: { name: 'Scrap', usage: LOCATION_USAGE.INVENTORY, active: true } },
-        { seedKey: STOCK_SEED_KEYS.transit, values: { name: 'Inter-warehouse transit', usage: LOCATION_USAGE.TRANSIT, active: false } },
-      ],
-    },
-    {
       objectUniversalIdentifier: IR_SEQUENCE_OBJECT_UNIVERSAL_IDENTIFIER,
       rows: [
         {
@@ -48,10 +37,6 @@ export const STOCK_INSTALL: ModuleInstallSpec = {
         {
           seedKey: STOCK_SEED_KEYS.packageSequence,
           values: { name: 'Packages', code: 'stock.package', prefix: 'PACK', padding: 7, numberNext: 1, numberIncrement: 1, active: true },
-        },
-        {
-          seedKey: STOCK_SEED_KEYS.scrapSequence,
-          values: { name: 'Sequence scrap', code: 'stock.scrap', prefix: 'SP/', padding: 5, numberNext: 1, numberIncrement: 1 },
         },
         {
           seedKey: STOCK_SEED_KEYS.orderpointSequence,
@@ -65,6 +50,21 @@ export const STOCK_INSTALL: ModuleInstallSpec = {
             active: true,
           },
         },
+        {
+          seedKey: STOCK_SEED_KEYS.scrapSequence,
+          values: { name: 'Sequence scrap', code: 'stock.scrap', prefix: 'SP/', padding: 5, numberNext: 1, numberIncrement: 1, active: true },
+        },
+      ],
+    },
+    {
+      objectUniversalIdentifier: STOCK_LOCATION_OBJECT_UNIVERSAL_IDENTIFIER,
+      rows: [
+        { seedKey: STOCK_SEED_KEYS.suppliers, values: { name: 'Vendors', usage: LOCATION_USAGE.SUPPLIER, active: true } },
+        { seedKey: STOCK_SEED_KEYS.customers, values: { name: 'Customers', usage: LOCATION_USAGE.CUSTOMER, active: true } },
+        { seedKey: STOCK_SEED_KEYS.transit, values: { name: 'Inter-warehouse transit', usage: LOCATION_USAGE.TRANSIT, active: false } },
+        { seedKey: STOCK_SEED_KEYS.inventory, values: { name: 'Inventory adjustment', usage: LOCATION_USAGE.INVENTORY, active: true } },
+        { seedKey: STOCK_SEED_KEYS.production, values: { name: 'Production', usage: LOCATION_USAGE.PRODUCTION, active: true } },
+        { seedKey: STOCK_SEED_KEYS.scrap, values: { name: 'Scrap', usage: LOCATION_USAGE.INVENTORY, active: true } },
       ],
     },
   ],
