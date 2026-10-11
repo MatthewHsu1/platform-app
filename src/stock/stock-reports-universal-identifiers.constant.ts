@@ -55,3 +55,25 @@ export const PRODUCT_ROUTES_UNIVERSAL_IDENTIFIERS = {
   frontComponent: '6c272aae-ba5b-4442-965e-d497fe3e2479',
   commandMenuItem: '83f1a062-b919-4d9e-bfd6-59d9ecb8ee84',
 };
+
+export const STATUS_TARGETS_ROUTE_PATH = '/stock/status-targets';
+
+export const STATUS_BUTTON_UNIVERSAL_IDENTIFIERS = {
+  logicFunction: 'aa2dcd4e-1977-4e96-ba9b-cd22d5b85fea',
+  pickingReturnsFrontComponent: '51cfad88-712f-4383-ad5f-1fc3944b3571',
+  pickingReturnsCommandMenuItem: '1e39a6e9-cae4-47bf-94ec-3abadf2d2747',
+  pickingScrapsFrontComponent: 'f8458889-a619-4ec1-b7c9-f045b98b8ae1',
+  pickingScrapsCommandMenuItem: '271ca079-aaa3-4e18-9874-7aa63741922f',
+  pickingPackagesFrontComponent: '64552025-b2de-4364-beb5-80462af2119b',
+  pickingPackagesCommandMenuItem: '245b4d3a-9ba0-4056-b54e-db651be39629',
+  pickingMovesFrontComponent: 'd5b0598e-ddf1-4827-96ff-84612ccaa32a',
+  pickingMovesCommandMenuItem: '9e528e60-78db-4e22-a8f8-8a37e524d084',
+  pickingNextTransfersFrontComponent: 'db61479f-8134-405a-8e78-c179e2f979df',
+  pickingNextTransfersCommandMenuItem: 'b327096a-6f50-48ba-bec6-042b44da98de',
+  variantHistoryFrontComponent: 'ec64b4ca-cdea-4862-bfd8-f4d5bf8971bc',
+  variantHistoryCommandMenuItem: 'e3d8f701-d8dc-4858-b576-70ab6787d1d0',
+  variantReplenishmentFrontComponent: 'a1897128-d702-4bc3-bfc7-cb30349e2908',
+  variantReplenishmentCommandMenuItem: '8cb53c55-a024-4abd-9304-64927b2859cc',
+  variantLocationsFrontComponent: 'd3d1372b-937f-4ead-9b7c-6a8241db6299',
+  variantLocationsCommandMenuItem: 'cd8da023-ea97-4c8b-ab54-f41d6488d106',
+};
