@@ -1,7 +1,7 @@
 import { kv } from 'twenty-sdk/logic-function';
 
 import { PLATFORM_CLAIM_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/shared/claims/claims-universal-identifiers.constant';
-import { planIndexViewTrim } from 'src/shared/install/utils/plan-index-view-trim.util';
+import { planIndexViewTrim, settleIndexViewTrim } from 'src/shared/install/utils/plan-index-view-trim.util';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
 import { requireData, twentyMetadata } from 'src/shared/twenty-graphql';
 
@@ -80,8 +80,7 @@ const hideViewFields = async (fields: ViewField[], stopAt: number) => {
   return hidden;
 };
 
-// Returns how many columns are still to hide. A column left for later is not remembered, so the
-// next run hides it.
+// Returns how many columns are still to hide.
 const trimIndexView = async (object: AppObject, stopAt: number) => {
   const fields = await readIndexViewFields(object.id);
 
@@ -100,20 +99,17 @@ const trimIndexView = async (object: AppObject, stopAt: number) => {
     handled,
   });
   const toHide = new Set(plan.hide);
-  const hidden = new Set(
-    await hideViewFields(
-      fields.filter((field) => toHide.has(field.fieldMetadataId)),
-      stopAt,
-    ),
+  const hidden = await hideViewFields(
+    fields.filter((field) => toHide.has(field.fieldMetadataId)),
+    stopAt,
   );
-  const left = new Set(plan.hide.filter((fieldId) => !hidden.has(fieldId)));
-  const handledNow = plan.handled.filter((fieldId) => !left.has(fieldId));
+  const progress = settleIndexViewTrim({ plan, hidden });
 
-  if (handledNow.length !== handled.length) {
-    await kv.set(key, handledNow, KV_OPTIONS);
+  if (progress.handled.length !== handled.length) {
+    await kv.set(key, progress.handled, KV_OPTIONS);
   }
 
-  return left.size;
+  return progress.left.length;
 };
 
 // Twenty's own "All" list of an object shows every field and the app cannot define it. Each

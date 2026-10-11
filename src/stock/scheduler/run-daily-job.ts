@@ -6,6 +6,7 @@ import { repairLotLocations } from 'src/stock/scheduler/steps/repair-lot-locatio
 import { reserveWaitingMoves } from 'src/stock/scheduler/steps/reserve-waiting-moves';
 import { runQuantTasks } from 'src/stock/scheduler/steps/quant-tasks';
 import { resumeStaleClaims } from 'src/stock/scheduler/steps/resume-stale-claims';
+import { trimListColumns } from 'src/stock/scheduler/steps/trim-list-columns';
 import { type DailyJobStep } from 'src/stock/scheduler/types/daily-job-step.type';
 
 // Reordering rules come first, so the reservation step already sees the receipts they make.
@@ -19,6 +20,8 @@ export const DAILY_JOB_STEPS: DailyJobStep[] = [
   { order: 6, name: 'lot locations', run: repairLotLocations },
   { order: 7, name: 'finished claims', run: sweepFinishedClaims },
   { order: 8, name: 'print links', run: () => clearPrintPasses(new Date()) },
+  // Last: it takes what time is left within its own budget.
+  { order: 9, name: 'list columns', run: trimListColumns },
 ];
 
 // A failed step is reported and the later steps still run.

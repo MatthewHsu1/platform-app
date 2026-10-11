@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { planIndexViewTrim } from 'src/shared/install/utils/plan-index-view-trim.util';
+import { planIndexViewTrim, settleIndexViewTrim } from 'src/shared/install/utils/plan-index-view-trim.util';
 
 const visibleFields = (count: number) =>
   Array.from({ length: count }, (_, position) => ({ fieldId: `field-${position}`, position, isVisible: true }));
@@ -47,5 +47,44 @@ describe('planIndexViewTrim', () => {
     const plan = planIndexViewTrim({ fields: [...shown, hidden, ...added], handled: idsOf([...shown, hidden]) });
 
     expect(plan.hide).toEqual(['field-c']);
+  });
+});
+
+describe('a trim stopped by its time limit', () => {
+  it('remembers only the columns it reached, and the next run hides the rest', () => {
+    const fields = visibleFields(14);
+    const plan = planIndexViewTrim({ fields, handled: [] });
+
+    const stopped = settleIndexViewTrim({ plan, hidden: ['field-10'] });
+
+    expect(stopped.left).toEqual(['field-11', 'field-12', 'field-13']);
+    expect([...stopped.handled].sort()).toEqual(
+      idsOf(fields)
+        .filter((id) => !['field-11', 'field-12', 'field-13'].includes(id))
+        .sort(),
+    );
+
+    const afterFirstRun = fields.map((field) => (field.fieldId === 'field-10' ? { ...field, isVisible: false } : field));
+    const resumed = planIndexViewTrim({ fields: afterFirstRun, handled: stopped.handled });
+
+    expect(resumed.hide).toEqual(['field-11', 'field-12', 'field-13']);
+    expect(settleIndexViewTrim({ plan: resumed, hidden: resumed.hide })).toEqual({
+      handled: resumed.handled,
+      left: [],
+    });
+  });
+
+  it('leaves the memory as it was when the time ran out before the first column', () => {
+    const handledFields = visibleFields(10);
+    const added = [
+      { fieldId: 'field-a', position: 10, isVisible: true },
+      { fieldId: 'field-b', position: 11, isVisible: true },
+    ];
+    const plan = planIndexViewTrim({ fields: [...handledFields, ...added], handled: idsOf(handledFields) });
+
+    expect(settleIndexViewTrim({ plan, hidden: [] })).toEqual({
+      handled: idsOf(handledFields),
+      left: ['field-a', 'field-b'],
+    });
   });
 });
