@@ -47,3 +47,11 @@ export const FORECAST_UNIVERSAL_IDENTIFIERS = {
   orderpointTab: '0a7c0ebd-b275-44d2-94db-6490e8e66937',
   orderpointTabWidget: 'f3e4aa63-7724-46d0-8535-c832e7e7212a',
 };
+
+export const PRODUCT_ROUTES_ROUTE_PATH = '/stock/reports/product-routes';
+
+export const PRODUCT_ROUTES_UNIVERSAL_IDENTIFIERS = {
+  logicFunction: 'afc0b613-7015-4f37-bc50-c42a097c5254',
+  frontComponent: '6c272aae-ba5b-4442-965e-d497fe3e2479',
+  commandMenuItem: '83f1a062-b919-4d9e-bfd6-59d9ecb8ee84',
+};
