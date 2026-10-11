@@ -123,6 +123,23 @@ describe('automatic probability', () => {
   });
 });
 
+describe('won status', () => {
+  // A lead won in a stage that has since stopped being won.
+  const wonEarlier = () => lead({ stageId: 'qualified', probability: 100, automatedProbability: 100, wonStatus: 'WON', dateClosed: '2026-10-01T09:00:00.000Z' });
+
+  it('keeps a lead won when a save writes none of probability, stage or status', () => {
+    const before = wonEarlier();
+
+    expect(compute(before, { ...before, name: 'Renamed' }, ['name']).wonStatus).toBeUndefined();
+  });
+
+  it('recomputes the status once the probability is written', () => {
+    const before = wonEarlier();
+
+    expect(compute(before, { ...before, probability: 90 }, ['probability']).wonStatus).toBe('PENDING');
+  });
+});
+
 describe('derived values', () => {
   it('recomputes money, quality and day counts from the row', () => {
     const before = lead({ stageId: 'new' });

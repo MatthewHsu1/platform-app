@@ -14,6 +14,8 @@ import { sameValue } from 'src/shared/utils/same-value.util';
 
 export const DEFAULT_OPPORTUNITY_NAME_TEMPLATE = "{name}'s opportunity";
 
+const WON_STATUS_INPUTS = ['probability', 'stageId', 'wonStatus'] as const;
+
 const partnerNameOf = (lead: LeadRow, context: LeadContext) => {
   if (lead.personId !== null) {
     const person = context.people.get(lead.personId);
@@ -108,7 +110,12 @@ export const planLeadComputes = (input: LeadComputesInput): Partial<LeadRow> => 
     }
   }
 
-  set('wonStatus', planWonStatus({ probability: lead.probability, stageIsWon: stageOf(lead.stageId)?.isWon === true, archived }));
+  // The status follows its inputs: the probability, the stage and the lost
+  // marker. A stage that stops being won leaves its won leads as they are
+  // until one of those is written.
+  if (isCreate || operation === 'restored' || WON_STATUS_INPUTS.some((field) => written.has(field) || changed(field))) {
+    set('wonStatus', planWonStatus({ probability: lead.probability, stageIsWon: stageOf(lead.stageId)?.isWon === true, archived }));
+  }
 
   const money = planMoney(lead, lead.recurringPlanId === null ? null : (context.recurringPlanMonths.get(lead.recurringPlanId) ?? null));
 

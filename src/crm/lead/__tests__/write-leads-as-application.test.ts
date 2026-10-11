@@ -19,6 +19,8 @@ const stage = (id: string, sequence: number, isWon = false): StageRow => ({
   teamIds: [],
 });
 const STAGES = [stage('new', 1), stage('signed', 50, true)];
+// The money values the computes give a lead without amounts.
+const ZERO = { amountMicros: 0, currencyCode: 'USD' };
 const lead = (id: string, values: Record<string, unknown>): LeadRow =>
   readLeadRow({ id, createdAt: '2026-09-01T09:00:00.000Z', leadType: 'OPPORTUNITY', wonStatus: 'PENDING', dateLastStageUpdate: NOW, ...values });
 
@@ -82,6 +84,37 @@ describe('writeLeadsAsApplication', () => {
 
     expect(result).toEqual({ written: [], skipped: ['l1'] });
     expect(store.rows.get('l1')?.probability).toBe(100);
+  });
+
+  it('asks for a fresh score without a score to give and leaves a lead won in a stage no longer won as it is', async () => {
+    const store = makeFakeLeadStore({
+      leads: [
+        lead('l1', {
+          stageId: 'new',
+          probability: 100,
+          automatedProbability: 100,
+          wonStatus: 'WON',
+          dateClosed: '2026-10-01T09:00:00.000Z',
+          dayClose: 30,
+          proratedRevenue: ZERO,
+          recurringRevenueMonthly: ZERO,
+          recurringRevenueMonthlyProrated: ZERO,
+          recurringRevenueProrated: ZERO,
+        }),
+      ],
+      stages: STAGES,
+      now: NOW,
+    });
+
+    const result = await makeWriteLeadsAsApplication(store.writeApi)([{ leadId: 'l1', data: {} }], { rescore: true });
+
+    expect(result).toEqual({ written: ['l1'], skipped: [] });
+    expect(store.updateCalls).toEqual([]);
+    expect(store.rows.get('l1')).toMatchObject({
+      wonStatus: 'WON',
+      probability: 100,
+      dateClosed: '2026-10-01T09:00:00.000Z',
+    });
   });
 
   it('skips a lead that no longer exists', async () => {

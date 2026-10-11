@@ -30,6 +30,7 @@ export const MARK_WON_TEXTS = [
   msg('This lead is already won.'),
   msg('A lost lead must be restored before it is marked won.'),
   msg("No won stage fits this lead's sales team. Mark a stage as won first."),
+  msg('Your role does not allow this.'),
 ];
 
 export default defineFrontComponent({
