@@ -13,7 +13,7 @@ export const buildPrintOutput = async (pass: PrintPass): Promise<{ output: Print
   const data = await printable.read(pass.recordIds, pass.options);
 
   return {
-    output: await printable.build(data, pass.options),
+    output: await printable.build(data, pass.options, { timeZone: pass.timeZone }),
     fileName: printable.fileName(data, pass.options),
   };
 };

@@ -3,7 +3,7 @@ import { kv } from 'twenty-sdk/logic-function';
 
 import { filterReadableIds } from 'src/stock/stock-access';
 import { readCurrentMemberId } from 'src/stock/stock-current-member';
-import { PRINTABLE_OBJECTS } from 'src/stock/printing/printable-objects';
+import { printableObject } from 'src/stock/printing/printable-objects';
 import { type PrintLink } from 'src/stock/printing/types/print-link.type';
 import { type PrintPass } from 'src/stock/printing/types/print-pass.type';
 import { type PrintReportKey } from 'src/stock/printing/types/print-report-key.type';
@@ -11,16 +11,19 @@ import { printPassDayKey, printPassExpiry, printPassKey } from 'src/stock/printi
 
 const PASS_BYTES = 32;
 
-// Keeps the ids the clicking user may read and stores a one-time pass for them. The pass is also
-// filed under today's day key: two prints at the same instant may lose one entry there, which only
-// leaves that unused pass for its expiry check to refuse.
+// Keeps the ids the clicking user may read and stores a one-time pass for them. `beforeStore` runs on
+// those ids first, so a failing click leaves no pass behind. The pass is also filed under today's day
+// key: two prints at the same instant may lose one entry there, which only leaves that unused pass
+// for its expiry check to refuse.
 export const createPrintPass = async (input: {
   report: PrintReportKey;
   objectSingular: string;
   recordIds: string[];
   options: Record<string, unknown>;
+  timeZone: string;
+  beforeStore?: (recordIds: string[]) => Promise<void>;
 }): Promise<{ link: PrintLink; recordIds: string[] } | null> => {
-  const objectPlural = PRINTABLE_OBJECTS[input.objectSingular]?.objectPlural;
+  const objectPlural = printableObject(input.objectSingular)?.objectPlural;
 
   if (objectPlural === undefined) {
     return null;
@@ -30,6 +33,7 @@ export const createPrintPass = async (input: {
   if (recordIds.length === 0) {
     return null;
   }
+  await input.beforeStore?.(recordIds);
   const now = new Date();
   const pass = randomBytes(PASS_BYTES).toString('hex');
   const stored: PrintPass = {
@@ -37,6 +41,7 @@ export const createPrintPass = async (input: {
     objectSingular: input.objectSingular,
     recordIds,
     options: input.options,
+    timeZone: input.timeZone,
     workspaceMemberId: await readCurrentMemberId(),
     expiresAt: printPassExpiry(now),
   };

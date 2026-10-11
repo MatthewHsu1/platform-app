@@ -7,6 +7,7 @@ export type PrintPass = {
   objectSingular: string;
   recordIds: string[];
   options: Record<string, unknown>;
+  timeZone: string;
   workspaceMemberId: string | null;
   expiresAt: string;
 };

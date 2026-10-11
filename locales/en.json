@@ -327,6 +327,7 @@
   "There is no open wave transfer.": "There is no open wave transfer.",
   "There is no quantity to split off this move.": "There is no quantity to split off this move.",
   "There is nothing to order.": "There is nothing to order.",
+  "These print options are not valid.": "These print options are not valid.",
   "These rows already have a count. Set only the other rows?": "These rows already have a count. Set only the other rows?",
   "These transfers have no open operation.": "These transfers have no open operation.",
   "This product is not tracked by lots or serial numbers.": "This product is not tracked by lots or serial numbers.",
@@ -369,6 +370,7 @@
   "You cannot split a stock move that has been set to 'Done' or 'Cancel'.": "You cannot split a stock move that has been set to 'Done' or 'Cancel'.",
   "You have processed less products than the initial demand.": "You have processed less products than the initial demand.",
   "You have to set some pickings to batch.": "You have to set some pickings to batch.",
+  "Your time zone is not known. Check the time zone in your settings and print again.": "Your time zone is not known. Check the time zone in your settings and print again.",
   "commandMenuItem.label": {
     "Add to all products": "Add to all products",
     "Add to batch": "Add to batch",

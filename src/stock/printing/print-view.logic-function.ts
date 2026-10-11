@@ -38,6 +38,8 @@ const takePass = async (pass: string): Promise<PrintPass | null> => {
 // Public: a browser tab opened from the print pop-up has no Twenty token. The pass
 // carries the ids already checked as the person, so the printables read as the application.
 const handler = async (payload: RoutePayload) => {
+  let printing = 'a print link';
+
   try {
     const pass = payload.queryStringParameters?.pass ?? '';
     const stored = isPrintPassToken(pass) ? await takePass(pass) : null;
@@ -45,6 +47,7 @@ const handler = async (payload: RoutePayload) => {
     if (stored === null) {
       return linkNotValid();
     }
+    printing = `${stored.report} on ${stored.objectSingular}`;
     const { output, fileName } = await buildPrintOutput(stored);
 
     if (output.kind === 'zpl') {
@@ -63,6 +66,9 @@ const handler = async (payload: RoutePayload) => {
     if (error instanceof StockUserError) {
       return htmlResponse(renderMessagePage(translate('en', error.message, error.values)), 409);
     }
+
+    // The only trace a public page leaves for staff: the report and the cause, never the pass.
+    console.error(`Could not print ${printing}: ${error instanceof Error ? error.message : String(error)}`);
 
     return htmlResponse(renderMessagePage(PRINT_PAGE_MESSAGES.failed), 500);
   }

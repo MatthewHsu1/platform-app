@@ -2,8 +2,12 @@ import { type PickingPrintBackorderMove } from 'src/stock/printing/types/picking
 import { type PickingPrintData } from 'src/stock/printing/types/picking-print-data.type';
 import { type PickingPrintLine } from 'src/stock/printing/types/picking-print-line.type';
 import { type PickingPrintMove } from 'src/stock/printing/types/picking-print-move.type';
+import { type BarcodeBlock } from 'src/stock/printing/types/barcode-block.type';
 import { type PrintBlock } from 'src/stock/printing/types/print-block.type';
+import { type PrintContext } from 'src/stock/printing/types/print-context.type';
 import { type PrintDocument } from 'src/stock/printing/types/print-document.type';
+import { type PrintTableCell } from 'src/stock/printing/types/print-table-cell.type';
+import { dayInTimeZone } from 'src/stock/printing/utils/print-dates.util';
 import { PICKING_STATE, PICKING_STATE_OPTIONS, PICKING_TYPE_CODE } from 'src/stock/stock-options.constant';
 
 const CODE_REPORT_NAMES: Record<PickingPrintData['pickingTypeCode'], string> = {
@@ -20,7 +24,6 @@ type Field = [string, string];
 type TableBlock = Extract<PrintBlock, { kind: 'table' }>;
 
 const amount = (quantity: number, uomName: string) => (uomName === '' ? `${quantity}` : `${quantity} ${uomName}`);
-const day = (value: string | null) => value?.slice(0, 10) ?? '';
 const withPackage = (location: string, packageName: string) => (packageName === '' ? location : `${location} (${packageName})`);
 const contact = (name: string, address: string) => [name, address].filter((part) => part !== '').join('\n');
 const stateLabel = (state: string) => PICKING_STATE_OPTIONS.find((option) => option.value === state)?.label ?? state;
@@ -30,12 +33,18 @@ const compareText = (left: string, right: string) => (left < right ? -1 : left >
 const compareLocations = (left: PickingPrintLine | undefined, right: PickingPrintLine | undefined) =>
   compareText(left?.from ?? '', right?.from ?? '') || compareText(left?.to ?? '', right?.to ?? '');
 
-const table = (columns: string[], rows: string[][]): TableBlock => ({
+const table = (columns: string[], rows: PrintTableCell[][]): TableBlock => ({
   kind: 'table',
   columns,
   rows,
   widths: columns.map((_, index) => (index === 0 ? 3 : 2)),
 });
+
+// Product barcodes print bare; lot and package barcodes carry their name under the bars.
+const barcodeCell = (value: string, caption?: string): PrintTableCell =>
+  value === ''
+    ? ''
+    : ({ kind: 'barcode', symbology: 'code128', value, ...(caption === undefined ? {} : { caption }), widthMm: 40, heightMm: 9 } satisfies BarcodeBlock);
 
 // The transfer's own wording for a product, without the product name it often starts with.
 const reportDescription = (productName: string, description: string) =>
@@ -49,15 +58,15 @@ const deliveryProductCell = (move: Pick<PickingPrintMove, 'productName' | 'descr
 const shouldPrintDeliveryAddress = (picking: PickingPrintData) =>
   picking.pickingTypeCode === PICKING_TYPE_CODE.OUTGOING && picking.moves.length > 0 && picking.partnerName !== '';
 
-const pickingOperationsFields = (picking: PickingPrintData): Field[] => [
+const pickingOperationsFields = (picking: PickingPrintData, timeZone: string): Field[] => [
   ...field(shouldPrintDeliveryAddress(picking), 'Delivery Address:', contact(picking.partnerName, picking.partnerAddress)),
   ...field(picking.origin !== '', 'Order:', picking.origin),
   ['Warehouse:', picking.warehouseName],
   ...field(picking.pickingTypeCode === PICKING_TYPE_CODE.INTERNAL && picking.partnerName !== '', 'Contact', picking.partnerName),
   ['Status:', stateLabel(picking.state)],
   ...field(picking.responsibleName !== '', 'Operator:', picking.responsibleName),
-  ...field(picking.state === PICKING_STATE.DONE && picking.dateDone !== null, 'Done Date:', day(picking.dateDone)),
-  ...field(picking.state !== PICKING_STATE.DONE && picking.scheduledDate !== null, 'Scheduled Date:', day(picking.scheduledDate)),
+  ...field(picking.state === PICKING_STATE.DONE && picking.dateDone !== null, 'Done Date:', dayInTimeZone(picking.dateDone, timeZone)),
+  ...field(picking.state !== PICKING_STATE.DONE && picking.scheduledDate !== null, 'Scheduled Date:', dayInTimeZone(picking.scheduledDate, timeZone)),
   ...field(picking.warningText !== '', 'Instructions:', picking.warningText.trim()),
   ...field(picking.pickingTypeCode === PICKING_TYPE_CODE.INCOMING && picking.partnerName !== '', 'Vendor:', picking.partnerName),
 ];
@@ -75,12 +84,12 @@ const operationsTable = (picking: PickingPrintData): TableBlock | null => {
   if (!allLines.some((line) => !line.isEntirePack)) {
     return null;
   }
-  const cells = (from: string, to: string, barcode: string) => [
+  const cells = (from: string, to: string, barcode: PrintTableCell): PrintTableCell[] => [
     ...(showFrom ? [from] : []),
     ...(showTo ? [to] : []),
     ...(showBarcode ? [barcode] : []),
   ];
-  const rows: string[][] = [];
+  const rows: PrintTableCell[][] = [];
 
   for (const move of moves) {
     const lines = move.lines.filter((line) => !line.isEntirePack);
@@ -99,7 +108,7 @@ const operationsTable = (picking: PickingPrintData): TableBlock | null => {
       ...cells(
         hasLineRows ? '' : withPackage(first.from, first.packageName),
         hasLineRows ? '' : withPackage(first.to, first.resultPackageName),
-        move.productBarcode,
+        barcodeCell(move.productBarcode),
       ),
     ]);
     if (hasLineRows) {
@@ -107,13 +116,13 @@ const operationsTable = (picking: PickingPrintData): TableBlock | null => {
         rows.push([
           line.lotName === '' ? '' : `    ${line.lotName}`,
           amount(line.quantity, line.uomName),
-          ...cells(withPackage(line.from, line.packageName), withPackage(line.to, line.resultPackageName), line.lotBarcode),
+          ...cells(withPackage(line.from, line.packageName), withPackage(line.to, line.resultPackageName), barcodeCell(line.lotBarcode, line.lotBarcode)),
         ]);
       }
     }
   }
 
-  return table(['Product', 'Quantity', ...cells('From', 'To', 'Barcode')], rows);
+  return table(['Product', 'Quantity', ...(showFrom ? ['From'] : []), ...(showTo ? ['To'] : []), ...(showBarcode ? ['Barcode'] : [])], rows);
 };
 
 // Packages moved whole are listed by package, not by product.
@@ -135,7 +144,7 @@ const packagesTable = (picking: PickingPrintData): TableBlock | null => {
   const rows = [...byPackage.entries()]
     .sort(([left], [right]) => compareText(left, right))
     .map(([packageName, line]) => [
-      packageName,
+      barcodeCell(packageName, packageName),
       ...(showFrom ? [line.from] : []),
       ...(showTo ? [withPackage(line.to, line.resultPackageName === packageName ? '' : line.resultPackageName)] : []),
     ]);
@@ -147,14 +156,14 @@ const isNotReserved = (picking: PickingPrintData) =>
   WAITING_STATES.includes(picking.state) ||
   (picking.state !== PICKING_STATE.DONE && picking.moves.some((move) => move.demand > move.quantity && move.lines.length > 0));
 
-const pickingOperationsBlocks = (picking: PickingPrintData): PrintBlock[] => {
+const pickingOperationsBlocks = (picking: PickingPrintData, timeZone: string): PrintBlock[] => {
   const operations = operationsTable(picking);
   const packages = packagesTable(picking);
 
   return [
     { kind: 'title', text: picking.name },
     { kind: 'barcode', symbology: 'code128', value: picking.name, widthMm: 60, heightMm: 12 },
-    { kind: 'fields', rows: pickingOperationsFields(picking) },
+    { kind: 'fields', rows: pickingOperationsFields(picking, timeZone) },
     ...(operations === null ? [] : [operations]),
     ...(packages === null ? [] : [packages]),
     ...(isNotReserved(picking) ? [{ kind: 'text' as const, text: NOT_RESERVED_TEXT }] : []),
@@ -162,7 +171,7 @@ const pickingOperationsBlocks = (picking: PickingPrintData): PrintBlock[] => {
   ];
 };
 
-const deliverySlipFields = (picking: PickingPrintData): Field[] => {
+const deliverySlipFields = (picking: PickingPrintData, timeZone: string): Field[] => {
   const address: Field[] = shouldPrintDeliveryAddress(picking)
     ? [['Delivery Address', contact(picking.partnerName, picking.partnerAddress)]]
     : field(
@@ -181,7 +190,7 @@ const deliverySlipFields = (picking: PickingPrintData): Field[] => {
     ),
     ...field(picking.origin !== '', 'Order', picking.origin),
     ...field(picking.pickingTypeCode === PICKING_TYPE_CODE.INTERNAL && picking.partnerName !== '', 'Contact', picking.partnerName),
-    ['Shipping Date', day(isDone ? picking.dateDone : picking.scheduledDate)],
+    ['Shipping Date', dayInTimeZone(isDone ? picking.dateDone : picking.scheduledDate, timeZone)],
     ...field(picking.responsibleName !== '', 'Operator:', picking.responsibleName),
   ];
 };
@@ -236,7 +245,7 @@ const aggregateLines = (
   return [...aggregated.values()];
 };
 
-const doneTable = (picking: PickingPrintData): TableBlock | null => {
+const doneTable = (picking: PickingPrintData, timeZone: string): TableBlock | null => {
   const doneLines: DoneLine[] = picking.moves.flatMap((move) => move.lines.map((line) => ({ move, line })));
 
   if (doneLines.length === 0) {
@@ -248,7 +257,7 @@ const doneTable = (picking: PickingPrintData): TableBlock | null => {
   const lotRow = ({ move, line }: DoneLine) => [
     deliveryProductCell(move),
     line.lotName,
-    ...(hasExpiry ? [day(line.expirationDate)] : []),
+    ...(hasExpiry ? [dayInTimeZone(line.expirationDate, timeZone)] : []),
     amount(line.quantity, line.uomName),
   ];
   const aggregatedRow = (aggregated: AggregatedLine) => [
@@ -262,7 +271,7 @@ const doneTable = (picking: PickingPrintData): TableBlock | null => {
   if (packageNames.length === 0) {
     return table(columns, hasLots ? doneLines.map(lotRow) : aggregateLines(doneLines, { strict: false, picking }).map(aggregatedRow));
   }
-  const rows: string[][] = [];
+  const rows: PrintTableCell[][] = [];
 
   for (const packageName of packageNames) {
     const inPackage = doneLines
@@ -282,10 +291,10 @@ const doneTable = (picking: PickingPrintData): TableBlock | null => {
   return table(columns, rows);
 };
 
-const deliverySlipBlocks = (picking: PickingPrintData): PrintBlock[] => {
+const deliverySlipBlocks = (picking: PickingPrintData, timeZone: string): PrintBlock[] => {
   const lines =
     picking.state === PICKING_STATE.DONE
-      ? doneTable(picking)
+      ? doneTable(picking, timeZone)
       : table(
           ['Product', 'Ordered', 'Delivered'],
           picking.moves
@@ -303,7 +312,7 @@ const deliverySlipBlocks = (picking: PickingPrintData): PrintBlock[] => {
 
   return [
     { kind: 'title', text: `${CODE_REPORT_NAMES[picking.pickingTypeCode]} ${picking.name}` },
-    { kind: 'fields', rows: deliverySlipFields(picking) },
+    { kind: 'fields', rows: deliverySlipFields(picking, timeZone) },
     ...(lines === null ? [] : [lines]),
     ...(remaining.length > 0
       ? [
@@ -340,11 +349,21 @@ const returnSlipBlocks = (picking: PickingPrintData): PrintBlock[] => [
 ];
 
 // Several transfers print one after the other, each from a new page.
-const perPicking = (pickings: PickingPrintData[], blocksOf: (picking: PickingPrintData) => PrintBlock[]): PrintDocument => ({
+const perPicking = (
+  pickings: PickingPrintData[],
+  context: PrintContext,
+  blocksOf: (picking: PickingPrintData, timeZone: string) => PrintBlock[],
+): PrintDocument => ({
   kind: 'document',
-  blocks: pickings.flatMap((picking, index) => [...(index > 0 ? [{ kind: 'pageBreak' as const }] : []), ...blocksOf(picking)]),
+  blocks: pickings.flatMap((picking, index) => [
+    ...(index > 0 ? [{ kind: 'pageBreak' as const }] : []),
+    ...blocksOf(picking, context.timeZone),
+  ]),
 });
 
-export const buildPickingOperations = (pickings: PickingPrintData[]) => perPicking(pickings, pickingOperationsBlocks);
-export const buildDeliverySlip = (pickings: PickingPrintData[]) => perPicking(pickings, deliverySlipBlocks);
-export const buildReturnSlip = (pickings: PickingPrintData[]) => perPicking(pickings, returnSlipBlocks);
+export const buildPickingOperations = (pickings: PickingPrintData[], _options: Record<string, unknown>, context: PrintContext) =>
+  perPicking(pickings, context, pickingOperationsBlocks);
+export const buildDeliverySlip = (pickings: PickingPrintData[], _options: Record<string, unknown>, context: PrintContext) =>
+  perPicking(pickings, context, deliverySlipBlocks);
+export const buildReturnSlip = (pickings: PickingPrintData[], _options: Record<string, unknown>, context: PrintContext) =>
+  perPicking(pickings, context, returnSlipBlocks);

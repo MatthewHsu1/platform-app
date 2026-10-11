@@ -66,17 +66,48 @@ const texts = (blocks: PrintBlock[]) => blocks.flatMap((block) => ('text' in blo
 const fieldsOf = (blocks: PrintBlock[]) =>
   blocks.flatMap((block) => (block.kind === 'fields' ? block.rows : []));
 
+const UTC = { timeZone: 'UTC' };
+const barcodeOf = (value: string, caption?: string) => ({
+  kind: 'barcode',
+  symbology: 'code128',
+  value,
+  ...(caption === undefined ? {} : { caption }),
+  widthMm: 40,
+  heightMm: 9,
+});
+
 const NOT_RESERVED = 'All products could not be reserved. Click on the "Check Availability" button to try to reserve products.';
 
 describe('buildPickingOperations', () => {
   it('drops the To column on a delivery and has no Barcode column without barcodes', () => {
-    expect(tableOf(buildPickingOperations([picking({})]).blocks)?.columns).toEqual(['Product', 'Quantity', 'From']);
+    expect(tableOf(buildPickingOperations([picking({})], {}, UTC).blocks)?.columns).toEqual(['Product', 'Quantity', 'From']);
   });
 
   it('drops the From column on a receipt and shows barcodes when a product has one', () => {
     const receipt = picking({ pickingTypeCode: 'INCOMING', moves: [move({ productBarcode: '4006381333931' })] });
 
-    expect(tableOf(buildPickingOperations([receipt]).blocks)?.columns).toEqual(['Product', 'Quantity', 'To', 'Barcode']);
+    expect(tableOf(buildPickingOperations([receipt], {}, UTC).blocks)?.columns).toEqual(['Product', 'Quantity', 'To', 'Barcode']);
+  });
+
+  it("draws the product's barcode in its cell, without the number under it", () => {
+    const receipt = picking({ pickingTypeCode: 'INCOMING', moves: [move({ productBarcode: '4006381333931' })] });
+
+    expect(tableOf(buildPickingOperations([receipt], {}, UTC).blocks)?.rows).toEqual([
+      ['Treadmill', '2 Units', 'Partners/Customers', barcodeOf('4006381333931')],
+    ]);
+  });
+
+  it('prints the done date as the reader in Denver saw it on the evening of 2026-10-10', () => {
+    const done = picking({ state: 'DONE', dateDone: '2026-10-11T02:30:00.000Z' });
+
+    expect(fieldsOf(buildPickingOperations([done], {}, { timeZone: 'America/Denver' }).blocks)).toContainEqual([
+      'Done Date:',
+      '2026-10-10',
+    ]);
+    expect(fieldsOf(buildDeliverySlip([done], {}, { timeZone: 'America/Denver' }).blocks)).toContainEqual([
+      'Shipping Date',
+      '2026-10-10',
+    ]);
   });
 
   it('lists the lines of a tracked move under it', () => {
@@ -89,38 +120,38 @@ describe('buildPickingOperations', () => {
       ],
     });
 
-    expect(tableOf(buildPickingOperations([tracked]).blocks)?.rows).toEqual([
+    expect(tableOf(buildPickingOperations([tracked], {}, UTC).blocks)?.rows).toEqual([
       ['Treadmill', '2 Units', '', ''],
-      ['    SN1', '1 Units', 'WH/Stock', 'SN1'],
-      ['    SN2', '1 Units', 'WH/Stock', 'SN2'],
+      ['    SN1', '1 Units', 'WH/Stock', barcodeOf('SN1', 'SN1')],
+      ['    SN2', '1 Units', 'WH/Stock', barcodeOf('SN2', 'SN2')],
     ]);
   });
 
   it('warns when a waiting transfer could not reserve everything', () => {
     const waiting = picking({ state: 'CONFIRMED', moves: [move({ quantity: 0, lines: [] })] });
 
-    expect(texts(buildPickingOperations([waiting]).blocks)).toContain(NOT_RESERVED);
+    expect(texts(buildPickingOperations([waiting], {}, UTC).blocks)).toContain(NOT_RESERVED);
   });
 
   it('warns on a ready transfer when a move with lines holds less than its demand', () => {
     const partly = picking({ moves: [move({ demand: 3, quantity: 2 })] });
 
-    expect(texts(buildPickingOperations([partly]).blocks)).toContain(NOT_RESERVED);
+    expect(texts(buildPickingOperations([partly], {}, UTC).blocks)).toContain(NOT_RESERVED);
   });
 
   it('does not warn on a ready transfer whose demand is reserved', () => {
-    expect(texts(buildPickingOperations([picking({})]).blocks)).not.toContain(NOT_RESERVED);
+    expect(texts(buildPickingOperations([picking({})], {}, UTC).blocks)).not.toContain(NOT_RESERVED);
   });
 
   it('starts with the transfer name and its barcode', () => {
-    const [title, barcode] = buildPickingOperations([picking({})]).blocks;
+    const [title, barcode] = buildPickingOperations([picking({})], {}, UTC).blocks;
 
     expect(title).toEqual({ kind: 'title', text: 'WH/OUT/00001' });
     expect(barcode).toMatchObject({ kind: 'barcode', symbology: 'code128', value: 'WH/OUT/00001' });
   });
 
   it('shows the status by its name and the delivery address of a delivery', () => {
-    const fields = fieldsOf(buildPickingOperations([picking({})]).blocks);
+    const fields = fieldsOf(buildPickingOperations([picking({})], {}, UTC).blocks);
 
     expect(fields).toContainEqual(['Status:', 'Ready']);
     expect(fields).toContainEqual(['Delivery Address:', 'Gym A\n1 Main St']);
@@ -138,14 +169,14 @@ describe('buildPickingOperations', () => {
         }),
       ],
     });
-    const tables = tablesOf(buildPickingOperations([packed]).blocks);
+    const tables = tablesOf(buildPickingOperations([packed], {}, UTC).blocks);
 
     expect(tables).toHaveLength(1);
-    expect(tables[0]).toMatchObject({ columns: ['Package', 'From', 'To'], rows: [['PACK0002', 'WH/Stock', 'WH/Output']] });
+    expect(tables[0]).toMatchObject({ columns: ['Package', 'From', 'To'], rows: [[barcodeOf('PACK0002', 'PACK0002'), 'WH/Stock', 'WH/Output']] });
   });
 
   it('puts each transfer on its own page', () => {
-    const blocks = buildPickingOperations([picking({}), picking({ id: 'p2', name: 'WH/OUT/00002' })]).blocks;
+    const blocks = buildPickingOperations([picking({}), picking({ id: 'p2', name: 'WH/OUT/00002' })], {}, UTC).blocks;
 
     expect(blocks.filter((block) => block.kind === 'pageBreak')).toHaveLength(1);
   });
@@ -153,14 +184,14 @@ describe('buildPickingOperations', () => {
 
 describe('buildDeliverySlip', () => {
   it('titles a delivery "Delivery Note" and lists ordered and delivered before it is done', () => {
-    const blocks = buildDeliverySlip([picking({})]).blocks;
+    const blocks = buildDeliverySlip([picking({})], {}, UTC).blocks;
 
     expect(blocks[0]).toEqual({ kind: 'title', text: 'Delivery Note WH/OUT/00001' });
     expect(tableOf(blocks)).toMatchObject({ columns: ['Product', 'Ordered', 'Delivered'], rows: [['Treadmill', '2 Units', '2 Units']] });
   });
 
   it('titles a receipt "Goods Receipt Note"', () => {
-    expect(buildDeliverySlip([picking({ pickingTypeCode: 'INCOMING' })]).blocks[0]).toEqual({
+    expect(buildDeliverySlip([picking({ pickingTypeCode: 'INCOMING' })], {}, UTC).blocks[0]).toEqual({
       kind: 'title',
       text: 'Goods Receipt Note WH/OUT/00001',
     });
@@ -173,7 +204,7 @@ describe('buildDeliverySlip', () => {
       moves: [move({ lines: [line({ lotName: 'L42', expirationDate: '2027-01-31T00:00:00.000Z' })] })],
       backorderMoves: [{ productName: 'Rowing machine', descriptionPicking: '', demand: 3, uomName: 'Units' }],
     });
-    const blocks = buildDeliverySlip([done]).blocks;
+    const blocks = buildDeliverySlip([done], {}, UTC).blocks;
     const tables = tablesOf(blocks);
 
     expect(tables[0]).toMatchObject({
@@ -204,7 +235,7 @@ describe('buildDeliverySlip', () => {
       ],
     });
 
-    expect(tableOf(buildDeliverySlip([done]).blocks)).toMatchObject({
+    expect(tableOf(buildDeliverySlip([done], {}, UTC).blocks)).toMatchObject({
       columns: ['Product', 'Ordered', 'Delivered'],
       rows: [
         ['Product A', '10 Units', '6 Units'],
@@ -222,7 +253,7 @@ describe('buildDeliverySlip', () => {
       ],
     });
 
-    expect(tableOf(buildDeliverySlip([done]).blocks)?.rows).toEqual([['Treadmill', '15 Units', '15 Units']]);
+    expect(tableOf(buildDeliverySlip([done], {}, UTC).blocks)?.rows).toEqual([['Treadmill', '15 Units', '15 Units']]);
   });
 
   it('groups delivered products under their packages', () => {
@@ -237,7 +268,7 @@ describe('buildDeliverySlip', () => {
       ],
     });
 
-    expect(tableOf(buildDeliverySlip([done]).blocks)?.rows).toEqual([
+    expect(tableOf(buildDeliverySlip([done], {}, UTC).blocks)?.rows).toEqual([
       ['PACK0001', '', ''],
       ['Treadmill', '5 Units', '5 Units'],
       ['PACK0002', '', ''],
@@ -247,7 +278,7 @@ describe('buildDeliverySlip', () => {
 
   it('shows the warehouse address on a receipt and the vendor', () => {
     const receipt = picking({ pickingTypeCode: 'INCOMING', partnerName: 'Supplier B', partnerAddress: '5 Port Rd', warehouseAddress: 'Main\n2 Depot St' });
-    const fields = fieldsOf(buildDeliverySlip([receipt]).blocks);
+    const fields = fieldsOf(buildDeliverySlip([receipt], {}, UTC).blocks);
 
     expect(fields).toContainEqual(['Warehouse Address', 'Main\n2 Depot St']);
     expect(fields).toContainEqual(['Vendor Address', 'Supplier B\n5 Port Rd']);
@@ -255,7 +286,7 @@ describe('buildDeliverySlip', () => {
 
   it('shows the signature with the contact name', () => {
     const png = new Uint8Array([137, 80, 78, 71]);
-    const blocks = buildDeliverySlip([picking({ state: 'DONE', signaturePng: png })]).blocks;
+    const blocks = buildDeliverySlip([picking({ state: 'DONE', signaturePng: png })], {}, UTC).blocks;
 
     expect(blocks.slice(-3)).toEqual([
       { kind: 'heading', text: 'Signature' },
@@ -267,7 +298,7 @@ describe('buildDeliverySlip', () => {
 
 describe('buildReturnSlip', () => {
   it('asks to put the slip in the parcel and carries the return barcodes', () => {
-    const blocks = buildReturnSlip([picking({ pickingTypeCode: 'OUTGOING' })]).blocks;
+    const blocks = buildReturnSlip([picking({ pickingTypeCode: 'OUTGOING' })], {}, UTC).blocks;
 
     expect(blocks[0]).toEqual({ kind: 'title', text: 'RETURN OF WH/OUT/00001' });
     expect(texts(blocks)).toEqual(
@@ -280,7 +311,7 @@ describe('buildReturnSlip', () => {
   });
 
   it('sends a receipt back to its contact', () => {
-    const blocks = buildReturnSlip([picking({ pickingTypeCode: 'INCOMING', partnerName: 'Supplier B', partnerAddress: '5 Port Rd' })]).blocks;
+    const blocks = buildReturnSlip([picking({ pickingTypeCode: 'INCOMING', partnerName: 'Supplier B', partnerAddress: '5 Port Rd' })], {}, UTC).blocks;
 
     expect(texts(blocks)).toContain('Supplier B\n5 Port Rd');
   });

@@ -18,7 +18,12 @@ export const PICKING_OPERATIONS_TEXT: PrintText = { ...PRINT_TEXT, open: msg('Op
 // The print route answers these texts in the user's language. The translation
 // extractor reads only front-component files, so they are listed here to reach
 // the catalog; each must match its source text exactly.
-export const PRINT_ROUTE_TEXTS = [msg('Choose what to print.'), msg('Nothing to print.')];
+export const PRINT_ROUTE_TEXTS = [
+  msg('Choose what to print.'),
+  msg('Nothing to print.'),
+  msg('These print options are not valid.'),
+  msg('Your time zone is not known. Check the time zone in your settings and print again.'),
+];
 
 export default defineFrontComponent({
   universalIdentifier: PICKING_PRINT_UNIVERSAL_IDENTIFIERS.printReadyFrontComponent,

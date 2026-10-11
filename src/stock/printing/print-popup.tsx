@@ -37,7 +37,10 @@ export const PrintNow = ({
 
   useRunOnce(() => {
     if (ids.length > 0) {
-      void call<{ links: PrintLink[] }>(PRINT_ROUTE_PATH, { report, objectSingular: object, recordIds: ids, options }).then(
+      // Dates on the page print as the reader's calendar shows them.
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      void call<{ links: PrintLink[] }>(PRINT_ROUTE_PATH, { report, objectSingular: object, recordIds: ids, options, timeZone }).then(
         (result) => {
           if (result !== null) {
             setLinks(result.links);

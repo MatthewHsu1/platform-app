@@ -2,6 +2,7 @@ import { type BarcodeBlock } from 'src/stock/printing/types/barcode-block.type';
 import { type LabelSheet } from 'src/stock/printing/types/label-sheet.type';
 import { type PrintBlock } from 'src/stock/printing/types/print-block.type';
 import { type PrintDocument } from 'src/stock/printing/types/print-document.type';
+import { type PrintTableCell } from 'src/stock/printing/types/print-table-cell.type';
 
 const HTML_ESCAPES: Record<string, string> = {
   '&': '&amp;',
@@ -37,14 +38,31 @@ img { max-width: 100%; }
 const page = (title: string, style: string, body: string) =>
   `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title><style>${BASE_STYLE}${style}</style></head><body>${body}</body></html>`;
 
-const percent = (part: number, total: number) => `${((part / total) * 100).toFixed(2)}%`;
+// Sizes go into style attributes: anything that is not a finite number is written as 0.
+const size = (value: number) => {
+  const number = Number(value);
 
-const tableHtml = (block: Extract<PrintBlock, { kind: 'table' }>) => {
-  const total = block.widths.reduce((sum, width) => sum + width, 0);
+  return Number.isFinite(number) ? number : 0;
+};
+
+const percent = (part: number, total: number) => `${((size(part) / total) * 100).toFixed(2)}%`;
+
+// The SVG comes from the barcode encoder, not from record data, so it goes in as markup.
+const barcodeHtml = (block: BarcodeBlock, barcodeSvg: (block: BarcodeBlock) => string) => {
+  const caption = block.caption === undefined || block.caption === '' ? '' : `<div class="caption">${escapeHtml(block.caption)}</div>`;
+
+  return `<div class="barcode"><div class="symbol" style="width: ${size(block.widthMm)}mm; height: ${size(block.heightMm)}mm">${barcodeSvg(block)}</div>${caption}</div>`;
+};
+
+const cellHtml = (cell: PrintTableCell, barcodeSvg: (block: BarcodeBlock) => string) =>
+  `<td>${typeof cell === 'string' ? escapeHtml(cell) : barcodeHtml(cell, barcodeSvg)}</td>`;
+
+const tableHtml = (block: Extract<PrintBlock, { kind: 'table' }>, barcodeSvg: (block: BarcodeBlock) => string) => {
+  const total = block.widths.reduce((sum, width) => sum + size(width), 0);
   const columns =
     total > 0 ? `<colgroup>${block.widths.map((width) => `<col style="width: ${percent(width, total)}">`).join('')}</colgroup>` : '';
   const header = block.columns.map((column) => `<th>${escapeHtml(column)}</th>`).join('');
-  const rows = block.rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('');
+  const rows = block.rows.map((row) => `<tr>${row.map((cell) => cellHtml(cell, barcodeSvg)).join('')}</tr>`).join('');
 
   // Browsers repeat a table's thead at the top of every printed page it runs onto.
   return `<table class="lines">${columns}<thead><tr>${header}</tr></thead><tbody>${rows}</tbody></table>`;
@@ -63,15 +81,11 @@ const blockHtml = (block: PrintBlock, barcodeSvg: (block: BarcodeBlock) => strin
         .map(([label, value]) => `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`)
         .join('')}</tbody></table>`;
     case 'table':
-      return tableHtml(block);
-    case 'barcode': {
-      // The SVG comes from the barcode encoder, not from record data, so it goes in as markup.
-      const caption = block.caption === undefined || block.caption === '' ? '' : `<div class="caption">${escapeHtml(block.caption)}</div>`;
-
-      return `<div class="barcode"><div class="symbol" style="width: ${block.widthMm}mm; height: ${block.heightMm}mm">${barcodeSvg(block)}</div>${caption}</div>`;
-    }
+      return tableHtml(block, barcodeSvg);
+    case 'barcode':
+      return barcodeHtml(block, barcodeSvg);
     case 'image':
-      return `<img src="data:image/png;base64,${Buffer.from(block.png).toString('base64')}" style="width: ${block.widthMm}mm" alt="">`;
+      return `<img src="data:image/png;base64,${Buffer.from(block.png).toString('base64')}" style="width: ${size(block.widthMm)}mm" alt="">`;
     case 'pageBreak':
       return '<div class="page-break"></div>';
   }
@@ -86,7 +100,9 @@ const documentHtml = (output: PrintDocument, title: string, barcodeSvg: (block: 
   );
 
 const labelSheetHtml = (output: LabelSheet, title: string, barcodeSvg: (block: BarcodeBlock) => string) => {
-  const perSheet = output.columns * output.rows;
+  const columns = Math.max(1, Math.floor(size(output.columns)));
+  const rows = Math.max(1, Math.floor(size(output.rows)));
+  const perSheet = columns * rows;
   const sheets: string[] = [];
 
   for (let start = 0; start < Math.max(output.cells.length, 1); start += perSheet) {
@@ -100,10 +116,10 @@ const labelSheetHtml = (output: LabelSheet, title: string, barcodeSvg: (block: B
 
   return page(
     title,
-    `@page { size: ${output.pageWidthMm}mm ${output.pageHeightMm}mm; margin: 0; }
-.sheet { width: ${output.pageWidthMm}mm; height: ${output.pageHeightMm}mm; display: grid;
-  grid-template-columns: repeat(${output.columns}, ${output.cellWidthMm}mm);
-  grid-template-rows: repeat(${output.rows}, ${output.cellHeightMm}mm);
+    `@page { size: ${size(output.pageWidthMm)}mm ${size(output.pageHeightMm)}mm; margin: 0; }
+.sheet { width: ${size(output.pageWidthMm)}mm; height: ${size(output.pageHeightMm)}mm; display: grid;
+  grid-template-columns: repeat(${columns}, ${size(output.cellWidthMm)}mm);
+  grid-template-rows: repeat(${rows}, ${size(output.cellHeightMm)}mm);
   justify-content: center; align-content: center; overflow: hidden; break-after: page; }
 .sheet:last-child { break-after: auto; }
 .cell { overflow: hidden; padding: 2mm; }

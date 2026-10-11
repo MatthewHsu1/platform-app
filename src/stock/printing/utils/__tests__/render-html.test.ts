@@ -53,4 +53,24 @@ describe('renderHtml', () => {
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
   });
+
+  it('draws a barcode inside a table cell, under it the escaped caption', () => {
+    const html = renderHtml(
+      {
+        kind: 'document',
+        blocks: [
+          {
+            kind: 'table',
+            columns: ['Product', 'Barcode'],
+            rows: [['Treadmill', { kind: 'barcode', symbology: 'code128', value: 'SN<1>', caption: 'SN<1>', widthMm: 40, heightMm: 9 }]],
+            widths: [1, 1],
+          },
+        ],
+      },
+      'x',
+      (block) => `<svg data-value="${block.value.length}"></svg>`,
+    );
+
+    expect(html).toContain('<td><div class="barcode"><div class="symbol" style="width: 40mm; height: 9mm"><svg data-value="5"></svg></div><div class="caption">SN&lt;1&gt;</div></div></td>');
+  });
 });
