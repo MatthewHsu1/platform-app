@@ -67,6 +67,7 @@ export const handlePickingCreated = async (
       const data = planPickingCreate({
         picking,
         typeMoveType: type.moveType,
+        typeCode: type.code,
         nextName,
         locations: await defaultPickingLocations(picking, type),
         actingMemberId: event.workspaceMemberId,

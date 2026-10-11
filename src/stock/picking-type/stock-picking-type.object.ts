@@ -6,6 +6,7 @@ import {
 } from 'src/base/base-universal-identifiers.constant';
 import {
   activeField,
+  appTextField,
   booleanField,
   manyToOneField,
   numberField,
@@ -31,6 +32,7 @@ import {
   RESERVATION_METHOD,
   RESERVATION_METHOD_OPTIONS,
 } from 'src/stock/stock-options.constant';
+import { STOCK_PICKING_TYPE_PAGES_FIELD_UNIVERSAL_IDENTIFIERS as PAGES_FIELD_IDS } from 'src/stock/stock-pages-universal-identifiers.constant';
 import {
   STOCK_LOCATION_FIELD_UNIVERSAL_IDENTIFIERS as LOCATION_FIELD_IDS,
   STOCK_LOCATION_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -69,6 +71,7 @@ export default defineObject({
   labelIdentifierFieldMetadataUniversalIdentifier: FIELD_IDS.name,
   fields: [
     { universalIdentifier: FIELD_IDS.name, name: 'name', label: 'Operation type', icon: 'IconAbc', type: FieldType.TEXT },
+    appTextField(PAGES_FIELD_IDS.completeName, 'completeName', 'Full name', 'IconSitemap'),
     numberField(FIELD_IDS.sequence, 'sequence', 'Sequence', 'IconArrowsSort', { decimals: 0, int: true }),
     manyToOneField({
       universalIdentifier: FIELD_IDS.referenceSequence,
