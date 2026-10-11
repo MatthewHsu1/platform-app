@@ -99,10 +99,14 @@ const documentHtml = (output: PrintDocument, title: string, barcodeSvg: (block: 
     output.blocks.map((block) => blockHtml(block, barcodeSvg)).join(''),
   );
 
+// Labels under this height (the 4 x 12 sheets) print in a smaller font so name, reference and barcode fit.
+const SMALL_CELL_MM = 25;
+
 const labelSheetHtml = (output: LabelSheet, title: string, barcodeSvg: (block: BarcodeBlock) => string) => {
   const columns = Math.max(1, Math.floor(size(output.columns)));
   const rows = Math.max(1, Math.floor(size(output.rows)));
   const perSheet = columns * rows;
+  const isSmall = size(output.cellHeightMm) < SMALL_CELL_MM;
   const sheets: string[] = [];
 
   for (let start = 0; start < Math.max(output.cells.length, 1); start += perSheet) {
@@ -122,7 +126,11 @@ const labelSheetHtml = (output: LabelSheet, title: string, barcodeSvg: (block: B
   grid-template-rows: repeat(${rows}, ${size(output.cellHeightMm)}mm);
   justify-content: center; align-content: center; overflow: hidden; break-after: page; }
 .sheet:last-child { break-after: auto; }
-.cell { overflow: hidden; padding: 2mm; }
+.cell { overflow: hidden; padding: 1mm; border: 1px solid black; font-size: ${isSmall ? 6 : 8}pt; line-height: 1.2; }
+.cell h2 { font-size: 1.2em; margin: 0 0 0.5mm; overflow: hidden; max-height: 2.4em;${isSmall ? ' white-space: nowrap; text-overflow: ellipsis;' : ''} }
+.cell p { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cell .barcode { margin: 0.5mm 0 0; }
+.cell .barcode .caption { font-size: 1em; line-height: 1; }
 @media screen { body { background: lightgray; } .sheet { background: white; margin: 0 auto 8mm; } }`,
     sheets.join(''),
   );

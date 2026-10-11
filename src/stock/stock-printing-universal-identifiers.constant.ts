@@ -31,3 +31,14 @@ export const ZPL_PRINT_UNIVERSAL_IDENTIFIERS = {
   packagingFrontComponent: 'b7a174c4-a773-4b28-b571-399b0e21f42d',
   packagingCommand: '59c1c749-35a7-49e1-bd0d-4773ed80fef2',
 } as const;
+
+export const LABEL_UNIVERSAL_IDENTIFIERS = {
+  chooseLabelsLayout: '54513797-8ccc-454f-a5ec-1e6636cc8e40',
+  chooseTypeOfLabels: '97da270a-0e19-469d-a6f6-26e1da67439a',
+  chooseLotLabelsLayout: 'c7ea893f-88b5-415d-a275-5c3e365370e9',
+  lotPdfFrontComponent: 'e901e4e0-ab9c-4191-bdce-59da7a346638',
+  pickingCommand: '78d90922-a575-4bdf-b07a-495237aea409',
+  productTemplateCommand: 'a11ed5d6-a6e8-47ce-a1f3-3a68150cfd56',
+  productProductCommand: '4746ae87-4a1a-4784-be28-f7059cfb4650',
+  lotPdfCommand: '0889f897-79c9-40be-9d92-4b97863fe83e',
+} as const;

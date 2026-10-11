@@ -86,7 +86,7 @@ export const productBarcodeSymbology = (value: string): BarcodeBlock['symbology'
 };
 
 // Code 128 holds printable ASCII only; a name in another script prints as text instead of failing the page.
-const isCode128Text = (value: string) => /^[\x20-\x7E]+$/.test(value);
+export const isCode128Text = (value: string) => /^[\x20-\x7E]+$/.test(value);
 
 // Product barcodes print bare; lot and package barcodes carry their name under the bars.
 const barcodeCell = (value: string, caption?: string, symbology: BarcodeBlock['symbology'] = 'code128'): PrintTableCell => {
