@@ -2,6 +2,7 @@ import { floatRound } from 'src/shared/utils/float-round.util';
 import { MOVE_STATE, PRIORITY } from 'src/stock/stock-options.constant';
 import { type MoveState } from 'src/stock/types/move-state.type';
 import { OPEN_MOVE_STATES_FOR_FORECAST } from 'src/stock/utils/plan-product-quantities.util';
+import { rollupMoves } from 'src/stock/utils/rollup-moves.util';
 import { compareAtDigits, isZeroAtDigits } from 'src/stock/utils/stock-uom.util';
 import { type ForecastExpiry } from 'src/stock/utils/types/forecast-expiry.type';
 import { type ForecastLine } from 'src/stock/utils/types/forecast-line.type';
@@ -78,27 +79,6 @@ const orderOuts = (outs: ForecastMove[], today: string) => {
   return [...due, ...later];
 };
 
-// Walks a move chain level by level; ids already in `seen` stop the walk.
-const rollup = (startIds: string[], next: (id: string) => string[], seen: Set<string>) => {
-  const order: string[] = [];
-  let level = startIds;
-
-  while (level.length > 0) {
-    const unseen = [...new Set(level)].filter((id) => !seen.has(id));
-
-    if (unseen.length === 0) {
-      break;
-    }
-    for (const id of unseen) {
-      seen.add(id);
-      order.push(id);
-    }
-    level = unseen.flatMap(next);
-  }
-
-  return order;
-};
-
 const pushTo = <TValue>(map: Map<string, TValue[]>, key: string, value: TValue) => {
   map.set(key, [...(map.get(key) ?? []), value]);
 };
@@ -138,7 +118,7 @@ export const forecastLines = (input: {
   // The chain behind a delivery stops at the receipts: what feeds them is
   // still outside the warehouse.
   const linkedMoves = new Map(
-    outs.map((out) => [out.id, movesOf(rollup([out.id], (id) => byId.get(id)?.moveOrigIds ?? [], new Set(inIds)))]),
+    outs.map((out) => [out.id, movesOf(rollupMoves([out.id], (id) => byId.get(id)?.moveOrigIds ?? [], new Set(inIds)))]),
   );
 
   const inQuantity = new Map(ins.map((move) => [move.id, move.productQty]));
@@ -147,7 +127,7 @@ export const forecastLines = (input: {
   const insByProduct = new Map<string, string[]>();
 
   for (const move of ins) {
-    const destinations = rollup([move.id], (id) => byId.get(id)?.moveDestIds ?? [], new Set());
+    const destinations = rollupMoves([move.id], (id) => byId.get(id)?.moveDestIds ?? [], new Set());
 
     inDestinations.set(move.id, destinations);
     pushTo(insByProduct, move.productId, move.id);
@@ -295,7 +275,8 @@ export const forecastLines = (input: {
     receiptLate: moveIn !== null ? moveIn.state !== MOVE_STATE.DONE && isBefore(moveIn.date, input.now) : false,
     inTransit,
     isMatched: [moveIn?.id, moveOut?.id].some((id) => id !== undefined && matched.has(id)),
-    reservation: documentOf(reservedMove),
+    // A move outside any transfer still holds the stock, with no transfer to name.
+    reservation: reservedMove === null ? null : { id: reservedMove.pickingId, name: reservedMove.pickingName ?? '' },
     removalDate,
   });
 

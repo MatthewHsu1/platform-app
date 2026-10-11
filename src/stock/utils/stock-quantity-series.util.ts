@@ -1,4 +1,4 @@
-import { addMonths } from 'src/stock/orderpoint/utils/day.util';
+import { addMonths, dayOf } from 'src/stock/orderpoint/utils/day.util';
 import { LOCATION_USAGE, MOVE_STATE } from 'src/stock/stock-options.constant';
 import { addDays } from 'src/stock/utils/stock-dates.util';
 import { type StockQuantityDay } from 'src/stock/utils/types/stock-quantity-day.type';
@@ -44,7 +44,7 @@ export const stockQuantitySeries = ({
     if (usage === undefined || !STOCK_USAGES.has(usage) || warehouseOf(quant.locationId) !== warehouseId) {
       continue;
     }
-    const removalDay = quant.removalDate ? quant.removalDate.slice(0, 10) : null;
+    const removalDay = quant.removalDate ? dayOf(quant.removalDate) : null;
 
     // Stock due for removal stops counting from today, except what is already
     // reserved for a move.
@@ -63,7 +63,7 @@ export const stockQuantitySeries = ({
     if (move.productQty === 0 && move.quantityProductUom === 0) {
       continue;
     }
-    const moveDay = move.date.slice(0, 10);
+    const moveDay = dayOf(move.date);
     const isDone = move.state === MOVE_STATE.DONE;
 
     if (isDone && moveDay < windowStart) {

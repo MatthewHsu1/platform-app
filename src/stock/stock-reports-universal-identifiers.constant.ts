@@ -30,3 +30,20 @@ export const TRACEABILITY_UNIVERSAL_IDENTIFIERS = {
   lotTab: 'd2c42eb3-bbe4-4689-9fc6-1c195364602f',
   lotTabWidget: '86437642-aee7-4108-ace9-5915a284fc5e',
 };
+
+export const FORECAST_ROUTE_PATH = '/stock/reports/forecast';
+export const FORECAST_RESERVE_ROUTE_PATH = '/stock/reports/forecast/reserve';
+
+export const FORECAST_UNIVERSAL_IDENTIFIERS = {
+  logicFunction: 'a1cf260b-7167-4699-9116-99b5145b6735',
+  reserveLogicFunction: '75a5bbdc-6189-4af9-8363-9fa3c2748633',
+  widget: 'eceb498d-1478-4496-b3b3-9d1b395a8f52',
+  productTemplateCommand: '7428cb48-571f-4b62-b825-c4c0e72f1e91',
+  productProductCommand: '6df91637-3b97-49d6-86cb-c96a51564e93',
+  moveCommand: '59a54366-6533-4419-a075-195f625a5fb5',
+  orderpointCommand: 'afa456c4-376e-4123-94a9-093d72e9ed66',
+  productTemplateTab: 'b7114455-d0f0-427b-8a58-b0399cf7b709',
+  productTemplateTabWidget: '8945b449-65b1-4d09-8d82-3d7adb0fc538',
+  orderpointTab: '0a7c0ebd-b275-44d2-94db-6490e8e66937',
+  orderpointTabWidget: 'f3e4aa63-7724-46d0-8535-c832e7e7212a',
+};
