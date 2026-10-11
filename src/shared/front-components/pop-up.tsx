@@ -66,11 +66,13 @@ export const ClosablePanel = ({
   error,
   busy,
   closeLabel,
+  onClose = closePopUp,
 }: {
   message: string | null;
   error: string | null;
   busy: boolean;
   closeLabel: string;
+  onClose?: () => void;
 }) => {
   const styles = readPopUpStyles();
 
@@ -78,7 +80,7 @@ export const ClosablePanel = ({
     <div style={styles.panel}>
       {error === null ? <div>{message ?? ''}</div> : <ErrorText error={error} />}
       <div style={styles.buttons}>
-        <Button size="sm" variant="outline" disabled={busy} onClick={closePopUp}>
+        <Button size="sm" variant="outline" disabled={busy} onClick={onClose}>
           {closeLabel}
         </Button>
       </div>

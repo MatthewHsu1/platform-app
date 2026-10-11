@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { AppPath, navigate, useLocale, useTranslate } from 'twenty-sdk/front-component';
+import { Button } from 'twenty-ui/primitives/input';
 
 import { describeRouteError } from 'src/shared/describe-route-error';
 import { DataTable } from 'src/shared/front-components/data-table';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { postAppRoute } from 'src/shared/front-components/post-app-route';
+import { PrintNow } from 'src/stock/printing/print-popup';
 import { type TraceabilityAnswer } from 'src/stock/reports/traceability/types/traceability-answer.type';
 import { type TraceabilityText } from 'src/stock/reports/traceability/types/traceability-text.type';
 import { TRACEABILITY_ROUTE_PATH } from 'src/stock/stock-reports-universal-identifiers.constant';
@@ -39,6 +41,17 @@ const formatQuantity = (row: TraceRow, digits: number, locale: string) => {
 const referenceText = (row: TraceRow, translate: (text: string) => string) =>
   row.referenceRecord?.objectNameSingular === 'stockMove' ? translate(row.reference) : row.reference;
 
+// The lines whose rows are unfolded and shown: a row under a folded one is not on screen.
+const shownOpenLineIds = (open: Record<string, boolean>) => {
+  const isShown = (key: string) => {
+    const parts = key.split('/').slice(1);
+
+    return parts.every((_, index) => open[`/${parts.slice(0, index + 1).join('/')}`] === true);
+  };
+
+  return [...new Set(Object.keys(open).filter(isShown).map((key) => key.slice(key.lastIndexOf('/') + 1)))];
+};
+
 const openRecord = (record: TraceRecordLink) =>
   void navigate(AppPath.RecordShowPage, { objectNameSingular: record.objectNameSingular, objectRecordId: record.recordId });
 
@@ -62,6 +75,7 @@ export const TraceabilityView = ({
   const styles = readPopUpStyles();
   const [children, setChildren] = useState<Record<string, TraceRow[]>>({});
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [isPrinting, setPrinting] = useState(false);
 
   const toggle = async (key: string, lineId: string) => {
     if (open[key] === true) {
@@ -108,8 +122,26 @@ export const TraceabilityView = ({
       </span>
     ));
 
+  if (isPrinting) {
+    return (
+      <PrintNow
+        report="traceability"
+        text={text.printPopUp}
+        objectSingular={model}
+        recordIds={[recordId]}
+        options={{ openLineIds: shownOpenLineIds(open) }}
+        onClose={() => setPrinting(false)}
+      />
+    );
+  }
+
   return (
     <>
+      <div style={styles.buttons}>
+        <Button size="sm" variant="outline" onClick={() => setPrinting(true)}>
+          {t(text.print)}
+        </Button>
+      </div>
       {data.deliveries === null ? null : (
         <>
           {data.deliveries.transfers.length === 0 ? null : (

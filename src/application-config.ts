@@ -8,6 +8,7 @@ import {
   APPLICATION_UNIVERSAL_IDENTIFIER,
   PRODUCT_UNIT_DIGITS_VARIABLE_UNIVERSAL_IDENTIFIER,
   ROW_ACCESS_CONFIG_VARIABLE_UNIVERSAL_IDENTIFIER,
+  SHOW_EXPECTED_QUANTITY_COUNT_VARIABLE_UNIVERSAL_IDENTIFIER,
 } from 'src/constants/universal-identifiers';
 import { EMPTY_ROW_ACCESS_CONFIG } from 'src/row-access/constants/empty-row-access-config.constant';
 import { ROW_ACCESS_CONFIG_VARIABLE_KEY } from 'src/row-access/constants/row-access-config-variable-key.constant';
@@ -51,6 +52,14 @@ export default defineApplication({
       description: 'Day of the month of the yearly physical count. A day past the end of the month means its last day.',
       type: FieldType.NUMBER,
       value: 31,
+      isSecret: false,
+    },
+    SHOW_EXPECTED_QUANTITY_COUNT: {
+      universalIdentifier: SHOW_EXPECTED_QUANTITY_COUNT_VARIABLE_UNIVERSAL_IDENTIFIER,
+      label: 'Show expected quantity on count sheets',
+      description: 'Prints the quantity on hand on inventory count sheets. Off: the column stays blank for the counted number.',
+      type: FieldType.BOOLEAN,
+      value: false,
       isSecret: false,
     },
     REPLENISHMENT_HORIZON_DAYS: {

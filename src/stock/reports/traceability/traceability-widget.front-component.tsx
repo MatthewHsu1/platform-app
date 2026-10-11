@@ -3,6 +3,7 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import { msg, useSelectedObjectMetadata, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 
 import { describeRouteError } from 'src/shared/describe-route-error';
+import { PRINT_TEXT } from 'src/stock/printing/commands/print-picking-ready.front-component';
 import { ErrorText } from 'src/shared/front-components/pop-up';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { postAppRoute } from 'src/shared/front-components/post-app-route';
@@ -33,6 +34,8 @@ export const TRACEABILITY_TEXT: TraceabilityText = {
   quantity: msg('Quantity'),
   deliveries: msg('Delivered in'),
   customers: msg('Customers'),
+  print: msg('Print'),
+  printPopUp: { ...PRINT_TEXT, open: msg('Open Traceability Report') },
 };
 
 // The report of the record on the page, or of the one record a Traceability

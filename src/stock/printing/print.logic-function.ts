@@ -44,8 +44,8 @@ const readTimeZone = (value: unknown) => {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// An option that names a record (a pricelist) is kept only when the clicking user may read it: the
-// page reads it later without the user.
+// An option that names records (a pricelist, the unfolded lines of a report) is kept only when the
+// clicking user may read every one of them: the page reads them later without the user.
 const checkOptionRecords = async (report: PrintReportKey, options: Record<string, unknown>) => {
   for (const [key, of] of Object.entries(OPTION_RECORDS[report] ?? {})) {
     const value = options[key];
@@ -53,10 +53,12 @@ const checkOptionRecords = async (report: PrintReportKey, options: Record<string
     if (value === undefined) {
       continue;
     }
+    const ids: unknown[] = Array.isArray(value) ? value : [value];
+    const isIdList = ids.every((id): id is string => typeof id === 'string' && UUID.test(id));
+
     if (
-      typeof value !== 'string' ||
-      !UUID.test(value) ||
-      (await filterReadableIds(of.objectSingular, of.objectPlural, [value])).length === 0
+      !isIdList ||
+      (await filterReadableIds(of.objectSingular, of.objectPlural, ids as string[])).length !== new Set(ids).size
     ) {
       throw new StockUserError(PRINT_MESSAGES.optionsNotValid);
     }

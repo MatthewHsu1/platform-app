@@ -9,6 +9,9 @@ import { closePopUp, ErrorText, usePopUpCall } from 'src/shared/front-components
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { postAppRoute } from 'src/shared/front-components/post-app-route';
 import { formatDay } from 'src/shared/front-components/utils/format-day.util';
+import { PRINT_TEXT } from 'src/stock/printing/commands/print-picking-ready.front-component';
+import { PrintNow } from 'src/stock/printing/print-popup';
+import { type PrintText } from 'src/stock/printing/types/print-text.type';
 import {
   RECEPTION_ALLOCATE_ROUTE_PATH,
   RECEPTION_ROUTE_PATH,
@@ -27,6 +30,9 @@ export const RECEPTION_ROUTE_TEXTS = [
   msg('No transfers selected or a delivery order selected'),
   msg('This report cannot be used for done and not done transfers at the same time'),
 ];
+
+const RECEPTION_PRINT_TEXT: PrintText = { ...PRINT_TEXT, open: msg('Open Reception Report') };
+const RECEPTION_LABELS_PRINT_TEXT: PrintText = { ...PRINT_TEXT, open: msg('Open the reception labels') };
 
 type ReceptionAnswer = {
   sources: ReceptionSource[];
@@ -57,6 +63,7 @@ export const ReceptionReport = ({ pickingIds }: { pickingIds?: string[] }) => {
   const [answer, setAnswer] = useState<ReceptionAnswer | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  const [printing, setPrinting] = useState<'report' | 'labels' | null>(null);
   const isBatch = pickingIds === undefined && objectName === 'stockPickingBatch';
   const ids = pickingIds ?? selectedIds;
   const requestKey = JSON.stringify(isBatch ? { batchId: ids[0] ?? null } : { pickingIds: ids });
@@ -116,12 +123,25 @@ export const ReceptionReport = ({ pickingIds }: { pickingIds?: string[] }) => {
       </div>
     );
   }
+  if (printing !== null) {
+    return (
+      <PrintNow
+        report={printing === 'report' ? 'receptionReport' : 'receptionReportLabels'}
+        text={printing === 'report' ? RECEPTION_PRINT_TEXT : RECEPTION_LABELS_PRINT_TEXT}
+        objectSingular={isBatch ? 'stockPickingBatch' : 'stockPicking'}
+        recordIds={isBatch ? ids.slice(0, 1) : ids}
+        options={printing === 'labels' ? { allocatedOnly: true } : {}}
+        onClose={() => setPrinting(null)}
+      />
+    );
+  }
   const busy = changing.busy;
   const canAllocate = answer?.canAllocate === true;
   const toAllocate = (answer?.sources ?? []).flatMap((source) =>
     source.lines.filter((line) => line.isQtyAssignable && !line.isAssigned && line.moveInIds.length > 0),
   );
   const product = (line: ReceptionLine) => answer?.products[line.productId];
+  const hasAllocated = (answer?.sources ?? []).some((source) => source.lines.some((line) => line.isAssigned));
 
   return (
     <div style={styles.panel}>
@@ -132,6 +152,12 @@ export const ReceptionReport = ({ pickingIds }: { pickingIds?: string[] }) => {
             {t('Allocate All')}
           </Button>
         ) : null}
+        <Button size="sm" variant="outline" disabled={busy} onClick={() => setPrinting('report')}>
+          {t('Print')}
+        </Button>
+        <Button size="sm" variant="outline" disabled={busy || !hasAllocated} onClick={() => setPrinting('labels')}>
+          {t('Print Labels')}
+        </Button>
       </div>
       <ErrorText error={loadError ?? changing.error} />
       {answer === null && loadError === null ? <div style={styles.muted}>{t('Loading…')}</div> : null}

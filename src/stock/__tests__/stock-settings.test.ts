@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { readStockSettings, todayUtc } from 'src/stock/stock-settings';
 
-const NAMES = ['PRODUCT_UNIT_DIGITS', 'ANNUAL_INVENTORY_MONTH', 'ANNUAL_INVENTORY_DAY', 'REPLENISHMENT_HORIZON_DAYS'];
+const NAMES = ['PRODUCT_UNIT_DIGITS', 'ANNUAL_INVENTORY_MONTH', 'ANNUAL_INVENTORY_DAY', 'REPLENISHMENT_HORIZON_DAYS', 'SHOW_EXPECTED_QUANTITY_COUNT'];
 
 afterEach(() => {
   for (const name of NAMES) {
@@ -24,6 +24,7 @@ describe('readStockSettings', () => {
       annualInventoryMonth: 12,
       annualInventoryDay: 31,
       replenishmentHorizonDays: 365,
+      showExpectedQuantityCount: false,
     });
   });
 
@@ -32,11 +33,13 @@ describe('readStockSettings', () => {
     process.env.ANNUAL_INVENTORY_MONTH = '0';
     process.env.ANNUAL_INVENTORY_DAY = '15';
     process.env.REPLENISHMENT_HORIZON_DAYS = '0';
+    process.env.SHOW_EXPECTED_QUANTITY_COUNT = 'true';
     expect(readStockSettings()).toEqual({
       productUnitDigits: 3,
       annualInventoryMonth: 0,
       annualInventoryDay: 15,
       replenishmentHorizonDays: 0,
+      showExpectedQuantityCount: true,
     });
   });
 });

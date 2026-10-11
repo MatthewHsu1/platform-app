@@ -26,6 +26,16 @@ describe('print options', () => {
     expect(labels({ extraContent: { text: 'x' } })).toBeNull();
   });
 
+  it('takes a list of record ids only for an option declared as one', () => {
+    const lines = printOptionsParser({ openLineIds: 'idList' });
+    const id = '0b6a8f4e-1d0b-4d7e-9c1f-3f1f8e3e2a10';
+
+    expect(lines({ openLineIds: [id] })).toEqual({ openLineIds: [id] });
+    expect(lines({ openLineIds: [] })).toEqual({ openLineIds: [] });
+    expect(lines({ openLineIds: ['line-1'] })).toBeNull();
+    expect(lines({ openLineIds: id })).toBeNull();
+  });
+
   it('takes no options for a printable that declares none', () => {
     expect(NO_PRINT_OPTIONS({})).toEqual({});
     expect(NO_PRINT_OPTIONS({ rows: [] })).toBeNull();

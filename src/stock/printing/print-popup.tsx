@@ -12,19 +12,22 @@ import { type PrintText } from 'src/stock/printing/types/print-text.type';
 import { PRINT_ROUTE_PATH } from 'src/stock/stock-printing-universal-identifiers.constant';
 
 // Asks for a print link at once and shows it: a front component cannot open a
-// window by itself, the user clicks the link.
+// window by itself, the user clicks the link. Close closes the pop-up, or goes
+// back to the report the print was started from.
 export const PrintNow = ({
   report,
   text,
   options = {},
   recordIds,
   objectSingular,
+  onClose = closePopUp,
 }: {
   report: PrintReportKey;
   text: PrintText;
   options?: Record<string, unknown>;
   recordIds?: string[];
   objectSingular?: string;
+  onClose?: () => void;
 }) => {
   const { t } = useTranslate();
   const styles = readPopUpStyles();
@@ -52,17 +55,19 @@ export const PrintNow = ({
 
   // "Select all" hands the pop-up no ids.
   if (ids.length === 0) {
-    return <ClosablePanel message={null} error={t(text.selectAll)} busy={false} closeLabel={t(text.close)} />;
+    return <ClosablePanel message={null} error={t(text.selectAll)} busy={false} closeLabel={t(text.close)} onClose={onClose} />;
   }
   if (links === null) {
-    return <ClosablePanel message={error === null ? t(text.printing) : null} error={error} busy={busy} closeLabel={t(text.close)} />;
+    return (
+      <ClosablePanel message={error === null ? t(text.printing) : null} error={error} busy={busy} closeLabel={t(text.close)} onClose={onClose} />
+    );
   }
 
   return (
     <div style={styles.panel}>
       <LinkList title={t(text.ready)} links={links.map((link) => ({ name: t(text.open), url: printViewUrl(link.pass) }))} />
       <div style={styles.buttons}>
-        <Button size="sm" variant="outline" onClick={closePopUp}>
+        <Button size="sm" variant="outline" onClick={onClose}>
           {t(text.close)}
         </Button>
       </div>

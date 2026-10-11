@@ -42,3 +42,26 @@ export const LABEL_UNIVERSAL_IDENTIFIERS = {
   productProductCommand: '4746ae87-4a1a-4784-be28-f7059cfb4650',
   lotPdfCommand: '0889f897-79c9-40be-9d92-4b97863fe83e',
 } as const;
+
+export const MORE_PRINT_UNIVERSAL_IDENTIFIERS = {
+  countSheetFrontComponent: 'db9c04d2-0eb7-4657-be7e-2ebf7011064b',
+  countSheetCommand: '8e4794b9-f090-4301-8f2a-6bc5292f2e4f',
+  locationBarcodeFrontComponent: '16a95e91-4f9f-4b98-9a27-935d7e45bca3',
+  locationBarcodeCommand: '500b09e3-141e-4291-a6e0-d3d585b496c5',
+  pickingTypePdfFrontComponent: '9f73fea5-7a90-4392-9822-e6647a923ce7',
+  pickingTypePdfCommand: '8e197cca-75db-4271-9e85-fd8501d81f3e',
+  packageContentsFrontComponent: 'd2bf4e97-bdfb-49f3-a75d-d1092fa6cd72',
+  packageContentsCommand: '4d0cfd2f-fc0d-4021-a398-f6edae6cc0bc',
+  packageSmallFrontComponent: '25d608e7-26be-4e09-a0bc-d5d7e09ce38e',
+  packageSmallCommand: '718a35fa-cf56-4502-9ea0-c7f328bf2e9a',
+  packageHistoryContentsFrontComponent: 'a3707193-d1c1-427b-85e8-39c61fb8e620',
+  packageHistoryContentsCommand: 'bbbe19b2-df19-4688-ad90-9dc33b094504',
+  packageHistorySmallFrontComponent: 'dc83e5bc-3c46-46aa-ab66-ef4b7938db49',
+  packageHistorySmallCommand: '672313fb-2f03-4639-9c32-60953e1539cc',
+  pickingPackagesFrontComponent: '42e9d64e-07a6-4a0b-a39c-613c383d5191',
+  pickingPackagesCommand: 'f33dcebd-20d3-4bee-8ea9-418ef954d258',
+  receptionReportFrontComponent: '9f15a2c9-0f89-4432-b26f-63f38e413e4d',
+  receptionReportCommand: '6aab0d0b-2ac4-43a5-ab32-b30de88c545e',
+  batchTransferFrontComponent: 'c88c690e-c799-4e65-883f-5f2df49038bc',
+  batchTransferCommand: '6f77d304-31ff-4844-b1d1-7ec002d6d931',
+} as const;

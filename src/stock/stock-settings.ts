@@ -3,6 +3,7 @@ type StockSettings = {
   annualInventoryMonth: number;
   annualInventoryDay: number;
   replenishmentHorizonDays: number;
+  showExpectedQuantityCount: boolean;
 };
 
 const readNumber = (name: string, fallback: number) => {
@@ -16,6 +17,7 @@ export const readStockSettings = (): StockSettings => ({
   annualInventoryMonth: readNumber('ANNUAL_INVENTORY_MONTH', 12),
   annualInventoryDay: readNumber('ANNUAL_INVENTORY_DAY', 31),
   replenishmentHorizonDays: readNumber('REPLENISHMENT_HORIZON_DAYS', 365),
+  showExpectedQuantityCount: process.env.SHOW_EXPECTED_QUANTITY_COUNT === 'true',
 });
 
 export const todayUtc = (now: Date = new Date()) => now.toISOString().slice(0, 10);

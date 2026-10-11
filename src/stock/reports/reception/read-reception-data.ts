@@ -1,4 +1,5 @@
-import { pruneEmptyLists } from 'src/shared/triggers/records';
+import { type GraphqlCaller } from 'src/shared/twenty-graphql';
+import { pruneEmptyLists, records } from 'src/shared/triggers/records';
 import { readInChunks } from 'src/shared/utils/read-in-chunks.util';
 import { readStockProducts } from 'src/stock/product/read-stock-products';
 import { type AllocationInputs } from 'src/stock/reports/reception/types/allocation-inputs.type';
@@ -82,19 +83,31 @@ const distinct = (ids: string[]) => [...new Set(ids)];
 
 const compareText = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
 
-// Rows the clicking user can read. Twenty refuses an empty `in` list: such a
-// filter matches nothing.
-const findAsUser = async <TRow>(objectPlural: string, filterType: string, filter: Record<string, unknown>, selection: string) => {
-  const sendable = pruneEmptyLists(filter);
+type Find = <TRow>(objectPlural: string, filterType: string, filter: Record<string, unknown>, selection: string) => Promise<TRow[]>;
 
-  return sendable === null ? [] : findAsPerson<TRow>(objectPlural, filterType, sendable, selection);
-};
+// Rows the clicking user can read, or, for a print page that has no user, rows read as the app.
+// Twenty refuses an empty `in` list: such a filter matches nothing.
+const finder =
+  (caller: GraphqlCaller): Find =>
+  async <TRow>(objectPlural: string, filterType: string, filter: Record<string, unknown>, selection: string) => {
+    const sendable = pruneEmptyLists(filter);
 
-const readPickingsAsUser = (filter: (ids: string[]) => Record<string, unknown>, ids: string[]) =>
-  readInChunks(distinct(ids), (part) => findAsUser<PickingNode>('stockPickings', 'StockPickingFilterInput', filter(part), PICKING_SELECTION));
+    if (sendable === null) {
+      return [];
+    }
+    if (caller === 'person') {
+      return findAsPerson<TRow>(objectPlural, filterType, sendable, selection);
+    }
+    const objectSingular = `${filterType.charAt(0).toLowerCase()}${filterType.slice(1).replace(/FilterInput$/, '')}`;
 
-const readMovesAsUser = (filter: (ids: string[]) => Record<string, unknown>, ids: string[]) =>
-  readInChunks(distinct(ids), (part) => findAsUser<MoveNode>('stockMoves', 'StockMoveFilterInput', filter(part), MOVE_SELECTION));
+    return records(objectSingular, objectPlural).find<TRow>(sendable, selection);
+  };
+
+const readPickings = (find: Find, filter: (ids: string[]) => Record<string, unknown>, ids: string[]) =>
+  readInChunks(distinct(ids), (part) => find<PickingNode>('stockPickings', 'StockPickingFilterInput', filter(part), PICKING_SELECTION));
+
+const readMoves = (find: Find, filter: (ids: string[]) => Record<string, unknown>, ids: string[]) =>
+  readInChunks(distinct(ids), (part) => find<MoveNode>('stockMoves', 'StockMoveFilterInput', filter(part), MOVE_SELECTION));
 
 // Both directions of every link touching these moves.
 const readLinks = async (moveIds: string[]) => {
@@ -168,13 +181,18 @@ const productLabel = (product: { displayName: string; defaultCode: string | null
   product.defaultCode === null ? product.displayName : `[${product.defaultCode}] ${product.displayName}`;
 
 // The reception report's data for the selected transfers or a batch, read as
-// the clicking user. Transfers and moves come in the order the report walks
-// them, as their lists order them.
-export const readReceptionData = async ({ pickingIds, batchId }: { pickingIds: string[]; batchId: string | null }): Promise<ReceptionData> => {
+// the clicking user (as the app for a print page, which has no user).
+// Transfers and moves come in the order the report walks them, as their lists
+// order them.
+export const readReceptionData = async (
+  { pickingIds, batchId }: { pickingIds: string[]; batchId: string | null },
+  caller: GraphqlCaller = 'person',
+): Promise<ReceptionData> => {
+  const find = finder(caller);
   const docRows = (
     batchId === null
-      ? await readPickingsAsUser((part) => ({ id: { in: part } }), pickingIds)
-      : await findAsUser<PickingNode>('stockPickings', 'StockPickingFilterInput', { batchId: { eq: batchId } }, PICKING_SELECTION)
+      ? await readPickings(find, (part) => ({ id: { in: part } }), pickingIds)
+      : await find<PickingNode>('stockPickings', 'StockPickingFilterInput', { batchId: { eq: batchId } }, PICKING_SELECTION)
   ).sort(byTransferOrder);
   const codeOf = await readTypeCodes(docRows);
   const docs = docRows.flatMap((doc) => {
@@ -185,22 +203,25 @@ export const readReceptionData = async ({ pickingIds, batchId }: { pickingIds: s
   const firstUsable = docRows.find((doc) => codeOf(doc) !== PICKING_TYPE_CODE.OUTGOING && doc.state !== PICKING_STATE.CANCEL);
   const warehouseLocationIds = await readWarehouseLocationIds(firstUsable?.pickingTypeId ?? null);
   const docRank = new Map(docRows.map((doc, index) => [doc.id, index]));
-  const docMoves = (await readMovesAsUser((part) => ({ pickingId: { in: part } }), docRows.map((doc) => doc.id))).sort(
+  const docMoves = (await readMoves(find, (part) => ({ pickingId: { in: part } }), docRows.map((doc) => doc.id))).sort(
     (left, right) => (docRank.get(left.pickingId ?? '') ?? 0) - (docRank.get(right.pickingId ?? '') ?? 0) || byMoveOrder(left, right),
   );
-  const candidates = await readMovesAsUser(
+  const candidates = await readMoves(
+    find,
     (part) => ({ productId: { in: part }, state: { in: CANDIDATE_STATES }, productQty: { gt: 0 } }),
     docMoves.map((move) => move.productId),
   );
   const links = await readLinks([...docMoves, ...candidates].map((move) => move.id));
   const known = new Set([...docMoves, ...candidates].map((move) => move.id));
   const docMoveIds = new Set(docMoves.map((move) => move.id));
-  const destMoves = await readMovesAsUser(
+  const destMoves = await readMoves(
+    find,
     (part) => ({ id: { in: part } }),
     links.filter((link) => docMoveIds.has(link.moveOrigId) && !known.has(link.moveDestId)).map((link) => link.moveDestId),
   );
   const all = [...new Map([...docMoves, ...candidates, ...destMoves].map((move) => [move.id, move])).values()];
-  const otherPickings = await readPickingsAsUser(
+  const otherPickings = await readPickings(
+    find,
     (part) => ({ id: { in: part } }),
     all.flatMap((move) => (move.pickingId === null || docRank.has(move.pickingId) ? [] : [move.pickingId])),
   );
