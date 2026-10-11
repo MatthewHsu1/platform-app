@@ -189,6 +189,12 @@ export const MOVES_ANALYSIS_UNIVERSAL_IDENTIFIERS = {
   widgetByType: '655ff412-50f5-4a3a-8667-1a783a83559c',
   widgetByDestination: '2ca50abe-40fb-4f7c-baf5-740e280b0577',
   widgetByMonth: '039b520e-63d4-4f2c-a415-c64dd3434983',
+  widgetCountByMonth: '6aa40ca7-b997-4509-945f-edec6a9d4a38',
   widgetTable: '7c3db352-1328-464a-84f7-1a1dd4e40d47',
   navigationItem: 'f420412c-9e9f-4308-a42c-eada0985e01a',
+} as const;
+
+// Fields the reporting pages group by.
+export const STOCK_PICKING_TYPE_PAGES_FIELD_UNIVERSAL_IDENTIFIERS = {
+  completeName: 'cdf2ace4-3e76-4922-93cb-162831968c5f',
 } as const;

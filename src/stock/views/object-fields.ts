@@ -75,6 +75,7 @@ import {
   STOCK_WAREHOUSE_ORDERPOINT_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS,
   STOCK_WAREHOUSE_ORDERPOINT_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/stock/stock-universal-identifiers.constant';
+import { STOCK_PICKING_TYPE_PAGES_FIELD_UNIVERSAL_IDENTIFIERS } from 'src/stock/stock-pages-universal-identifiers.constant';
 import { allFields } from 'src/stock/views/list-columns';
 
 // Every field of each object an Inventory list or related table shows, so the
@@ -195,6 +196,7 @@ export const STOCK_LOCATION_ALL_FIELDS = allFields(STOCK_LOCATION_OBJECT_UNIVERS
 
 export const STOCK_PICKING_TYPE_ALL_FIELDS = allFields(STOCK_PICKING_TYPE_OBJECT_UNIVERSAL_IDENTIFIER, [
   ...Object.values(STOCK_PICKING_TYPE_FIELD_UNIVERSAL_IDENTIFIERS),
+  STOCK_PICKING_TYPE_PAGES_FIELD_UNIVERSAL_IDENTIFIERS.completeName,
   STOCK_PICKING_BATCH_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS.autoBatch,
   STOCK_PICKING_BATCH_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS.batchAutoConfirm,
   STOCK_PICKING_BATCH_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS.batchGroupByDestination,
