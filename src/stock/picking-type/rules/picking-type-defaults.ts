@@ -1,22 +1,17 @@
 import { type ObjectRecordEvent } from 'twenty-sdk/define';
 
 import { type PickingTypeEventRecord } from 'src/stock/picking-type/types/picking-type-event-record.type';
-import { updateWhere } from 'src/shared/compare-and-set';
 import { type RecordOperation } from 'src/shared/triggers/batch-events';
-import { includingDeleted, MUTATION_MAXIMUM_RECORDS } from 'src/shared/triggers/records';
 import { type ErrorCollector } from 'src/shared/triggers/retry-on-conflict';
-import { chunks } from 'src/shared/utils/chunks.util';
 import { findSeedLocationId } from 'src/stock/location/read-locations';
+import { followTypeCode } from 'src/stock/picking-type/rules/follow-type-code';
 import { eventAfter, eventBefore, eventChangedFields, isStaffEvent, localizedReason } from 'src/stock/stock-event-helpers';
 import { STOCK_SEED_KEYS } from 'src/stock/stock-options.constant';
 import { putBackForEvent } from 'src/stock/stock-put-back';
-import { irSequences, stockPickings, stockPickingTypes, stockWarehouses } from 'src/stock/stock-records';
+import { irSequences, stockPickingTypes, stockWarehouses } from 'src/stock/stock-records';
 import { PICKING_TYPE_ROW, WAREHOUSE_ROW } from 'src/stock/stock-rows';
-import { planPickingTypeCodes } from 'src/stock/utils/plan-picking-type-codes.util';
 import { planPickingTypeDefaults } from 'src/stock/utils/plan-picking-type-rules.util';
 import { readWorkspaceDisplayName } from 'src/stock/warehouse/workspace-name';
-import { type PickingTypeCode } from 'src/stock/types/picking-type-code.type';
-import { type PickingTypeCodeRow } from 'src/stock/types/picking-type-code-row.type';
 import { type PickingTypeRow } from 'src/stock/types/picking-type-row.type';
 import { type WarehouseRow } from 'src/stock/types/warehouse-row.type';
 
@@ -89,25 +84,6 @@ export const handlePickingTypeCreated = async (
         data.referenceSequenceId = sequenceId;
       }
       await stockPickingTypes.update(type.id, data);
-    });
-  }
-};
-
-// Every transfer of the type shows its type of operation, done, cancelled and
-// trashed ones too. A by-id update does not reach a trashed row, so the filter names deletedAt.
-const followTypeCode = async (type: { id: string; code: PickingTypeCode }) => {
-  const pickings = await stockPickings.findIncludingDeleted<PickingTypeCodeRow>(
-    { pickingTypeId: { eq: type.id } },
-    'id pickingTypeId pickingTypeCode',
-  );
-  const ids = planPickingTypeCodes({ pickings, codeByTypeId: new Map([[type.id, type.code]]) }).map((row) => row.id);
-
-  for (const part of chunks(ids, MUTATION_MAXIMUM_RECORDS)) {
-    await updateWhere({
-      objectSingular: 'stockPicking',
-      objectPlural: 'stockPickings',
-      filter: includingDeleted({ id: { in: part } }),
-      data: { pickingTypeCode: type.code },
     });
   }
 };

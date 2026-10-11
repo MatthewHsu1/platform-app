@@ -105,6 +105,19 @@ describe('planPickingCreate', () => {
     ).toEqual({ name: '/', locationDestId: 'customers' });
   });
 
+  it("replaces a code that is not the type's", () => {
+    expect(
+      planPickingCreate({
+        picking: { ...empty, name: 'Typed', pickingTypeCode: 'OUTGOING' },
+        typeMoveType: 'DIRECT',
+        typeCode: 'INCOMING',
+        nextName: null,
+        locations: null,
+        actingMemberId: undefined,
+      }),
+    ).toEqual({ pickingTypeCode: 'INCOMING' });
+  });
+
   it('writes nothing for a named transfer without defaults or creator', () => {
     expect(
       planPickingCreate({
