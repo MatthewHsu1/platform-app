@@ -36,12 +36,12 @@ type RelocateLotEditsStore = {
 // Stock rows one run moves at most. A run of 25 rows took 20–23 s live.
 export const LOT_RUN_QUANTS = 25;
 // The trigger stops at 120 s. A run after the first starts only when the time spent, the slowest run so far and the
-// put-back of every stocked lot after it still fit in 90 s, counting 0.4 s a lot: the slowest put-back measured one
-// lot at a time (it is written in bulk, so it is usually much shorter). So a save stops by about 90 s unless a run
-// is slower than the ones before it. The first run always starts, so a save of 200 lots can also end at that run plus
-// the put-back of up to 199 lots: 23 s + 199 × 0.4 s, about 103 s at worst, and 93 s when each lot has one stock row.
+// put-back of every stocked lot after it still fit in 90 s. The put-back is one bulk write plus a note a lot: live,
+// 175 lots took 1.1 s in all (about 6 ms a lot), so 20 ms a lot leaves room for a slower database. A save therefore
+// stops by about 90 s unless a run is slower than the ones before it; with 20–23 s runs a save of 200 lots moves 75 to
+// 100 of them.
 export const LOT_SAVE_LIMIT_MS = 90_000;
-export const LOT_PUT_BACK_MS = 400;
+export const LOT_PUT_BACK_MS = 20;
 export const TOO_MANY_LOTS_MESSAGE = 'Too many lots in one save; set the location again for this lot.';
 
 const OBJECT = { objectSingular: 'stockLot', objectPlural: 'stockLots' } as const;

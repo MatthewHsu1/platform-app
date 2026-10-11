@@ -67,10 +67,10 @@ const setup = ({
   return { calls, relocateEdits };
 };
 
-// The stockLot trigger stops after 120 s. Live, a run of 25 stock rows took 20–23 s and each lot not moved cost up
-// to 0.4 s to put back with its note.
+// The stockLot trigger stops after 120 s. Live, a run of 25 stock rows took 20–23 s, and putting back 175 lots not
+// moved, with their notes, took 1.1 s in all.
 const TRIGGER_LIMIT_MS = 120_000;
-const LIVE_PUT_BACK_MS_PER_LOT = 400;
+const LIVE_PUT_BACK_MS_PER_LOT = 1_100 / 175;
 // A later run starts only while the save can still end by 90 s, so 30 s are left for a run slower than the others.
 const LATER_RUN_END_MS = 90_000;
 
@@ -211,4 +211,13 @@ describe('relocateLotEdits', () => {
       });
     },
   );
+
+  it('a save of 200 lots with one stock row each and 21 s runs moves four runs of lots, the last ending by 90 s', async () => {
+    const lotIds = Array.from({ length: 200 }, (_, index) => `lot${index}`);
+    const save = timedSave(21_000, 1);
+
+    await save.relocateEdits(lotIds.map((lotId) => moved(lotId, 'A', 'shelf')));
+
+    expect({ moved: save.moved.size, endsInTime: save.end() < TRIGGER_LIMIT_MS }).toEqual({ moved: 4 * LOT_RUN_QUANTS, endsInTime: true });
+  });
 });

@@ -10,6 +10,7 @@ import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { type LinkItem } from 'src/shared/front-components/types/link-item.type';
 import { SIGNATURE_PAD } from 'src/stock/picking/sign/signature-pad.constant';
 import { SIGN_ROUTE_PATH, SIGNATURE_UNIVERSAL_IDENTIFIERS } from 'src/stock/stock-printing-universal-identifiers.constant';
+import { padPoint } from 'src/stock/utils/signature-pad-point.util';
 import { type SignaturePoint } from 'src/stock/utils/types/signature-point.type';
 
 const SIGN_TEXT = {
@@ -40,7 +41,6 @@ export const SIGN_ROUTE_TEXTS = [
 ];
 
 const pathOf = (points: SignaturePoint[]) => points.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`).join(' ');
-const tenths = (value: number) => Math.round(value * 10) / 10;
 
 // Drawn as SVG paths: a canvas draws nothing inside a front component.
 const SignPad = () => {
@@ -72,10 +72,12 @@ const SignPad = () => {
     );
   }
 
-  const point = (event: PointerEvent): SignaturePoint => {
-    const box = (padRef.current as unknown as Element).getBoundingClientRect();
-
-    return [tenths(event.clientX - box.left), tenths(event.clientY - box.top)];
+  const point = (event: PointerEvent) =>
+    padPoint(event.clientX, event.clientY, (padRef.current as unknown as Element).getBoundingClientRect());
+  // Asking for the pad's box as soon as it is shown gets it measured before the first stroke.
+  const measurePad = (node: SVGSVGElement | null) => {
+    padRef.current = node;
+    node?.getBoundingClientRect();
   };
   // Moves outside the pad never arrive, and neither does a release there, so leaving the pad ends
   // the stroke as a release does.
@@ -114,7 +116,7 @@ const SignPad = () => {
     <div style={styles.panel}>
       <div style={styles.title}>{t(SIGN_TEXT.title)}</div>
       <svg
-        ref={padRef}
+        ref={measurePad}
         width={SIGNATURE_PAD.width}
         height={SIGNATURE_PAD.height}
         style={{
@@ -125,13 +127,15 @@ const SignPad = () => {
           cursor: 'crosshair',
         }}
         onPointerDown={(event) => {
+          const first = point(event);
+
           isDrawing.current = true;
-          setStrokes((current) => [...current, [point(event)]]);
+          setStrokes((current) => [...current, first === null ? [] : [first]]);
         }}
         onPointerMove={(event) => {
-          if (isDrawing.current) {
-            const next = point(event);
+          const next = point(event);
 
+          if (isDrawing.current && next !== null) {
             setStrokes((current) => current.map((stroke, index) => (index === current.length - 1 ? [...stroke, next] : stroke)));
           }
         }}
