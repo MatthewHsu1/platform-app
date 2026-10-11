@@ -26,7 +26,15 @@ export default defineView({
   type: ViewType.TABLE,
   icon: 'IconRefresh',
   position: 1,
-  fields: orderpointViewFields(PART_IDS),
+  fields: orderpointViewFields(ORDERPOINT_VIEW_UNIVERSAL_IDENTIFIERS.replenishment, PART_IDS, [
+    'product',
+    'location',
+    'qtyOnHand',
+    'qtyForecast',
+    'productMinQty',
+    'productMaxQty',
+    'qtyToOrder',
+  ]),
   filterGroups: [
     { universalIdentifier: PART_IDS.allGroup, logicalOperator: ViewFilterGroupLogicalOperator.AND },
     {

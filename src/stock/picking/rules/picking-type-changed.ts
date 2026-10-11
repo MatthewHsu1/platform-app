@@ -9,6 +9,7 @@ import { eventAfter, eventBefore, eventChangedFields, isStaffEvent } from 'src/s
 import { putBackForEvent } from 'src/stock/stock-put-back';
 import { stockMoves, stockPickings } from 'src/stock/stock-records';
 import { PICKING_TYPE_CHANGE_MESSAGE, planTypeChange } from 'src/stock/utils/plan-picking-rules.util';
+import { planPickingTypeCodes } from 'src/stock/utils/plan-picking-type-codes.util';
 import { type PickingEventRecord } from 'src/stock/picking/types/picking-event-record.type';
 
 const OBJECT = { objectSingular: 'stockPicking', objectPlural: 'stockPickings' } as const;
@@ -36,9 +37,17 @@ export const handlePickingTypeChanged = async (
     }
     await errors.run(event.recordId, async () => {
       const picking = await readPicking(event.recordId);
+
+      if (picking === undefined || picking.pickingTypeId !== after.pickingTypeId) {
+        return;
+      }
       const newType = await readPickingType(after.pickingTypeId);
 
-      if (picking === undefined || newType === undefined || picking.pickingTypeId !== after.pickingTypeId) {
+      if (newType === undefined) {
+        // A transfer left without an operation type shows no type of operation.
+        for (const { pickingTypeCode } of planPickingTypeCodes({ pickings: [picking], codeByTypeId: new Map() })) {
+          await stockPickings.update(picking.id, { pickingTypeCode });
+        }
         return;
       }
       const moves = await stockMoves.find<{ id: string; pickingTypeId: string | null }>(

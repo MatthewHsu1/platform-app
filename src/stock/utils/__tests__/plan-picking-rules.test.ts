@@ -63,13 +63,21 @@ describe('planPickingLocations', () => {
 });
 
 describe('planPickingCreate', () => {
-  const empty = { name: null, locationId: null, locationDestId: null, moveType: 'DIRECT' as const, responsibleUserId: null };
+  const empty = {
+    name: null,
+    locationId: null,
+    locationDestId: null,
+    moveType: 'DIRECT' as const,
+    responsibleUserId: null,
+    pickingTypeCode: null,
+  };
 
   it('gives the next number, the default locations, the type policy and the creator', () => {
     expect(
       planPickingCreate({
         picking: empty,
         typeMoveType: 'ONE',
+        typeCode: 'OUTGOING',
         nextName: 'WH/OUT/00001',
         locations: { locationId: 'stock', locationDestId: 'customers' },
         actingMemberId: 'member-1',
@@ -80,14 +88,16 @@ describe('planPickingCreate', () => {
       locationDestId: 'customers',
       moveType: 'ONE',
       responsibleUserId: 'member-1',
+      pickingTypeCode: 'OUTGOING',
     });
   });
 
   it('keeps what the user typed and names a transfer of a type without sequence "/"', () => {
     expect(
       planPickingCreate({
-        picking: { ...empty, locationId: 'shelf', responsibleUserId: 'member-2' },
+        picking: { ...empty, locationId: 'shelf', responsibleUserId: 'member-2', pickingTypeCode: 'OUTGOING' },
         typeMoveType: 'DIRECT',
+        typeCode: 'OUTGOING',
         nextName: null,
         locations: { locationId: 'stock', locationDestId: 'customers' },
         actingMemberId: 'member-1',
@@ -95,11 +105,25 @@ describe('planPickingCreate', () => {
     ).toEqual({ name: '/', locationDestId: 'customers' });
   });
 
+  it("replaces a code that is not the type's", () => {
+    expect(
+      planPickingCreate({
+        picking: { ...empty, name: 'Typed', pickingTypeCode: 'OUTGOING' },
+        typeMoveType: 'DIRECT',
+        typeCode: 'INCOMING',
+        nextName: null,
+        locations: null,
+        actingMemberId: undefined,
+      }),
+    ).toEqual({ pickingTypeCode: 'INCOMING' });
+  });
+
   it('writes nothing for a named transfer without defaults or creator', () => {
     expect(
       planPickingCreate({
-        picking: { ...empty, name: 'Typed' },
+        picking: { ...empty, name: 'Typed', pickingTypeCode: 'INTERNAL' },
         typeMoveType: 'DIRECT',
+        typeCode: 'INTERNAL',
         nextName: null,
         locations: null,
         actingMemberId: undefined,
@@ -109,14 +133,20 @@ describe('planPickingCreate', () => {
 });
 
 describe('planTypeChange', () => {
-  const internal = { id: 'int', defaultLocationSrcId: 'stock', defaultLocationDestId: 'stock', moveType: 'DIRECT' as const };
+  const internal = {
+    id: 'int',
+    code: 'INTERNAL' as const,
+    defaultLocationSrcId: 'stock',
+    defaultLocationDestId: 'stock',
+    moveType: 'DIRECT' as const,
+  };
 
   it('refuses on a done or cancelled transfer', () => {
     expect(planTypeChange({ state: 'DONE', newType: internal, nextName: 'WH/INT/00001', moveIds: [] })).toEqual({ kind: 'refuse' });
     expect(planTypeChange({ state: 'CANCEL', newType: internal, nextName: 'WH/INT/00001', moveIds: [] })).toEqual({ kind: 'refuse' });
   });
 
-  it('renames, forces the new defaults and policy, and moves every move to the new type', () => {
+  it('renames, forces the new defaults, policy and type of operation, and moves every move to the new type', () => {
     expect(
       planTypeChange({
         state: 'CONFIRMED',
@@ -129,7 +159,13 @@ describe('planTypeChange', () => {
       }),
     ).toEqual({
       kind: 'apply',
-      picking: { name: 'WH/INT/00001', locationId: 'stock', locationDestId: 'stock', moveType: 'DIRECT' },
+      picking: {
+        name: 'WH/INT/00001',
+        locationId: 'stock',
+        locationDestId: 'stock',
+        moveType: 'DIRECT',
+        pickingTypeCode: 'INTERNAL',
+      },
       moves: [{ id: 'm1', pickingTypeId: 'int' }],
     });
   });

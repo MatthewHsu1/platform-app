@@ -17,7 +17,16 @@ export default defineView({
   type: ViewType.TABLE,
   icon: 'IconRepeat',
   position: 2,
-  fields: orderpointViewFields(PART_IDS),
+  fields: orderpointViewFields(ORDERPOINT_VIEW_UNIVERSAL_IDENTIFIERS.reorderingRules, PART_IDS, [
+    'product',
+    'location',
+    'qtyOnHand',
+    'qtyForecast',
+    'trigger',
+    'productMinQty',
+    'productMaxQty',
+    'qtyToOrder',
+  ]),
   filters: [
     {
       universalIdentifier: PART_IDS.filterTrigger,
