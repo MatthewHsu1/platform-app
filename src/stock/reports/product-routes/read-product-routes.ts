@@ -1,7 +1,6 @@
 import { readInChunks } from 'src/shared/utils/read-in-chunks.util';
 import { readText } from 'src/shared/utils/read-text.util';
 import { textOrNull } from 'src/shared/utils/text-or-null.util';
-import { productLabel } from 'src/stock/product/product-label';
 import { PRODUCT_ROUTES_MESSAGES } from 'src/stock/reports/product-routes/product-routes-messages.constant';
 import { type ProductRoutesAnswer } from 'src/stock/reports/product-routes/types/product-routes-answer.type';
 import { readIds } from 'src/stock/stock-route';
@@ -280,7 +279,7 @@ export const readProductRoutes = async (body: Record<string, unknown>): Promise<
     );
 
   return {
-    variants: variants.map((candidate) => ({ id: candidate.id, name: productLabel({ displayName: candidate.name, defaultCode: candidate.defaultCode }) })),
+    variants: variants.map((candidate) => ({ id: candidate.id, name: candidate.name })),
     variantId: variant?.id ?? null,
     warehouses: warehouses.map((warehouse) => ({ id: warehouse.id, name: warehouse.name ?? '' })),
     chosenWarehouseIds: chosenIds,

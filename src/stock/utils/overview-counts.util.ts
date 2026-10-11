@@ -76,3 +76,37 @@ export const overviewWarehouses = (types: OverviewTypeRow[], groups: OverviewCou
 
   return [...warehouses.values()];
 };
+
+const typeChip = (typeId: string) => ({ pickingType: { IS: { selectedRecordIds: [typeId] } } });
+
+// The query of the transfer list a card opens: every transfer of the type
+// (`count` null), or the transfers of one count. Twenty replaces a saved view's
+// filters with the ones in the URL, so every condition of the count is in the
+// URL; the view only gives the list its name, columns and sort.
+export const overviewListQuery = (count: OverviewCount | null, typeId: string, viewId: string | undefined) => {
+  const view = viewId === undefined ? {} : { viewId };
+
+  if (count === null) {
+    return { ...view, filter: typeChip(typeId) };
+  }
+  const filter = { state: { IS: OVERVIEW_COUNT_STATES[count] }, ...typeChip(typeId) };
+
+  if (count === 'backorders') {
+    return { ...view, filter: { ...filter, backorder: { IS_NOT_EMPTY: '' } } };
+  }
+  if (count === 'late') {
+    return {
+      ...view,
+      filter,
+      filterGroup: {
+        operator: 'OR',
+        filters: [
+          { field: 'hasDeadlineIssue', op: 'IS', value: 'true' },
+          { field: 'dateDeadline', op: 'IS_IN_PAST', value: '' },
+          { field: 'scheduledDate', op: 'IS_IN_PAST', value: '' },
+        ],
+      },
+    };
+  }
+  return { ...view, filter };
+};

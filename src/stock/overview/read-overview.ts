@@ -2,8 +2,12 @@ import { requireData, twentyGraphql, twentyMetadata } from 'src/shared/twenty-gr
 import { chunks } from 'src/shared/utils/chunks.util';
 import { type OverviewAnswer } from 'src/stock/overview/types/overview-answer.type';
 import { findAsPerson } from 'src/stock/stock-person-writes';
-import { OVERVIEW_COUNT_VIEW_UNIVERSAL_IDENTIFIERS } from 'src/stock/stock-reports-universal-identifiers.constant';
+import {
+  OVERVIEW_COUNT_VIEW_UNIVERSAL_IDENTIFIERS,
+  OVERVIEW_TYPE_VIEW_UNIVERSAL_IDENTIFIERS,
+} from 'src/stock/stock-reports-universal-identifiers.constant';
 import { todayUtc } from 'src/stock/stock-settings';
+import { type PickingTypeCode } from 'src/stock/types/picking-type-code.type';
 import { OVERVIEW_COUNTS, overviewCountFilter, overviewWarehouses } from 'src/stock/utils/overview-counts.util';
 import { type OverviewCount } from 'src/stock/utils/types/overview-count.type';
 import { type OverviewCountGroup } from 'src/stock/utils/types/overview-count-group.type';
@@ -13,7 +17,7 @@ type TypeRead = {
   id: string;
   name: string;
   sequence: number | null;
-  code: string;
+  code: PickingTypeCode;
   warehouse: { id: string; name: string; deletedAt: string | null } | null;
 };
 
@@ -58,26 +62,40 @@ const countGroups = async (count: OverviewCount, typeIds: string[], today: strin
   }));
 };
 
-// View ids differ per workspace; the app's own views are found by their
-// universal ids with the app's token.
-const readCountViewIds = async () => {
-  const data = requireData(
-    await twentyMetadata<{ getViews: { id: string; universalIdentifier: string | null }[] }>(
-      'application',
-      'query { getViews { id universalIdentifier } }',
-    ),
-    'Read views',
-  );
-  const viewIds: Partial<Record<OverviewCount, string>> = {};
+const pickViewIds = <TKey extends string>(views: Map<string, string>, universalIdentifiers: Record<TKey, string>) => {
+  const viewIds: Partial<Record<TKey, string>> = {};
 
-  for (const [count, universalIdentifier] of Object.entries(OVERVIEW_COUNT_VIEW_UNIVERSAL_IDENTIFIERS)) {
-    const view = data.getViews.find((candidate) => candidate.universalIdentifier === universalIdentifier);
+  for (const key of Object.keys(universalIdentifiers) as TKey[]) {
+    const viewId = views.get(universalIdentifiers[key]);
 
-    if (view !== undefined) {
-      viewIds[count as OverviewCount] = view.id;
+    if (viewId !== undefined) {
+      viewIds[key] = viewId;
     }
   }
   return viewIds;
+};
+
+// View ids differ per workspace; the app's own views are found by their
+// universal ids with the app's token. Without them the links still open the
+// right transfers, only in the object's first list.
+const readViewIds = async () => {
+  try {
+    const data = requireData(
+      await twentyMetadata<{ getViews: { id: string; universalIdentifier: string | null }[] }>(
+        'application',
+        'query { getViews { id universalIdentifier } }',
+      ),
+      'Read views',
+    );
+    const views = new Map(data.getViews.flatMap((view) => (view.universalIdentifier === null ? [] : [[view.universalIdentifier, view.id] as const])));
+
+    return {
+      countViewIds: pickViewIds(views, OVERVIEW_COUNT_VIEW_UNIVERSAL_IDENTIFIERS),
+      typeViewIds: pickViewIds(views, OVERVIEW_TYPE_VIEW_UNIVERSAL_IDENTIFIERS),
+    };
+  } catch {
+    return { countViewIds: {}, typeViewIds: {} };
+  }
 };
 
 export const readOverview = async (): Promise<OverviewAnswer> => {
@@ -89,8 +107,8 @@ export const readOverview = async (): Promise<OverviewAnswer> => {
   );
   const [groups, viewIds] = await Promise.all([
     Promise.all(OVERVIEW_COUNTS.flatMap((count) => parts.map((typeIds) => countGroups(count, typeIds, today)))),
-    readCountViewIds(),
+    readViewIds(),
   ]);
 
-  return { viewIds, warehouses: overviewWarehouses(types, groups.flat()) };
+  return { ...viewIds, warehouses: overviewWarehouses(types, groups.flat()) };
 };

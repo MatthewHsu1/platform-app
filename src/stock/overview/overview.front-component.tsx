@@ -4,15 +4,17 @@ import { AppPath, type MessageDescriptor, msg, navigate, useTranslate } from 'tw
 import { themeCssVariables } from 'twenty-ui/theme';
 import { Button } from 'twenty-ui/primitives/input';
 
-import { ErrorText, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
+import { describeRouteError } from 'src/shared/describe-route-error';
+import { ErrorText, useRunOnce } from 'src/shared/front-components/pop-up';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
+import { postAppRoute } from 'src/shared/front-components/post-app-route';
 import { type OverviewAnswer } from 'src/stock/overview/types/overview-answer.type';
 import {
   OVERVIEW_NEW_TRANSFER_ROUTE_PATH,
   OVERVIEW_ROUTE_PATH,
   OVERVIEW_UNIVERSAL_IDENTIFIERS,
 } from 'src/stock/stock-reports-universal-identifiers.constant';
-import { OVERVIEW_COUNT_STATES, OVERVIEW_COUNTS } from 'src/stock/utils/overview-counts.util';
+import { OVERVIEW_COUNTS, overviewListQuery } from 'src/stock/utils/overview-counts.util';
 import { type OverviewCount } from 'src/stock/utils/types/overview-count.type';
 import { type OverviewTypeCard } from 'src/stock/utils/types/overview-type-card.type';
 
@@ -28,13 +30,6 @@ const COUNT_LABELS: Record<OverviewCount, MessageDescriptor> = {
   toProcess: msg('To process'),
 };
 
-// The list opens with the operation type and the count's states as filter
-// chips; a count with a saved list opens inside that list.
-const countQuery = (viewId: string | undefined, typeId: string, count: OverviewCount) => ({
-  ...(viewId === undefined ? {} : { viewId }),
-  filter: { state: { IS: OVERVIEW_COUNT_STATES[count] }, pickingType: { IS: { selectedRecordIds: [typeId] } } },
-});
-
 const TypeCard = ({
   card,
   busy,
@@ -43,7 +38,7 @@ const TypeCard = ({
 }: {
   card: OverviewTypeCard;
   busy: boolean;
-  onOpen: (count: OverviewCount) => void;
+  onOpen: (count: OverviewCount | null) => void;
   onCreate: () => void;
 }) => {
   const { t } = useTranslate();
@@ -52,7 +47,9 @@ const TypeCard = ({
 
   return (
     <div style={{ ...styles.card, minWidth: 220 }}>
-      <div style={styles.title}>{card.name}</div>
+      <button type="button" style={{ ...styles.link, ...styles.title, textAlign: 'left' }} onClick={() => onOpen(null)}>
+        {card.name}
+      </button>
       {shown.length === 0 ? <div style={styles.muted}>{t('No open transfers.')}</div> : null}
       {shown.map((count) => (
         <button
@@ -77,46 +74,52 @@ const TypeCard = ({
 const Overview = () => {
   const { t } = useTranslate();
   const styles = readPopUpStyles();
-  const loading = usePopUpCall(t('Could not load the overview.'));
-  const creating = usePopUpCall(t('Could not create the transfer.'));
   const [answer, setAnswer] = useState<OverviewAnswer | null>(null);
-  const [openError, setOpenError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  // Only the latest error shows: an older one no longer says what went wrong.
+  const [error, setError] = useState<string | null>(null);
 
   useRunOnce(() => {
-    void loading.call<OverviewAnswer>(OVERVIEW_ROUTE_PATH, {}).then((next) => {
-      if (next !== null) {
-        setAnswer(next);
-      }
-    });
+    void postAppRoute<OverviewAnswer>(OVERVIEW_ROUTE_PATH, {})
+      .then(setAnswer)
+      .catch((caught: unknown) => setError(describeRouteError(caught, t('Could not load the overview.'))))
+      .finally(() => setLoading(false));
   });
 
-  const openCount = async (typeId: string, count: OverviewCount) => {
-    setOpenError(null);
+  const openList = async (card: OverviewTypeCard, count: OverviewCount | null) => {
+    setError(null);
+    const viewId = count === null ? answer?.typeViewIds[card.code] : answer?.countViewIds[count];
+
     try {
-      await navigate(AppPath.RecordIndexPage, { objectNamePlural: 'stockPickings' }, countQuery(answer?.viewIds[count], typeId, count));
-    } catch {
-      setOpenError(t('Could not open the list.'));
+      await navigate(AppPath.RecordIndexPage, { objectNamePlural: 'stockPickings' }, overviewListQuery(count, card.id, viewId));
+    } catch (caught) {
+      setError(describeRouteError(caught, t('Could not open the list.')));
     }
   };
 
   const createTransfer = async (pickingTypeId: string) => {
-    setOpenError(null);
-    const created = await creating.call<{ pickingId: string }>(OVERVIEW_NEW_TRANSFER_ROUTE_PATH, { pickingTypeId });
-
-    if (created === null) {
-      return;
-    }
+    setError(null);
+    setCreating(true);
     try {
-      await navigate(AppPath.RecordShowPage, { objectNameSingular: 'stockPicking', objectRecordId: created.pickingId });
-    } catch {
-      setOpenError(t('Could not open the transfer.'));
+      const { pickingId } = await postAppRoute<{ pickingId: string }>(OVERVIEW_NEW_TRANSFER_ROUTE_PATH, { pickingTypeId });
+
+      try {
+        await navigate(AppPath.RecordShowPage, { objectNameSingular: 'stockPicking', objectRecordId: pickingId });
+      } catch (caught) {
+        setError(describeRouteError(caught, t('Could not open the transfer.')));
+      }
+    } catch (caught) {
+      setError(describeRouteError(caught, t('Could not create the transfer.')));
+    } finally {
+      setCreating(false);
     }
   };
 
   return (
     <div style={styles.panel}>
-      <ErrorText error={loading.error ?? creating.error ?? openError} />
-      {answer === null && loading.busy ? <div style={styles.muted}>{t('Loading…')}</div> : null}
+      <ErrorText error={error} />
+      {answer === null && loading ? <div style={styles.muted}>{t('Loading…')}</div> : null}
       {answer !== null && answer.warehouses.length === 0 ? <div style={styles.muted}>{t('No active operation types.')}</div> : null}
       {(answer?.warehouses ?? []).map((warehouse) => (
         <div key={warehouse.warehouseId ?? ''} style={{ display: 'flex', flexDirection: 'column', gap: themeCssVariables.spacing[2] }}>
@@ -126,8 +129,8 @@ const Overview = () => {
               <TypeCard
                 key={card.id}
                 card={card}
-                busy={creating.busy}
-                onOpen={(count) => void openCount(card.id, count)}
+                busy={creating}
+                onOpen={(count) => void openList(card, count)}
                 onCreate={() => void createTransfer(card.id)}
               />
             ))}

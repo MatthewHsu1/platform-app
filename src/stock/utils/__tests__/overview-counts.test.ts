@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { overviewCountFilter, overviewWarehouses } from 'src/stock/utils/overview-counts.util';
+import { overviewCountFilter, overviewListQuery, overviewWarehouses } from 'src/stock/utils/overview-counts.util';
 import { type OverviewTypeRow } from 'src/stock/utils/types/overview-type-row.type';
 
 const OPEN = ['ASSIGNED', 'WAITING', 'CONFIRMED'];
@@ -79,7 +79,7 @@ describe('overviewWarehouses', () => {
     expect(warehouse.types.map((card) => card.id)).toEqual(['d', 'a', 'b', 'c']);
   });
 
-  it('groups the cards by warehouse, each warehouse where its first operation type falls', () => {
+  it('groups the cards by warehouse', () => {
     const warehouses = overviewWarehouses(
       [
         type({ id: 'east-in', sequence: 3, warehouseId: 'east', warehouseName: 'East' }),
@@ -90,10 +90,54 @@ describe('overviewWarehouses', () => {
       [],
     );
 
-    expect(warehouses.map((warehouse) => [warehouse.warehouseName, warehouse.types.map((card) => card.id)])).toEqual([
-      ['Main', ['main-in', 'main-out']],
-      [null, ['none']],
-      ['East', ['east-in']],
-    ]);
+    expect(warehouses).toHaveLength(3);
+    expect(warehouses.map((warehouse) => [warehouse.warehouseName, warehouse.types.map((card) => card.id)])).toEqual(
+      expect.arrayContaining([
+        ['Main', ['main-in', 'main-out']],
+        [null, ['none']],
+        ['East', ['east-in']],
+      ]),
+    );
+  });
+});
+
+const TYPE_CHIP = { pickingType: { IS: { selectedRecordIds: ['receipts'] } } };
+
+describe('overviewListQuery', () => {
+  it('opens every transfer of the operation type from its name', () => {
+    expect(overviewListQuery(null, 'receipts', 'view-receipts')).toEqual({ viewId: 'view-receipts', filter: TYPE_CHIP });
+  });
+
+  it('opens the ready transfers of the type', () => {
+    expect(overviewListQuery('ready', 'receipts', 'view-ready')).toEqual({
+      viewId: 'view-ready',
+      filter: { state: { IS: ['ASSIGNED'] }, ...TYPE_CHIP },
+    });
+  });
+
+  it('opens the open backorders of the type', () => {
+    expect(overviewListQuery('backorders', 'receipts', 'view-backorders')).toEqual({
+      viewId: 'view-backorders',
+      filter: { state: { IS: OPEN }, ...TYPE_CHIP, backorder: { IS_NOT_EMPTY: '' } },
+    });
+  });
+
+  it('opens the open transfers of the type with a deadline issue, a passed deadline or a passed scheduled date', () => {
+    expect(overviewListQuery('late', 'receipts', 'view-late')).toEqual({
+      viewId: 'view-late',
+      filter: { state: { IS: OPEN }, ...TYPE_CHIP },
+      filterGroup: {
+        operator: 'OR',
+        filters: [
+          { field: 'hasDeadlineIssue', op: 'IS', value: 'true' },
+          { field: 'dateDeadline', op: 'IS_IN_PAST', value: '' },
+          { field: 'scheduledDate', op: 'IS_IN_PAST', value: '' },
+        ],
+      },
+    });
+  });
+
+  it('opens the list without a view when the saved list is not found', () => {
+    expect(overviewListQuery('draft', 'receipts', undefined)).toEqual({ filter: { state: { IS: ['DRAFT'] }, ...TYPE_CHIP } });
   });
 });

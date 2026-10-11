@@ -3,7 +3,6 @@ import { removalReached } from 'src/product-expiry/utils/lot-dates.util';
 import { readInChunks } from 'src/shared/utils/read-in-chunks.util';
 import { addMonths, dayOf, startOfDay } from 'src/stock/orderpoint/utils/day.util';
 import { productsLeadDays } from 'src/stock/procurement/product-lead-days';
-import { productLabel } from 'src/stock/product/product-label';
 import { readStockProducts } from 'src/stock/product/read-stock-products';
 import { FORECAST_MESSAGES } from 'src/stock/reports/forecast/forecast-messages.constant';
 import { readForecastMoves, readMovesAsPerson, toForecastMove } from 'src/stock/reports/forecast/read-forecast-moves';
@@ -295,7 +294,7 @@ export const readForecastData = async (request: ForecastRequest): Promise<Foreca
     return [
       {
         id,
-        name: productLabel(product),
+        name: product.displayName,
         uomName: uoms.get(product.uomId)?.name ?? '',
         onHand: quantity.qtyAvailable,
         free: quantity.freeQty,

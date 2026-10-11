@@ -1,3 +1,8 @@
+import {
+  INVENTORY_LIST_VIEW_UNIVERSAL_IDENTIFIERS,
+  STOCK_VIEW_UNIVERSAL_IDENTIFIERS,
+} from 'src/stock/stock-pages-universal-identifiers.constant';
+
 export const INVENTORY_AT_DATE_ROUTE_PATH = '/stock/reports/inventory-at-date';
 
 export const INVENTORY_AT_DATE_UNIVERSAL_IDENTIFIERS = {
@@ -91,13 +96,22 @@ export const OVERVIEW_UNIVERSAL_IDENTIFIERS = {
   navigationItem: 'df045b72-3cec-4aba-a3d3-d469622850e9',
 };
 
-// The saved transfer lists the Overview counts open (the Ready, Waiting, Late
-// and Backorders views of the Inventory module).
+// The saved transfer list each Overview count opens: the count's own list,
+// or the plain transfer list for the counts that have none.
 export const OVERVIEW_COUNT_VIEW_UNIVERSAL_IDENTIFIERS = {
-  ready: 'f0b7668f-5d14-41f0-9214-33c31ec4150e',
-  waiting: '6a32be16-d97e-44a9-8b1a-7a99d0aa64c1',
-  late: '51194025-2600-4b66-b76c-92b1c25fcd1b',
-  backorders: '24068fff-b295-4f5e-9fed-de0975cfbc00',
+  ready: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.ready,
+  waiting: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.waiting,
+  late: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.late,
+  backorders: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.backorders,
+  draft: INVENTORY_LIST_VIEW_UNIVERSAL_IDENTIFIERS.transfers,
+  toProcess: INVENTORY_LIST_VIEW_UNIVERSAL_IDENTIFIERS.transfers,
+};
+
+// The list an operation type's name opens: the transfers of its kind.
+export const OVERVIEW_TYPE_VIEW_UNIVERSAL_IDENTIFIERS = {
+  INCOMING: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.receipts,
+  OUTGOING: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.deliveries,
+  INTERNAL: STOCK_VIEW_UNIVERSAL_IDENTIFIERS.internal,
 };
 
 export const RECORD_FACTS_ROUTE_PATH = '/stock/facts';
