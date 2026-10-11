@@ -7,7 +7,9 @@ export type PickingPrintLine = {
   from: string;
   to: string;
   packageName: string;
+  resultPackageId: string | null;
   resultPackageName: string;
+  packageHistoryId: string | null;
   isEntirePack: boolean;
   expirationDate: string | null;
 };
