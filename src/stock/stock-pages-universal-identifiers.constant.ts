@@ -180,3 +180,15 @@ export const INVENTORY_VIEW_NAVIGATION_UNIVERSAL_IDENTIFIERS = {
   stockLocations: '8af69d3c-a909-4fe0-89eb-4289680deb47',
   movesHistory: 'd9da7733-172c-4e42-84e6-7d05a7f8240e',
 } as const;
+
+// Moves Analysis page: charts of done moves above the done-moves list.
+export const MOVES_ANALYSIS_UNIVERSAL_IDENTIFIERS = {
+  pageLayout: '926bff6a-bef2-42bd-94ee-17026573dd06',
+  tab: 'e554d60b-aaac-4d1a-8c31-0af7786a25d6',
+  widgetByProduct: 'c3d11ba1-2152-4616-8f05-7d7ea3a7ff13',
+  widgetByType: '655ff412-50f5-4a3a-8667-1a783a83559c',
+  widgetByDestination: '2ca50abe-40fb-4f7c-baf5-740e280b0577',
+  widgetByMonth: '039b520e-63d4-4f2c-a415-c64dd3434983',
+  widgetTable: '7c3db352-1328-464a-84f7-1a1dd4e40d47',
+  navigationItem: 'f420412c-9e9f-4308-a42c-eada0985e01a',
+} as const;
