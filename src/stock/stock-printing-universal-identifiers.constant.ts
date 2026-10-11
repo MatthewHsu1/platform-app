@@ -65,3 +65,11 @@ export const MORE_PRINT_UNIVERSAL_IDENTIFIERS = {
   batchTransferFrontComponent: 'c88c690e-c799-4e65-883f-5f2df49038bc',
   batchTransferCommand: '6f77d304-31ff-4844-b1d1-7ec002d6d931',
 } as const;
+
+export const SIGNATURE_UNIVERSAL_IDENTIFIERS = {
+  logicFunction: 'a5d03acb-812f-4a50-a50d-0a724c79a4b1',
+  frontComponent: '62752956-4d4c-4ed0-924a-30ae22df0344',
+  commandMenuItem: '38fd7cb8-0acf-4f3d-8c4d-b001ddf1f1cb',
+} as const;
+
+export const SIGN_ROUTE_PATH = '/stock/picking/sign';

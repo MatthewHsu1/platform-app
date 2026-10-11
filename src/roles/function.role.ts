@@ -128,7 +128,8 @@ const readOnly = (objectUniversalIdentifier: string) => ({
 // settings page save Platform's row access variable and list roles. With
 // them the role can also list installed apps and edit timeline activity type
 // labels; Twenty refuses role changes, installs and workspace settings to
-// application tokens.
+// application tokens. Upload lets the sign route save the signature and the
+// signed delivery slip on a transfer.
 export default defineApplicationRole({
   universalIdentifier: FUNCTION_ROLE_UNIVERSAL_IDENTIFIER,
   label: `${APP_DISPLAY_NAME} function role`,
@@ -228,5 +229,6 @@ export default defineApplicationRole({
     SystemPermissionFlag.VIEWS,
     SystemPermissionFlag.APPLICATIONS,
     SystemPermissionFlag.ROLES,
+    SystemPermissionFlag.UPLOAD_FILE,
   ],
 });
