@@ -1,5 +1,6 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
+import { DAILY_JOB_TIMEOUT_SECONDS } from 'src/stock/scheduler/daily-job-limits.constant';
 import { runDailyJob } from 'src/stock/scheduler/run-daily-job';
 import { STOCK_DAILY_JOB_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
 
@@ -21,7 +22,7 @@ export default defineLogicFunction({
   name: 'platform-stock-daily-job',
   description:
     'Once a day: recomputes reordering rules and orders for the automatic ones, reserves waiting moves whose day has come, recomputes reserved stock, removes empty stock rows, checks stock levels against the done move lines, resumes stale runs, and goes on trimming the columns of the "All" lists until every list is done.',
-  timeoutSeconds: 900,
+  timeoutSeconds: DAILY_JOB_TIMEOUT_SECONDS,
   handler,
   cronTriggerSettings: { pattern: '0 0 * * *' },
 });

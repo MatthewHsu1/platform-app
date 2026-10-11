@@ -25,14 +25,14 @@ export const DAILY_JOB_STEPS: DailyJobStep[] = [
 ];
 
 // A failed step is reported and the later steps still run.
-export const runDailyJob = async (steps: DailyJobStep[] = DAILY_JOB_STEPS) => {
+export const runDailyJob = async (steps: DailyJobStep[] = DAILY_JOB_STEPS, startedAt = Date.now()) => {
   const ran: string[] = [];
   const failures: string[] = [];
 
   for (const step of [...steps].sort((left, right) => left.order - right.order)) {
     ran.push(step.name);
     try {
-      await step.run();
+      await step.run({ startedAt });
     } catch (error) {
       failures.push(`${step.name}: ${error instanceof Error ? error.message : String(error)}`);
     }

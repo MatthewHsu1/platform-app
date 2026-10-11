@@ -38,10 +38,12 @@ const handler = async ({ previousVersion }: InstallPayload) => {
     [
       'trimming the columns of the "All" lists',
       async () => {
-        const left = await trimIndexViews(startedAt + TRIM_STOP_AFTER_MS);
+        const { columnsLeft, listsNotReached } = await trimIndexViews(startedAt + TRIM_STOP_AFTER_MS);
 
-        if (left > 0) {
-          warnings.push(`Install: ${left} columns of the "All" lists are still to hide; the next install goes on.`);
+        if (columnsLeft > 0 || listsNotReached > 0) {
+          warnings.push(
+            `Install: the "All" lists are not all trimmed yet (${columnsLeft} columns still to hide, ${listsNotReached} lists not reached); the next install and the daily job go on.`,
+          );
         }
       },
     ],

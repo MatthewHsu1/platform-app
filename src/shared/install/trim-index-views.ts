@@ -1,6 +1,7 @@
 import { kv } from 'twenty-sdk/logic-function';
 
 import { PLATFORM_CLAIM_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/shared/claims/claims-universal-identifiers.constant';
+import { type IndexViewTrimResult } from 'src/shared/install/types/index-view-trim-result.type';
 import { planIndexViewTrim, settleIndexViewTrim } from 'src/shared/install/utils/plan-index-view-trim.util';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
 import { requireData, twentyMetadata } from 'src/shared/twenty-graphql';
@@ -33,6 +34,10 @@ const listAppObjects = async (): Promise<AppObject[]> => {
   const applicationId = objects.find(
     (object) => object.universalIdentifier === PLATFORM_CLAIM_OBJECT_UNIVERSAL_IDENTIFIER,
   )?.applicationId;
+
+  if (applicationId === undefined) {
+    throw new Error('The app objects were not found: the claim object is missing.');
+  }
 
   return objects.filter((object) => object.applicationId === applicationId);
 };
@@ -113,18 +118,24 @@ const trimIndexView = async (object: AppObject, stopAt: number) => {
 };
 
 // Twenty's own "All" list of an object shows every field and the app cannot define it. Each
-// column is trimmed once and remembered, so a column staff switch back on stays on. Columns not
-// reached by `stopAt` are left for the next run; returns how many.
-export const trimIndexViews = async (stopAt: number) => {
+// column is trimmed once and remembered, so a column staff switch back on stays on. Columns and
+// lists not reached by `stopAt` are left for the next run.
+export const trimIndexViews = async (stopAt: number): Promise<IndexViewTrimResult> => {
   const errors = errorCollector();
-  let left = 0;
+  const objects = await listAppObjects();
+  let columnsLeft = 0;
+  let reached = 0;
 
-  for (const object of await listAppObjects()) {
+  for (const object of objects) {
+    if (Date.now() >= stopAt) {
+      break;
+    }
+    reached += 1;
     await errors.run(object.nameSingular, async () => {
-      left += await trimIndexView(object, stopAt);
+      columnsLeft += await trimIndexView(object, stopAt);
     });
   }
   errors.throwIfAny();
 
-  return left;
+  return { columnsLeft, listsNotReached: objects.length - reached };
 };
