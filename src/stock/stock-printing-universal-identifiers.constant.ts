@@ -18,3 +18,16 @@ export const PICKING_PRINT_UNIVERSAL_IDENTIFIERS = {
   returnSlipFrontComponent: '4d4f51c6-5239-41a1-a674-b2575f98b7fb',
   returnSlipCommand: 'ed554b9f-2388-4da3-88da-e0f54efb1db2',
 } as const;
+
+export const ZPL_PRINT_UNIVERSAL_IDENTIFIERS = {
+  lotFrontComponent: 'cccc5279-89d0-4ed2-85d1-10a9dcda9de7',
+  lotCommand: 'cf172f2a-a157-4bdb-9937-82fa8638bd90',
+  packageFrontComponent: '8625ed5e-f1ea-4294-adf7-506f1054e3d9',
+  packageCommand: '78e61c1c-3840-4693-b52f-e47d5d3e36df',
+  packageHistoryFrontComponent: 'ded948c6-6b5f-4770-87af-40ed9de12c02',
+  packageHistoryCommand: '95d4b283-d705-433e-aaeb-32d3d82bd6df',
+  pickingTypeFrontComponent: '70a71420-6d3f-4013-a4f8-1f90699d5745',
+  pickingTypeCommand: '978ea991-963d-4529-bc9f-519138f11ea0',
+  packagingFrontComponent: 'b7a174c4-a773-4b28-b571-399b0e21f42d',
+  packagingCommand: '59c1c749-35a7-49e1-bd0d-4773ed80fef2',
+} as const;

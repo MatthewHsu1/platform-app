@@ -14,6 +14,11 @@ export const PRINTABLE_OBJECTS: Record<
     objectPlural: 'stockPickings',
     reports: { pickingOperations: NO_PRINT_OPTIONS, deliverySlip: NO_PRINT_OPTIONS, returnSlip: NO_PRINT_OPTIONS },
   },
+  stockLot: { objectPlural: 'stockLots', reports: { lotLabelZpl: NO_PRINT_OPTIONS } },
+  stockPackage: { objectPlural: 'stockPackages', reports: { packageBarcodeZpl: NO_PRINT_OPTIONS } },
+  stockPackageHistory: { objectPlural: 'stockPackageHistories', reports: { packageBarcodeZpl: NO_PRINT_OPTIONS } },
+  stockPickingType: { objectPlural: 'stockPickingTypes', reports: { pickingTypeLabelZpl: NO_PRINT_OPTIONS } },
+  productUom: { objectPlural: 'productUoms', reports: { packagingBarcodeZpl: NO_PRINT_OPTIONS } },
 };
 
 export const AFTER_PRINT: Partial<Record<PrintReportKey, (recordIds: string[]) => Promise<void>>> = {
