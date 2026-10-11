@@ -18,3 +18,15 @@ export const RECEPTION_UNIVERSAL_IDENTIFIERS = {
   pickingCommand: '6a565a55-7288-4b11-a76f-05fc694db219',
   batchCommand: 'bac11bf3-c609-46ea-87ce-281a62cf426a',
 };
+
+export const TRACEABILITY_ROUTE_PATH = '/stock/reports/traceability';
+
+export const TRACEABILITY_UNIVERSAL_IDENTIFIERS = {
+  logicFunction: '3f3221d8-c603-4ae4-9cea-4c0583073108',
+  widget: 'a8f63e2d-94af-4c56-a8ef-c8a96f62585c',
+  pickingCommand: '6d57127e-82b9-4948-9039-70f23d113690',
+  lotCommand: '68471a21-2c0a-4c4f-8823-5dee2d1ecd00',
+  moveLineCommand: '944c36f3-c08c-4ea9-8f08-523814d5d7b2',
+  lotTab: 'd2c42eb3-bbe4-4689-9fc6-1c195364602f',
+  lotTabWidget: '86437642-aee7-4108-ace9-5915a284fc5e',
+};
