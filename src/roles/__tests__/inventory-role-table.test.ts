@@ -24,7 +24,7 @@ beforeAll(async () => {
   );
 });
 
-// Objects of the CRM, sales team and UTM modules: the inventory roles keep the member defaults on them.
+// Objects of the CRM, sales team and UTM modules: the Sales blocks open them.
 const OUTSIDE_INVENTORY = [
   'crmLead',
   'crmLostReason',

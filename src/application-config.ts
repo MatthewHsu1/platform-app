@@ -11,8 +11,8 @@ import {
   SALES_TEAM_MEMBERSHIP_MULTI_VARIABLE_UNIVERSAL_IDENTIFIER,
   SHOW_EXPECTED_QUANTITY_COUNT_VARIABLE_UNIVERSAL_IDENTIFIER,
 } from 'src/constants/universal-identifiers';
-import { EMPTY_ROW_ACCESS_CONFIG } from 'src/row-access/constants/empty-row-access-config.constant';
-import { ROW_ACCESS_CONFIG_VARIABLE_KEY } from 'src/row-access/constants/row-access-config-variable-key.constant';
+import { EMPTY_ROW_ACCESS_CONFIG } from 'src/roles/constants/empty-row-access-config.constant';
+import { ROW_ACCESS_CONFIG_VARIABLE_KEY } from 'src/roles/constants/row-access-config-variable-key.constant';
 import { REPLENISHMENT_HORIZON_DAYS_VARIABLE_UNIVERSAL_IDENTIFIER } from 'src/stock/routing-universal-identifiers.constant';
 
 export default defineApplication({
@@ -25,7 +25,7 @@ export default defineApplication({
       universalIdentifier: ROW_ACCESS_CONFIG_VARIABLE_UNIVERSAL_IDENTIFIER,
       label: 'Row access rules',
       description:
-        'Edited on the Settings tab. Object, owner field and role ids are per workspace.',
+        'Written by Platform from the building blocks on every Roles page save, install and daily run. Do not edit: the next run puts it back.',
       type: FieldType.RAW_JSON,
       value: JSON.stringify(EMPTY_ROW_ACCESS_CONFIG),
       isSecret: false,

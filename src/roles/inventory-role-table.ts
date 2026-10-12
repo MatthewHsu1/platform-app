@@ -87,8 +87,8 @@ const link = (objectUniversalIdentifier: string, owner: InventoryRoleRow): Inven
   productsCreate: linkRights(owner.productsCreate),
 });
 
-// Columns: Inventory User, Inventory Administrator, Products: Create. Each column already holds
-// what every internal user may do, as each of these groups includes the internal user.
+// Columns: Inventory User, Inventory Administrator, Products: Create (building blocks). Each column already holds
+// what every internal user may do on these objects, as each of these groups includes the internal user.
 const WAREHOUSE = row(STOCK_WAREHOUSE_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'RUD', 'R');
 const LOCATION = row(STOCK_LOCATION_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'RUD', 'R');
 const PICKING_TYPE = row(STOCK_PICKING_TYPE_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'RUD', 'R');
@@ -105,8 +105,8 @@ const PRODUCT_ATTRIBUTE_LINE = row(PRODUCT_TEMPLATE_ATTRIBUTE_LINE_OBJECT_UNIVER
 const PRODUCT_EXCLUSION = row(PRODUCT_TEMPLATE_ATTRIBUTE_EXCLUSION_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'R', 'RUD');
 const PRODUCT_COMBO = row(PRODUCT_COMBO_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'R', 'RUD');
 
-// What each inventory role may do on each Platform inventory and product object. Objects not listed
-// keep Twenty's member defaults.
+// What each inventory block may do on each Platform inventory and product object. A block opens
+// nothing it does not list.
 export const INVENTORY_ROLE_TABLE: InventoryRoleRow[] = [
   WAREHOUSE,
   LOCATION,
