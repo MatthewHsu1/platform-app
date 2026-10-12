@@ -1,4 +1,6 @@
 import { ASSIGNMENT_MESSAGES } from 'src/crm/assignment/assignment-messages.constant';
+import { readQuotas } from 'src/crm/assignment/read-quotas';
+import { plugMessages, runPlug } from 'src/crm/assignment/run-plug';
 import { type AssignLeadsInput } from 'src/crm/assignment/types/assign-leads-input.type';
 import { type AssignmentApi } from 'src/crm/assignment/types/assignment-api.type';
 import { type AssignmentMembership } from 'src/crm/assignment/types/assignment-membership.type';
@@ -7,7 +9,6 @@ import { type TeamAllocation } from 'src/crm/assignment/types/team-allocation.ty
 import { runAllocationLoop } from 'src/crm/assignment/utils/allocation-loop.util';
 import { allocationCandidateFilter, assignableLeadFilter, withinIds } from 'src/crm/assignment/utils/assignment-filters.util';
 import { runAssignmentLoops } from 'src/crm/assignment/utils/assignment-loops.util';
-import { assignmentQuota } from 'src/crm/assignment/utils/assignment-quota.util';
 import { planMemberOrder } from 'src/crm/assignment/utils/member-order.util';
 import { planAssignmentMessages } from 'src/crm/assignment/utils/plan-assignment-messages.util';
 import { planAssignmentWrite } from 'src/crm/assignment/utils/plan-assignment-write.util';
@@ -21,7 +22,6 @@ import { FilterError } from 'src/shared/filter-editor/to-twenty-filter';
 import { translateFilterError } from 'src/shared/filter-editor/translate-filter-error';
 import { GraphqlInputError } from 'src/shared/twenty-graphql';
 
-const DAY_MS = 86_400_000;
 const ID_CHUNK = 100;
 
 // Ends the run: its message is the run's whole report.
@@ -47,6 +47,7 @@ const emptyResult = (teams: TeamRow[]): AssignmentResult => ({
   errors: [],
   messages: [],
   plugError: null,
+  plug: null,
 });
 
 const teamName = (team: TeamRow) => team.name ?? team.id;
@@ -73,19 +74,21 @@ const stillThere = async (api: AssignmentApi, leadIds: string[]) => {
 
 // Puts unassigned leads on teams, one weighted draw per lead, and merges a
 // lead with its duplicates on the way. Every team filter is used before the
-// first lead moves.
+// first lead moves. Leads a plugin already answered for are left out.
 const allocateLeads = async ({
   api,
   input,
   now,
   teams,
   result,
+  excludedLeadIds,
 }: {
   api: AssignmentApi;
   input: AssignLeadsInput;
   now: Date;
   teams: TeamRow[];
   result: AssignmentResult;
+  excludedLeadIds: ReadonlySet<string>;
 }) => {
   const delayHours = await api.readDelayHours();
   const allocations: TeamAllocation[] = [];
@@ -100,7 +103,7 @@ const allocateLeads = async ({
     const candidateFilter = allocationCandidateFilter({ teamFilter, now, delayHours, creationDeltaDays: input.creationDeltaDays });
     const found =
       teamFilter === null ? await api.findLeads(candidateFilter) : await usingFilter(api, describe, () => api.findLeads(candidateFilter));
-    const leads = sortAllocationCandidates(found);
+    const leads = sortAllocationCandidates(found.filter((lead) => !excludedLeadIds.has(lead.id)));
 
     leads.forEach((lead) => candidates.set(lead.id, lead));
     allocations.push({ teamId: team.id, weight: team.assignmentMax, leadIds: leads.map((lead) => lead.id) });
@@ -195,23 +198,7 @@ const assignToMembers = async ({
   }
   const teamIds = teamsWithMembers.map((team) => team.id);
   const members = memberships.filter((member) => teamIds.includes(member.teamId));
-  const dayCounts = input.forceQuota
-    ? new Map<string, number>()
-    : await api.countLeadDays({
-        teamIds,
-        userIds: [...new Set(members.map((member) => member.userId))],
-        since: new Date(now.getTime() - DAY_MS),
-      });
-  const quotas = new Map(
-    members.map((member) => [
-      member.id,
-      assignmentQuota({
-        assignmentMax: member.assignmentMax,
-        forceQuota: input.forceQuota,
-        leadDayCount: dayCounts.get(`${member.userId}|${member.teamId}`) ?? 0,
-      }),
-    ]),
-  );
+  const { quotas } = await readQuotas(api, input, now, members);
   const leads = sortAssignableLeads(await api.findLeads(assignableLeadFilter(teamIds)));
 
   for (const team of teamsWithMembers) {
@@ -264,22 +251,22 @@ const assignToMembers = async ({
   }
 };
 
-// The totals as messages; a manual run also notes them on its teams.
-const report = async (api: AssignmentApi, input: AssignLeadsInput, teams: TeamRow[], result: AssignmentResult) => {
+// The totals as messages; a manual run also notes them on its teams. When
+// the built-in steps did not run, only the plug's lines are reported.
+const report = async (api: AssignmentApi, input: AssignLeadsInput, teams: TeamRow[], result: AssignmentResult, builtIn: boolean) => {
   const teamResults = Object.values(result.teams);
   const memberResults = Object.values(result.members);
-  const messages = planAssignmentMessages({
-    teams: teams.map((team) => ({ name: teamName(team), assignmentMax: team.assignmentMax })),
-    allocated: teamResults.reduce((total, team) => total + team.assigned.length + team.merged.length, 0),
-    duplicates: teamResults.reduce((total, team) => total + team.duplicates.length, 0),
-    members: memberResults.length,
-    membersAssigned: memberResults.reduce((total, member) => total + member.assigned.length, 0),
-  });
+  const messages = builtIn
+    ? planAssignmentMessages({
+        teams: teams.map((team) => ({ name: teamName(team), assignmentMax: team.assignmentMax })),
+        allocated: teamResults.reduce((total, team) => total + team.assigned.length + team.merged.length, 0),
+        duplicates: teamResults.reduce((total, team) => total + team.duplicates.length, 0),
+        members: memberResults.length,
+        membersAssigned: memberResults.reduce((total, member) => total + member.assigned.length, 0),
+      })
+    : [];
 
-  result.messages = [
-    ...(result.plugError === null ? [] : [api.translateMessage(ASSIGNMENT_MESSAGES.plugFailed, { reason: result.plugError })]),
-    ...messages.map((message) => api.translateMessage(message.message, message.values)),
-  ];
+  result.messages = [...plugMessages(api, result), ...messages.map((message) => api.translateMessage(message.message, message.values))];
 
   if (input.door === 'SCHEDULE') {
     return;
@@ -302,17 +289,25 @@ export const makeAssignLeads =
     const stages = await api.readStages();
     const result = emptyResult(teams);
 
+    let builtIn = false;
+
     try {
-      await allocateLeads({ api, input, now, teams, result });
-      await assignToMembers({ api, input, now, teams, memberships, stages, result });
+      const plug = await runPlug({ api, input, now, teams, memberships, stages, result });
+
+      builtIn = plug.runBuiltIn;
+      if (builtIn) {
+        await allocateLeads({ api, input, now, teams, result, excludedLeadIds: plug.answeredIds });
+        await assignToMembers({ api, input, now, teams, memberships, stages, result });
+      }
     } catch (error) {
       if (!(error instanceof AssignmentStop)) {
         throw error;
       }
+      // The plug's own assignments stay written: its lines stay in the report.
       result.errors.push(error.message);
-      result.messages = [...result.errors];
+      result.messages = [...plugMessages(api, result), ...result.errors];
       return result;
     }
-    await report(api, input, teams, result);
+    await report(api, input, teams, result, builtIn);
     return result;
   };

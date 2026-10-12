@@ -28,3 +28,17 @@ export const SALES_TEAM_MEMBERSHIP_MULTI_VARIABLE_UNIVERSAL_IDENTIFIER =
 
 export const PRE_INSTALL_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
   '10ae1cd5-a8f6-468f-8aac-f56b2291b32a';
+
+export const CRM_ASSIGNMENT_VARIABLE_UNIVERSAL_IDENTIFIERS = {
+  autoAssignment: '31519536-858a-4c15-838e-c4a976e4e61a',
+  autoAssignmentAction: '0580e070-ed29-4f7d-89c6-e5b581fddd37',
+  intervalNumber: 'ff0ebc3b-3d8e-418c-a2fa-9f1ad527669c',
+  intervalType: '6b4ee485-46e3-4f3d-ab70-0494689fdfc0',
+  nextRun: 'cc5ec2e0-9e30-4818-aff7-2d880ecb27c0',
+  delayHours: 'ae7b20ef-e0d4-4819-9e7a-dac4d27fb832',
+} as const;
+
+export const PLUG_VARIABLE_UNIVERSAL_IDENTIFIERS = {
+  plugPoints: 'df81f4f2-7140-45f0-895f-5b91965a214f',
+  crmAssignmentKey: '092bf06b-664b-4ea6-a9cc-99b87534dd71',
+} as const;

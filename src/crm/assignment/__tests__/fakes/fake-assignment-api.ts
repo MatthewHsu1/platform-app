@@ -178,6 +178,23 @@ export const makeFakeAssignmentApi = ({
     },
     translateMessage: (message, values = {}) =>
       Object.entries(values).reduce((text, [key, value]) => text.replace(`{${key}}`, String(value)), message),
+    readPlugConfig: async () => null,
+    callAssignmentPlug: async () => {
+      throw new Error('No plug expected');
+    },
+    writePlugAssignments: async (writes) => {
+      const written: string[] = [];
+
+      for (const { leadId, data } of writes) {
+        const lead = store.get(leadId);
+
+        if (lead !== undefined && lead.salespersonId === null) {
+          store.set(leadId, { ...lead, ...(data as Partial<LeadRow>) });
+          written.push(leadId);
+        }
+      }
+      return written;
+    },
   };
 
   return fake;

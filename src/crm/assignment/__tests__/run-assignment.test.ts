@@ -333,3 +333,109 @@ describe('assignLeads', () => {
     expect(api.leads.get('waiting')?.salespersonId).toBeNull();
   });
 });
+
+describe('assignLeads with the assignment plug', () => {
+  const setup = (leftOut: 'DEFAULT' | 'UNTOUCHED', onError: 'DEFAULT' | 'SKIP' = 'DEFAULT') => {
+    const api = makeFakeAssignmentApi({
+      teams: [makeTeam('T', { assignmentMax: 30 })],
+      memberships: [makeMember('m', 'T', 'u', 30)],
+      leads: [makeLead('l1'), makeLead('l2'), makeLead('l3')],
+    });
+
+    api.readPlugConfig = async () => ({ enabled: true, target: { kind: 'route', path: '/acme/assign' }, timeoutSeconds: 30, onError, leftOut });
+    return api;
+  };
+
+  it('lets the plug assign leads and runs the built-in steps on the rest', async () => {
+    const api = setup('DEFAULT');
+    let sentLeads: string[] = [];
+
+    api.callAssignmentPlug = async (request) => {
+      sentLeads = request.leads.map((lead) => lead.id);
+      return {
+        kind: 'answer',
+        payload: {
+          assignments: [
+            { leadId: 'l1', teamId: 'T', salespersonId: 'u' },
+            { leadId: 'l2', teamId: 'T', salespersonId: null },
+          ],
+        },
+      };
+    };
+    const result = await makeAssignLeads(api)({ teamIds: ['T'], forceQuota: true, creationDeltaDays: 0, door: 'TEAM_BUTTON', requestedBy: 'Ann' });
+
+    expect(sentLeads).toEqual(['l1', 'l2', 'l3']);
+    expect(result.plug).toEqual({ answered: 2, written: ['l1', 'l2'] });
+    expect(api.leads.get('l1')).toMatchObject({ teamId: 'T', salespersonId: 'u', leadType: 'OPPORTUNITY' });
+    expect(api.leads.get('l2')).toMatchObject({ teamId: 'T', salespersonId: 'u' });
+    expect(api.leads.get('l3')).toMatchObject({ teamId: 'T', salespersonId: null });
+  });
+
+  it('leaves the leads the answer did not name alone when the settings say so', async () => {
+    const api = setup('UNTOUCHED');
+
+    api.callAssignmentPlug = async () => ({ kind: 'answer', payload: { assignments: [{ leadId: 'l1', teamId: 'T', salespersonId: null }] } });
+    await makeAssignLeads(api)({ teamIds: ['T'], forceQuota: true, creationDeltaDays: 0, door: 'TEAM_BUTTON', requestedBy: 'Ann' });
+
+    expect(api.leads.get('l1')?.teamId).toBe('T');
+    expect(api.leads.get('l2')?.teamId).toBeNull();
+    expect(api.writes).toEqual([]);
+  });
+
+  it('runs the built-in steps when the plug fails, and reports the failure', async () => {
+    const api = setup('DEFAULT', 'DEFAULT');
+
+    api.callAssignmentPlug = async () => ({
+      kind: 'error',
+      failure: { message: 'The plug point did not answer within {seconds} s.', values: { seconds: 30 } },
+    });
+    const result = await makeAssignLeads(api)({ teamIds: ['T'], forceQuota: true, creationDeltaDays: 0, door: 'TEAM_BUTTON', requestedBy: 'Ann' });
+
+    expect(result.errors).toEqual([]);
+    expect(result.messages[0]).toBe('The assignment plug failed: The plug point did not answer within 30 s.');
+    expect([...api.leads.values()].filter((lead) => lead.teamId === 'T')).toHaveLength(3);
+  });
+
+  it('does nothing when the plug fails and the settings say to skip', async () => {
+    const api = setup('DEFAULT', 'SKIP');
+
+    api.callAssignmentPlug = async () => ({ kind: 'error', failure: { message: 'The plug point answered with HTTP {status}.', values: { status: 500 } } });
+    const result = await makeAssignLeads(api)({ teamIds: ['T'], forceQuota: true, creationDeltaDays: 0, door: 'TEAM_BUTTON', requestedBy: 'Ann' });
+
+    expect(result.errors).toEqual(['The assignment plug failed: The plug point answered with HTTP 500.']);
+    expect(result.messages).toEqual(['The assignment plug failed: The plug point answered with HTTP 500.']);
+    expect(api.teamWrites).toEqual([]);
+    expect(api.writes).toEqual([]);
+  });
+
+  it("counts the plug's assignments in a salesperson's daily quota on a scheduled run", async () => {
+    const api = makeFakeAssignmentApi({
+      teams: [makeTeam('T', { assignmentMax: 60 })],
+      memberships: [makeMember('m', 'T', 'u', 60)],
+      leads: [makeLead('l1'), makeLead('l2'), makeLead('l3')],
+    });
+
+    api.readPlugConfig = async () => ({ enabled: true, target: { kind: 'route', path: '/acme/assign' }, timeoutSeconds: 30, onError: 'DEFAULT', leftOut: 'DEFAULT' });
+    api.callAssignmentPlug = async () => ({ kind: 'answer', payload: { assignments: [{ leadId: 'l1', teamId: 'T', salespersonId: 'u' }] } });
+    const result = await makeAssignLeads(api)({ teamIds: ['T'], forceQuota: false, creationDeltaDays: 7, door: 'SCHEDULE', requestedBy: null });
+
+    expect(result.members.m).toEqual({ assigned: ['l2'], quota: 1 });
+    expect(api.leads.get('l3')).toMatchObject({ teamId: 'T', salespersonId: null });
+  });
+
+  it("keeps the plug's line in the report when a filter stops the run afterwards", async () => {
+    const api = makeFakeAssignmentApi({
+      teams: [makeTeam('T', { assignmentMax: 30, assignmentDomain: 'bad' })],
+      memberships: [makeMember('m', 'T', 'u', 30)],
+      leads: [makeLead('l1'), makeLead('l2')],
+      filters: { bad: 'broken' },
+    });
+
+    api.readPlugConfig = async () => ({ enabled: true, target: { kind: 'route', path: '/acme/assign' }, timeoutSeconds: 30, onError: 'DEFAULT', leftOut: 'DEFAULT' });
+    api.callAssignmentPlug = async () => ({ kind: 'answer', payload: { assignments: [{ leadId: 'l1', teamId: 'T', salespersonId: 'u' }] } });
+    const result = await makeAssignLeads(api)({ teamIds: ['T'], forceQuota: true, creationDeltaDays: 0, door: 'TEAM_BUTTON', requestedBy: 'Ann' });
+
+    expect(result.messages[0]).toBe('1 leads were assigned by the assignment plug.');
+    expect(result.errors).toHaveLength(1);
+  });
+});

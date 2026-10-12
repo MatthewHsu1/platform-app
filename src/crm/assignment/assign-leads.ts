@@ -9,15 +9,23 @@ import { translate } from 'src/shared/i18n/translate';
 const ASSIGNMENT_CLAIM_KEY = claimKey('crmLeadAssignment', 'all');
 
 // One run at a time, whichever door started it: two runs could each merge the
-// same duplicates or hand out the same team's quota twice.
-export const assignLeads = async (input: AssignLeadsInput): Promise<AssignmentResult> => {
+// same duplicates or hand out the same team's quota twice. `onStart` runs only
+// when this run holds the claim, before any lead moves.
+export const assignLeads = async (
+  input: AssignLeadsInput,
+  { onStart }: { onStart?: () => Promise<void> } = {},
+): Promise<AssignmentResult> => {
   const locale = input.locale ?? 'en';
-  const outcome = await withClaim(ASSIGNMENT_CLAIM_KEY, () => makeAssignLeads(makeAssignmentApi(locale))(input));
+  const outcome = await withClaim(ASSIGNMENT_CLAIM_KEY, async () => {
+    await onStart?.();
+
+    return makeAssignLeads(makeAssignmentApi(locale))(input);
+  });
 
   if (outcome.kind === 'done') {
     return outcome.result;
   }
   const message = translate(locale, ASSIGNMENT_MESSAGES.alreadyRunning);
 
-  return { teams: {}, members: {}, errors: [message], messages: [message], plugError: null };
+  return { teams: {}, members: {}, errors: [message], messages: [message], plugError: null, plug: null };
 };

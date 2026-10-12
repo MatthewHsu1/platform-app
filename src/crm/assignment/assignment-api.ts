@@ -1,6 +1,8 @@
 import { ASSIGNMENT_MESSAGES } from 'src/crm/assignment/assignment-messages.constant';
 import { LEAD_FILTER_CATALOGUE } from 'src/crm/assignment/lead-filter-catalogue';
 import { lookupOneHop } from 'src/crm/assignment/lookup-one-hop';
+import { CRM_ASSIGNMENT_PLUG_POINT } from 'src/crm/assignment/plug/assignment-plug.constant';
+import { validateAssignmentAnswer } from 'src/crm/assignment/plug/utils/validate-assignment-answer.util';
 import { type AssignmentApi } from 'src/crm/assignment/types/assignment-api.type';
 import { leadDayCountFilter } from 'src/crm/assignment/utils/assignment-filters.util';
 import { loadLeadContext } from 'src/crm/lead/load-lead-context';
@@ -8,10 +10,13 @@ import { findLeadDuplicates } from 'src/crm/lead/merge/find-lead-duplicates';
 import { mergeLeads } from 'src/crm/lead/merge/merge-leads';
 import { queryLeads } from 'src/crm/lead/query-leads';
 import { writeLeadsAsApplication } from 'src/crm/lead/write-leads-as-application';
+import { readCrmSettings } from 'src/crm/settings/read-crm-settings';
 import { MEMBER_SELECTION, TEAM_CONTEXT_FINDS, toMembershipRows, toTeamContext } from 'src/sales-team/load-team-context';
 import { type TeamContextLists } from 'src/sales-team/types/team-context-lists.type';
 import { toTwentyFilter } from 'src/shared/filter-editor/to-twenty-filter';
 import { translate } from 'src/shared/i18n/translate';
+import { callPlugPoint } from 'src/shared/plug/call-plug-point';
+import { readPlugConfig } from 'src/shared/plug/read-plug-config';
 import { addNote } from 'src/shared/triggers/put-back';
 import { records } from 'src/shared/triggers/records';
 
@@ -42,8 +47,7 @@ export const makeAssignmentApi = (locale: string): AssignmentApi => ({
     return toMembershipRows(rows).map((member) => ({ ...member, name: nameOf.get(member.id) ?? null }));
   },
   readStages: async () => (await loadLeadContext([])).stages,
-  // No delay is configurable yet: a lead can be assigned as soon as it is created.
-  readDelayHours: async () => 0,
+  readDelayHours: async () => (await readCrmSettings()).assignmentDelayHours,
   translateFilter: (text) => toTwentyFilter(text, LEAD_FILTER_CATALOGUE, lookupOneHop('application')),
   findLeads: (filter) => queryLeads('application', filter),
   countLeadDays: async (input) => {
@@ -86,4 +90,7 @@ export const makeAssignmentApi = (locale: string): AssignmentApi => ({
   addTeamNote: (teamId, body) =>
     addNote({ objectSingular: 'crmTeam', recordId: teamId, title: translate(locale, ASSIGNMENT_MESSAGES.noteTitle), body }),
   translateMessage: (message, values) => translate(locale, message, values),
+  readPlugConfig: () => readPlugConfig(CRM_ASSIGNMENT_PLUG_POINT),
+  callAssignmentPlug: (request) => callPlugPoint(CRM_ASSIGNMENT_PLUG_POINT, request, validateAssignmentAnswer),
+  writePlugAssignments: async (writes) => (writes.length === 0 ? [] : (await writeLeadsAsApplication(writes)).written),
 });

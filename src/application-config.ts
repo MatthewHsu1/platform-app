@@ -6,13 +6,17 @@ import {
   ANNUAL_INVENTORY_DAY_VARIABLE_UNIVERSAL_IDENTIFIER,
   ANNUAL_INVENTORY_MONTH_VARIABLE_UNIVERSAL_IDENTIFIER,
   APPLICATION_UNIVERSAL_IDENTIFIER,
+  CRM_ASSIGNMENT_VARIABLE_UNIVERSAL_IDENTIFIERS,
+  PLUG_VARIABLE_UNIVERSAL_IDENTIFIERS,
   PRODUCT_UNIT_DIGITS_VARIABLE_UNIVERSAL_IDENTIFIER,
   ROW_ACCESS_CONFIG_VARIABLE_UNIVERSAL_IDENTIFIER,
   SALES_TEAM_MEMBERSHIP_MULTI_VARIABLE_UNIVERSAL_IDENTIFIER,
   SHOW_EXPECTED_QUANTITY_COUNT_VARIABLE_UNIVERSAL_IDENTIFIER,
 } from 'src/constants/universal-identifiers';
+import { DEFAULT_PLUG_POINTS } from 'src/crm/assignment/plug/assignment-plug.constant';
 import { EMPTY_ROW_ACCESS_CONFIG } from 'src/roles/constants/empty-row-access-config.constant';
 import { ROW_ACCESS_CONFIG_VARIABLE_KEY } from 'src/roles/constants/row-access-config-variable-key.constant';
+import { PLUG_POINTS_VARIABLE_KEY } from 'src/shared/plug/plug-points-variable-key.constant';
 import { REPLENISHMENT_HORIZON_DAYS_VARIABLE_UNIVERSAL_IDENTIFIER } from 'src/stock/routing-universal-identifiers.constant';
 
 export default defineApplication({
@@ -78,6 +82,78 @@ export default defineApplication({
       type: FieldType.BOOLEAN,
       value: false,
       isSecret: false,
+    },
+    CRM_LEAD_AUTO_ASSIGNMENT: {
+      universalIdentifier: CRM_ASSIGNMENT_VARIABLE_UNIVERSAL_IDENTIFIERS.autoAssignment,
+      label: 'Rule-based assignment',
+      description: 'Assign unassigned leads to sales teams and salespeople by their filters and capacity.',
+      type: FieldType.BOOLEAN,
+      value: false,
+      isSecret: false,
+    },
+    CRM_AUTO_ASSIGNMENT_ACTION: {
+      universalIdentifier: CRM_ASSIGNMENT_VARIABLE_UNIVERSAL_IDENTIFIERS.autoAssignmentAction,
+      label: 'Assignment runs',
+      description: 'Manually: only from the buttons. Repeatedly: also on a schedule.',
+      type: FieldType.SELECT,
+      options: [
+        { label: 'Manually', value: 'MANUAL' },
+        { label: 'Repeatedly', value: 'AUTO' },
+      ],
+      value: 'MANUAL',
+      isSecret: false,
+    },
+    CRM_AUTO_ASSIGNMENT_INTERVAL_NUMBER: {
+      universalIdentifier: CRM_ASSIGNMENT_VARIABLE_UNIVERSAL_IDENTIFIERS.intervalNumber,
+      label: 'Repeat every',
+      description: 'How many units between two scheduled runs, 1 to 99.',
+      type: FieldType.NUMBER,
+      value: 1,
+      isSecret: false,
+    },
+    CRM_AUTO_ASSIGNMENT_INTERVAL_TYPE: {
+      universalIdentifier: CRM_ASSIGNMENT_VARIABLE_UNIVERSAL_IDENTIFIERS.intervalType,
+      label: 'Repeat unit',
+      description: 'The unit of the repeat interval.',
+      type: FieldType.SELECT,
+      options: [
+        { label: 'Minutes', value: 'MINUTES' },
+        { label: 'Hours', value: 'HOURS' },
+        { label: 'Days', value: 'DAYS' },
+        { label: 'Weeks', value: 'WEEKS' },
+      ],
+      value: 'DAYS',
+      isSecret: false,
+    },
+    CRM_AUTO_ASSIGNMENT_NEXT_RUN: {
+      universalIdentifier: CRM_ASSIGNMENT_VARIABLE_UNIVERSAL_IDENTIFIERS.nextRun,
+      label: 'Next scheduled run',
+      description: 'When the schedule next assigns leads. Empty means at the next check.',
+      type: FieldType.DATE_TIME,
+      isSecret: false,
+    },
+    CRM_ASSIGNMENT_DELAY_HOURS: {
+      universalIdentifier: CRM_ASSIGNMENT_VARIABLE_UNIVERSAL_IDENTIFIERS.delayHours,
+      label: 'Assignment delay (hours)',
+      description: 'A new lead waits this long before it can be assigned.',
+      type: FieldType.NUMBER,
+      value: 0,
+      isSecret: false,
+    },
+    [PLUG_POINTS_VARIABLE_KEY]: {
+      universalIdentifier: PLUG_VARIABLE_UNIVERSAL_IDENTIFIERS.plugPoints,
+      label: 'Plug points',
+      description: 'Where a company rule replaces a built-in decision. Edited on the CRM settings page.',
+      type: FieldType.RAW_JSON,
+      value: JSON.stringify(DEFAULT_PLUG_POINTS),
+      isSecret: false,
+    },
+    PLUG_KEY_CRM_ASSIGNMENT_V1: {
+      universalIdentifier: PLUG_VARIABLE_UNIVERSAL_IDENTIFIERS.crmAssignmentKey,
+      label: 'Lead assignment plug key',
+      description: 'Sent as the bearer token to an outside lead assignment address.',
+      type: FieldType.TEXT,
+      isSecret: true,
     },
   },
 });

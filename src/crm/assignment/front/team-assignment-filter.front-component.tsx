@@ -100,7 +100,36 @@ export const ASSIGNMENT_RUN_TEXTS = [
   msg('Lead assignment stopped: the filter of team {team} cannot be used. {reason}'),
   msg('Lead assignment stopped: the filters of {member} in team {team} cannot be used. {reason}'),
   msg('The assignment plug failed: {reason}'),
+  msg('{count} leads were assigned by the assignment plug.'),
   msg('A lead assignment is already running. Try again in a moment.'),
+];
+
+// Why a plug call failed (src/shared/plug/plug-failure-messages.constant.ts),
+// listed for the extractor the same way.
+export const PLUG_FAILURE_TEXTS = [
+  msg('The plug point is not turned on.'),
+  msg('The plug point has no target.'),
+  msg('A plug point route must be a path such as /app-name/route.'),
+  msg('The plug point address is not a valid URL.'),
+  msg('An outside plug point address must use https.'),
+  msg('The plug point did not answer within {seconds} s.'),
+  msg('The plug point could not be reached: {detail}'),
+  msg('The plug point answered with HTTP {status}.'),
+  msg('The plug point answer is not JSON.'),
+  msg('The plug point answer does not match the request.'),
+  msg('The plug point answer is not valid: {reason}'),
+];
+
+// Why a lead assignment plug's answer is refused
+// (src/crm/assignment/plug/assignment-answer-messages.constant.ts), listed for
+// the extractor the same way.
+export const ASSIGNMENT_ANSWER_TEXTS = [
+  msg('The answer has no list of assignments.'),
+  msg('Assignment {position} is not an object.'),
+  msg('Lead {leadId} was not in the request.'),
+  msg('Lead {leadId} is assigned twice.'),
+  msg('Team {teamId} was not in the request.'),
+  msg('Salesperson {salespersonId} is not a member of team {teamId} who takes leads.'),
 ];
 
 // Checks the filter as the clicking user, with a filter error in their language.
