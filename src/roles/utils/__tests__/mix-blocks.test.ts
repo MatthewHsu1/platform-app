@@ -169,4 +169,8 @@ describe('mixedRoleLabel and mixedRoleId', () => {
     expect(mixedRoleId('ws-1', own)).not.toBe(mixedRoleId('ws-2', own));
     expect(mixedRoleId('ws-1', own)).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   });
+
+  it('refuses a block key with a colon, which would give two different key lists one id', () => {
+    expect(() => mixedRoleId('ws-1', ['employee:sales.own'])).toThrow('A building block key cannot contain ":" (employee:sales.own).');
+  });
 });
