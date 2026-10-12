@@ -1,8 +1,10 @@
 import { assignLeads } from 'src/crm/assignment/assign-leads';
 import { ASSIGNMENT_ROUTE_MESSAGES } from 'src/crm/assignment/assignment-route-messages.constant';
 import { type AssignmentDoor } from 'src/crm/assignment/types/assignment-door.type';
-import { isSalesAdministrator } from 'src/crm/settings/is-sales-administrator';
-import { readSignedInMember } from 'src/shared/current-member';
+import { holdsSalesAdministrator } from 'src/crm/settings/utils/holds-sales-administrator.util';
+import { NoPersonBehindRequestError } from 'src/roles/no-person-behind-request.error';
+import { readCallerAccess } from 'src/roles/read-caller-access';
+import { readCurrentMember } from 'src/shared/current-member';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
 import { notAllowedResponse } from 'src/shared/not-allowed';
@@ -23,11 +25,18 @@ export const runManualAssignment = async ({
   const locale = await readUserLocale().catch(() => 'en');
 
   try {
-    const member = await readSignedInMember();
+    const access = await readCallerAccess().catch((error: unknown) => {
+      if (error instanceof NoPersonBehindRequestError) {
+        return null;
+      }
+      throw error;
+    });
 
-    if (member === null || !(await isSalesAdministrator())) {
+    if (access === null || access.workspaceMemberId === null || !holdsSalesAdministrator(access)) {
       return jsonResponse(403, { error: translate(locale, ASSIGNMENT_ROUTE_MESSAGES.onlySalesAdministrators) });
     }
+    const member = await readCurrentMember();
+
     const teams = await readTeamIds(locale);
 
     if ('error' in teams) {
@@ -38,7 +47,7 @@ export const runManualAssignment = async ({
       forceQuota: true,
       creationDeltaDays: 0,
       door,
-      requestedBy: member.name,
+      requestedBy: member?.name ?? null,
       locale,
     });
 

@@ -438,4 +438,22 @@ describe('assignLeads with the assignment plug', () => {
     expect(result.messages[0]).toBe('1 leads were assigned by the assignment plug.');
     expect(result.errors).toHaveLength(1);
   });
+
+  it('sends the plug each lead with its tags and language', async () => {
+    const api = makeFakeAssignmentApi({
+      teams: [makeTeam('T', { assignmentMax: 30 })],
+      memberships: [makeMember('m', 'T', 'u', 30)],
+      leads: [makeLead('l1', { tags: ['OTHER'], language: 'EN_US' })],
+    });
+    let sent: { tags: string[]; language: string | null }[] = [];
+
+    api.readPlugConfig = async () => ({ enabled: true, target: { kind: 'route', path: '/acme/assign' }, timeoutSeconds: 30, onError: 'DEFAULT', leftOut: 'UNTOUCHED' });
+    api.callAssignmentPlug = async (request) => {
+      sent = request.leads.map((lead) => ({ tags: lead.tags, language: lead.language }));
+      return { kind: 'answer', payload: { assignments: [] } };
+    };
+    await makeAssignLeads(api)({ teamIds: ['T'], forceQuota: true, creationDeltaDays: 0, door: 'TEAM_BUTTON', requestedBy: 'Ann' });
+
+    expect(sent).toEqual([{ tags: ['OTHER'], language: 'EN_US' }]);
+  });
 });

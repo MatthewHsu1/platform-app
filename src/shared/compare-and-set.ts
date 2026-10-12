@@ -1,6 +1,5 @@
 import { requireData, twentyGraphql } from 'src/shared/twenty-graphql';
-
-const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+import { capitalize } from 'src/shared/utils/capitalize.util';
 
 export const updateWhere = async ({
   objectSingular,

@@ -8,10 +8,12 @@ const makeApi = ({
   deleted = [],
   linked = [],
   refusedByFilter = [],
+  checkProblems = [],
 }: {
   deleted?: { id: string; seedKey: string | null }[];
   linked?: string[];
   refusedByFilter?: string[];
+  checkProblems?: string[];
 }) => {
   const calls: string[] = [];
   const restored: { id: string; reason: string }[] = [];
@@ -47,7 +49,7 @@ const makeApi = ({
     },
     checkAssignmentFilters: async (changes: AssignmentFilterChange[]) => {
       calls.push(`check ${changes.map((change) => `${change.operation} ${change.recordId}`).join(',')}`);
-      return { refused: refusedByFilter.map((recordId) => ({ recordId, reason: `refused ${recordId}` })), problems: [] };
+      return { refused: refusedByFilter.map((recordId) => ({ recordId, reason: `refused ${recordId}` })), problems: checkProblems };
     },
     memberLocale: async () => 'en',
     translate: (_locale: string | null, message: string) => message,
@@ -122,5 +124,18 @@ describe('team trigger', () => {
 
     expect(calls).toEqual(['check created bad', 'fold bad', 'leads bad', 'destroy links bad', 'destroy members bad', 'destroy bad']);
     expect(colored).toEqual(['plain']);
+  });
+
+  it('keeps a new team and fails when its filter could not be checked', async () => {
+    const { api, calls } = makeApi({ checkProblems: ['crmTeam T: Run the filter: Internal server error'] });
+
+    await expect(
+      makeRunTeamTrigger(api)({
+        operation: 'created',
+        events: [{ recordId: 'T', properties: { after: { color: 'red', assignmentDomain: '{"rules":[1]}' } } }],
+      }),
+    ).rejects.toThrow('Internal server error');
+
+    expect(calls).toEqual(['check created T']);
   });
 });

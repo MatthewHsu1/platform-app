@@ -1,8 +1,8 @@
 import { type OneHopLookup } from 'src/shared/filter-editor/types/one-hop-lookup.type';
 import { type GraphqlCaller, requireData, twentyGraphql } from 'src/shared/twenty-graphql';
+import { capitalize } from 'src/shared/utils/capitalize.util';
 
 const PAGE_SIZE = 200;
-const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
 
 type IdPage = Record<string, { edges: { node: { id: string } }[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }>;
 

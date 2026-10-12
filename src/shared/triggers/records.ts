@@ -1,8 +1,8 @@
 import { requireData, twentyGraphql } from 'src/shared/twenty-graphql';
 import { emptyTextToNull } from 'src/shared/utils/empty-text-to-null.util';
 import { chunks } from 'src/shared/utils/chunks.util';
+import { capitalize } from 'src/shared/utils/capitalize.util';
 
-const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
 const PAGE_SIZE = 200;
 // Twenty's MUTATION_MAXIMUM_AFFECTED_RECORDS default.
 export const MUTATION_MAXIMUM_RECORDS = 100;

@@ -43,7 +43,8 @@ export const makeMergeLeads =
       teamId,
       maxLength = MERGE_LIMIT,
       caller,
-    }: { salespersonId?: string | null; teamId?: string | null; maxLength?: number; caller: GraphqlCaller },
+      locale: givenLocale,
+    }: { salespersonId?: string | null; teamId?: string | null; maxLength?: number; caller: GraphqlCaller; locale?: string },
   ) => {
     const ids = [...new Set(leadIds)];
 
@@ -68,7 +69,8 @@ export const makeMergeLeads =
 
     await api.requireUpdateRight(caller);
 
-    const locale = await api.readLocale(caller);
+    // A run with the app token passes the language of the person who started it.
+    const locale = givenLocale ?? (await api.readLocale(caller));
     const label = (message: string, values?: Record<string, string | number>) => translate(locale, message, values);
     const summary = planMergeSummary({ tails, names: await api.readNames(leads, context), label });
 

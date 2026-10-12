@@ -18,9 +18,8 @@ import { type StageRow } from 'src/crm/lead/types/stage-row.type';
 import { type TeamRow } from 'src/sales-team/team/types/team-row.type';
 import { sortTeams } from 'src/sales-team/team/utils/sort-teams.util';
 import { storedFilterHasConditions } from 'src/shared/filter-editor/stored-filter';
-import { FilterError } from 'src/shared/filter-editor/to-twenty-filter';
+import { isFilterRefusal } from 'src/shared/filter-editor/is-filter-refusal';
 import { translateFilterError } from 'src/shared/filter-editor/translate-filter-error';
-import { GraphqlInputError } from 'src/shared/twenty-graphql';
 
 const ID_CHUNK = 100;
 
@@ -34,7 +33,7 @@ const usingFilter = async <TResult>(api: AssignmentApi, describe: (reason: strin
   try {
     return await work();
   } catch (error) {
-    if (!(error instanceof FilterError || error instanceof GraphqlInputError)) {
+    if (!isFilterRefusal(error)) {
       throw error;
     }
     throw new AssignmentStop(describe(translateFilterError(error, api.translateMessage)));

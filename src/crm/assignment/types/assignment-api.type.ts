@@ -18,7 +18,8 @@ export type AssignmentApi = {
   readStages: () => Promise<StageRow[]>;
   readDelayHours: () => Promise<number>;
   translateFilter: (text: string | null) => Promise<Record<string, unknown> | null>;
-  findLeads: (filter: Record<string, unknown>) => Promise<LeadRow[]>;
+  // Tags and language are read only when asked: the plug request sends them.
+  findLeads: (filter: Record<string, unknown>, options?: { withTagsAndLanguage?: boolean }) => Promise<LeadRow[]>;
   countLeadDays: (input: { teamIds: string[]; userIds: string[]; since: Date }) => Promise<Map<string, number>>;
   findDuplicateIds: (lead: LeadRow) => Promise<string[]>;
   writeTeam: (leadId: string, teamId: string) => Promise<boolean>;

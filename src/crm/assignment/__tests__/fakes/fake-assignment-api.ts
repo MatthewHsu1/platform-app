@@ -125,7 +125,11 @@ export const makeFakeAssignmentApi = ({
       }
       return filter;
     },
-    findLeads: async (filter) => [...store.values()].filter((lead) => matchesTwentyFilter(filter, lead as unknown as Record<string, unknown>)),
+    // As the real read: tags and language come back empty unless asked for.
+    findLeads: async (filter, options) =>
+      [...store.values()]
+        .filter((lead) => matchesTwentyFilter(filter, lead as unknown as Record<string, unknown>))
+        .map((lead) => (options?.withTagsAndLanguage === true ? lead : { ...lead, tags: null, language: null })),
     countLeadDays: async ({ teamIds, userIds, since }) => {
       const counts = new Map<string, number>();
 

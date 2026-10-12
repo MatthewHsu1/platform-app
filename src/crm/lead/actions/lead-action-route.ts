@@ -10,7 +10,7 @@ import { translate } from 'src/shared/i18n/translate';
 import { notAllowedResponse } from 'src/shared/not-allowed';
 import { jsonResponse, readBody } from 'src/shared/route-response';
 import { MUTATION_MAXIMUM_RECORDS } from 'src/shared/triggers/records';
-import { GraphqlForbiddenError, requireData, twentyGraphql } from 'src/shared/twenty-graphql';
+import { GraphqlForbiddenError, type GraphqlResponse, requireData, twentyGraphql } from 'src/shared/twenty-graphql';
 import { UserError } from 'src/shared/user-error';
 import { chunks } from 'src/shared/utils/chunks.util';
 
@@ -35,18 +35,22 @@ export const readLeadId = (body: Record<string, unknown>) => {
 };
 
 // Reads as the clicking user, so a lead their row rule hides is "not found". A read their role refuses, or
-// one that fails, throws instead.
-export const findLead = async <TLead>(leadId: string, selection: string) =>
-  requireData(
-    await twentyGraphql<{ crmLead: TLead | null }>(
-      'person',
-      `query LeadForAction($id: UUID!) {
-        crmLead(filter: { id: { eq: $id } }) { ${selection} }
-      }`,
-      { id: leadId },
-    ),
-    'Read the lead',
-  ).crmLead;
+// one that fails, throws instead. The list query answers an empty list for a lead that is gone, where the
+// one-record query fails with "Record not found".
+export const makeFindLead =
+  (query: (query: string, variables: Record<string, unknown>) => Promise<GraphqlResponse<{ crmLeads: { edges: { node: unknown }[] } }>>) =>
+  async <TLead>(leadId: string, selection: string): Promise<TLead | null> =>
+    (requireData(
+      await query(
+        `query LeadForAction($id: UUID!) {
+          crmLeads(filter: { id: { eq: $id } }, first: 1) { edges { node { ${selection} } } }
+        }`,
+        { id: leadId },
+      ),
+      'Read the lead',
+    ).crmLeads.edges[0]?.node ?? null) as TLead | null;
+
+export const findLead = makeFindLead((query, variables) => twentyGraphql('person', query, variables));
 
 export const applyLeadUpdate = async (leadId: string, plan: LeadUpdatePlan) => {
   if (plan.kind === 'refuse') {

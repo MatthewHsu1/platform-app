@@ -49,7 +49,7 @@ export const makeAssignmentApi = (locale: string): AssignmentApi => ({
   readStages: async () => (await loadLeadContext([])).stages,
   readDelayHours: async () => (await readCrmSettings()).assignmentDelayHours,
   translateFilter: (text) => toTwentyFilter(text, LEAD_FILTER_CATALOGUE, lookupOneHop('application')),
-  findLeads: (filter) => queryLeads('application', filter),
+  findLeads: (filter, options) => queryLeads('application', filter, { withScoringFields: options?.withTagsAndLanguage === true }),
   countLeadDays: async (input) => {
     const counts = new Map<string, number>();
     const found = await leadRecords.find<{ id: string; teamId: string | null; salespersonId: string | null }>(
@@ -81,7 +81,7 @@ export const makeAssignmentApi = (locale: string): AssignmentApi => ({
 
     return written.includes(leadId);
   },
-  mergeLeads: (leadIds) => mergeLeads(leadIds, { maxLength: 0, caller: 'application' }),
+  mergeLeads: (leadIds) => mergeLeads(leadIds, { maxLength: 0, caller: 'application', locale }),
   writeAssignment: async (leadId, data) => {
     const { written } = await writeLeadsAsApplication([{ leadId, data, guard: { salespersonId: { is: 'NULL' } } }]);
 

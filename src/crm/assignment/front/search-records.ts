@@ -1,9 +1,9 @@
 import { escapeLike } from 'src/shared/utils/escape-like.util';
 import { type RecordSearch } from 'src/shared/filter-editor/types/record-search.type';
 import { queryAsUser } from 'src/shared/front-components/query-as-user';
+import { capitalize } from 'src/shared/utils/capitalize.util';
 
 const RESULT_LIMIT = 20;
-const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
 const SINGULAR_BY_PLURAL: Record<string, string> = { people: 'person', companies: 'company' };
 const singularOf = (objectPlural: string) => SINGULAR_BY_PLURAL[objectPlural] ?? objectPlural.replace(/s$/, '');
 

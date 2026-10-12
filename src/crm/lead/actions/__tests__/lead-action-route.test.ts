@@ -2,7 +2,7 @@ import { type RoutePayload } from 'twenty-sdk/define';
 import { describe, expect, it } from 'vitest';
 
 import { LeadActionError } from 'src/crm/lead/actions/lead-action-error';
-import { makeLeadRouteErrors, makeLeadRouteHandler } from 'src/crm/lead/actions/lead-action-route';
+import { makeFindLead, makeLeadRouteErrors, makeLeadRouteHandler } from 'src/crm/lead/actions/lead-action-route';
 import { jsonResponse } from 'src/shared/route-response';
 import { type GraphqlResponse, requireData } from 'src/shared/twenty-graphql';
 
@@ -73,5 +73,19 @@ describe('lead route handler', () => {
       error: 'Your role does not allow this.',
       detail: 'Update leads: Permission denied on crmLead',
     });
+  });
+});
+
+describe('reading the lead a button works on', () => {
+  it('reads a lead that is gone or hidden from the user as not found, not as an error', async () => {
+    const findLead = makeFindLead(async () => ({ data: { crmLeads: { edges: [] } }, caller: 'person' }));
+
+    expect(await findLead('missing', 'id')).toBeNull();
+  });
+
+  it('reads the lead when the user can see it', async () => {
+    const findLead = makeFindLead(async () => ({ data: { crmLeads: { edges: [{ node: { id: 'L' } }] } }, caller: 'person' }));
+
+    expect(await findLead('L', 'id')).toEqual({ id: 'L' });
   });
 });

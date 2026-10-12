@@ -47,10 +47,13 @@ export const runPlug = async ({
   }
   const delayHours = await api.readDelayHours();
   const teamsWithMembers = teams.filter((team) => memberships.some((member) => member.teamId === team.id)).map((team) => team.id);
+  const withTagsAndLanguage = { withTagsAndLanguage: true };
   const waitingForTeam = await api.findLeads(
     allocationCandidateFilter({ teamFilter: null, now, delayHours, creationDeltaDays: input.creationDeltaDays }),
+    withTagsAndLanguage,
   );
-  const waitingForSalesperson = teamsWithMembers.length === 0 ? [] : await api.findLeads(assignableLeadFilter(teamsWithMembers));
+  const waitingForSalesperson =
+    teamsWithMembers.length === 0 ? [] : await api.findLeads(assignableLeadFilter(teamsWithMembers), withTagsAndLanguage);
   const leads = [...new Map([...waitingForTeam, ...waitingForSalesperson].map((lead) => [lead.id, lead])).values()];
   const { dayCounts, quotas } = await readQuotas(api, input, now, memberships);
   const call = await api.callAssignmentPlug(

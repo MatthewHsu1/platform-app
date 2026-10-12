@@ -3,10 +3,9 @@ import { type InstallApi } from 'src/shared/install/utils/run-install.util';
 import { records } from 'src/shared/triggers/records';
 import { requireData, twentyGraphql, twentyMetadata } from 'src/shared/twenty-graphql';
 import { textOrNull } from 'src/shared/utils/text-or-null.util';
+import { capitalize } from 'src/shared/utils/capitalize.util';
 
 const FLAG_OFF_MESSAGE = 'Feature flag "IS_VALIDATION_RULES_ENABLED" is not enabled';
-
-const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
 
 // No person runs an install, so every call uses the app role alone.
 export const twentyInstallApi: InstallApi = {

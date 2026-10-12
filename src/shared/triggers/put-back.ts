@@ -5,8 +5,7 @@ import { requireData, twentyGraphql } from 'src/shared/twenty-graphql';
 import { chunks } from 'src/shared/utils/chunks.util';
 import { derivedId } from 'src/shared/utils/derived-id.util';
 import { randomId } from 'src/shared/utils/random-id.util';
-
-const capitalize = (name: string) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+import { capitalize } from 'src/shared/utils/capitalize.util';
 
 // A note attaches to a record through a target field named after the object.
 const noteTargetFieldName = (objectSingular: string) => `target${capitalize(objectSingular)}Id`;
