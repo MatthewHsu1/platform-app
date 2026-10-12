@@ -10,15 +10,12 @@ Our generic business app for Twenty, with a CRM, units of measure and a product 
 | `src/uom/` | Units of measure (`uomUom`) with 30 default units |
 | `src/product/` | Products (`productTemplate`), variants (`productProduct`), categories, tags, attributes and values, attribute lines, exclusions, packaging barcodes, vendor prices, pricelists and rules, combos |
 | `src/stock/`, `src/stock-picking-batch/`, `src/product-expiry/`, `src/base/` | Inventory: warehouses, locations, operation types, transfers, moves, stock levels, counts, scrap, returns, backorders, routes and rules, putaway, storage categories, lots and serial numbers, expiry dates, packages, consignment, reordering rules, batch and wave transfers, reports, printing, the delivery signature. `src/base/` holds number sequences |
-| `src/row-access/` | Row access: the settings tab that picks the owner-only objects, their owner field and the roles that see every row. The rules are the `ROW_ACCESS_CONFIG` variable |
 | `src/shared/install/` | The post-install hook |
-| `src/roles/` | The role the logic functions and the settings page run with, and three roles for staff, assigned to nobody: Inventory User, Inventory Administrator, Products: Create (`inventory-role-table.ts` lists their rights per object) |
+| `src/roles/` | Staff access: building blocks (Employee, Inventory User and Administrator, Products: Create, Sales: Own Documents, All Documents and Administrator), the Roles page, and the sync that makes one Twenty role per mix of blocks and writes the row rules. Also the role the logic functions run with |
 
 Later modules, each with its own design: Sales, Purchase, Work cases, Field service.
 
-The application universal id must equal the server constant
-`SPIRIT_PLATFORM_APPLICATION_UNIVERSAL_IDENTIFIER`: the server reads the row access rules from
-this app and allows rules on its objects.
+The application universal id is named in the server settings `OWNER_ROW_ACCESS_APPLICATION_UNIVERSAL_IDENTIFIER` and `ROLE_MANAGER_APPLICATION_UNIVERSAL_IDENTIFIERS` (twenty/compose.yaml): the server reads the row rules from this app, allows rules on its objects, and lets it write roles.
 
 ## Three kinds of field
 
@@ -33,38 +30,66 @@ option `WON` only while staff keep it.
 
 ## The install hook
 
-`definePostInstallLogicFunction`, run on install and on every upgrade. It only adds what is
-missing and never changes what exists:
+`definePostInstallLogicFunction`, run on install and on every upgrade. Apart from the last step
+below, it only adds what is missing and never changes what exists:
 
 1. Staff lists that are missing on their object.
 2. Default rows, only on the first install of 2.x (fresh, or over the 1.x app), so rows staff
    delete stay deleted.
 3. Boards that are missing by name (the Pipeline board, grouped by Stage, hiding lost leads).
    Twenty v2.42+ lets an app token create views when its role has the Views flag.
+4. Rebuilds the mixed roles from the building blocks, deletes the ones nobody holds, and writes
+   the row rules.
 
-The app role has the Data Model and Views permission flags for this, and Applications and
-Roles for the row access page. It is not see-all.
+The app role has the Data Model and Views permission flags for this, and Applications and Roles for the roles sync. The server lets it read every row.
 Twenty refuses a SELECT or MULTI_SELECT with no options, so Tags starts with one option, Other.
 
-## Row access
+## Roles and row access
 
-A signed-in user sees only the records they own on the objects an admin protects. Our Twenty
-fork enforces the rule (`twenty/source`, module
-`packages/twenty-server/src/engine/twenty-orm/spirit-row-access/`); Platform holds the settings
-page and the rules. Design: `docs/superpowers/specs/2026-09-27-twenty-owner-row-access-design.md`
-and `docs/superpowers/specs/2026-10-07-platform-row-access-design.md`.
+A person's access is a set of **building blocks**, one level per module, set on Platform's
+**Roles** page (Settings → Applications → Platform → Roles; Admin, or anyone whose role holds the Roles
+permission). Employee is always included: it opens every object Platform does not own — Twenty's
+own objects, objects admins make, and other apps' objects — with Twenty's Member rights in full
+(read, edit, delete, destroy); Platform's own objects stay closed unless a block opens them.
+Each module block opens that module's objects. Platform makes **one Twenty role per mix** (label like "Employee + Inventory
+User + Sales: Own Documents"), gives it to the person, and deletes a mix nobody holds. Two people
+with the same mix share its role. Rights add up across blocks; an object no block opens stays
+closed.
 
-- The rules are Platform's `ROW_ACCESS_CONFIG` variable (JSON, not secret). Installed value:
-  `{"version":1,"rules":[],"seeAllRoleIds":[]}`, which filters nothing.
-- The page is Platform's settings tab (Settings → Applications → Platform). It offers Company,
-  Opportunity, Task, the workspace's own custom objects and Platform's objects (Lead) that have
-  an owner field (a relation to a workspace member), and the roles that see every row. Admin
-  always sees every row. Saving needs the Applications and Roles permissions.
-- Row access is always on in the fork; there is no switch. Platform not installed, or no rule
-  enabled: Twenty behaves as upstream. A saved value the server cannot read or validate hides
-  every owner object from non-admins until an admin saves a valid one.
-- The rules hold workspace ids (object, field, role), so they are set per workspace on the page.
-- Uninstalling Platform deletes the rules with its objects: Twenty then behaves as upstream.
+| Module | Levels |
+| --- | --- |
+| Inventory | None, User, Administrator |
+| Products | None, Create |
+| Sales | None, Own Documents, All Documents, Administrator |
+
+**Row rules.** Each block may limit which rows of an object a person sees: `all`, `mine` (they are
+the owner) or `mineOrUnowned` (they are the owner, or nobody is). A mix joins its blocks' rules on
+each object and the widest wins; a block with no rule there does not widen it. Today: Lead
+(owner field Salesperson) — Sales: Own Documents sees their own and unowned leads, All Documents
+and Administrator see all. A person may create or change a row only so that it stays inside their
+rule: a rep cannot give a lead to someone else. Admin and Platform's own role see every row. Any
+other role (Twenty's Member, a role made by hand, an API key's role) sees only its own rows on a
+ruled object. Twenty's own Company, Opportunity and Task have no rule.
+
+The rules are Platform's `ROW_ACCESS_CONFIG` variable, written by Platform on every Roles page
+save, install and daily run; do not edit it. Our Twenty fork enforces them (module
+`packages/twenty-server/src/engine/twenty-orm/owner-row-access/` in `twenty/source`). A value the
+server cannot read hides ruled objects from everyone but Admin and Platform until the next run
+writes a good one. Platform not installed: no rules, Twenty behaves as upstream.
+
+**New people** get Twenty's default role (Member) until an admin sets their levels. **Restrict
+Member by hand** in Settings → Roles (no rights on Platform's objects): until then a new person has
+Member's full rights on every object, Platform's included. Twenty does not let anyone change their
+own role, so another admin sets yours. Admins keep Twenty's Admin role.
+
+Twenty's Members page still works: an admin may pick a mixed role there, and the Roles page reads
+it back into its levels. Building blocks are not roles and never show there.
+
+Mixed roles are owned by the workspace's Custom application, so they are ordinary workspace roles: an admin can edit a mixed role's rights by hand in Settings → Roles, and Platform's next sync (any save on the Roles page, the install, the daily job) puts them back. Uninstalling Platform leaves the mixed roles and their holders as they are; delete them by hand if you uninstall.
+
+A building block that a later Platform version removes leaves the roles that used it ignored by the sync. Their holders see only their own records on ruled objects until an admin saves them again on the Roles page.
+
+**Release notes.** Production needs `TWENTY_ROLE_MANAGER_APPLICATION_UNIVERSAL_IDENTIFIERS` and `TWENTY_OWNER_ROW_ACCESS_APPLICATION_UNIVERSAL_IDENTIFIER` in `secrets/prod.env` before the new image runs. Nobody's role changes on release. The admin then restricts Twenty's Member role by hand (this closes Platform's objects to it) and sets each person's levels on the Roles page. Platform's own role needs no setting: the fork lets it see every row.
 
 ## Products
 
@@ -172,20 +197,7 @@ back with a note ("Change undone", "Delete undone"); a refused new row is remove
 | `SHOW_EXPECTED_QUANTITY_COUNT` | off | Print the quantity on hand on count sheets |
 | `PRODUCT_UNIT_DIGITS` | 2 | Decimals of quantities |
 
-**Roles.** The app ships three member roles, assigned to nobody: Inventory User, Inventory
-Administrator, Products: Create. An admin assigns them in Settings → Roles. A member holds one
-role, so there are no combined roles yet. Buttons that only a stock manager may use (Clear and
-Set to 0 on counts, Request a Count, Lock and Unlock, Relocate, the count conflict pop-up) need the
-right to update warehouses, which only Inventory Administrator has. Sign needs the right to update
-the transfer. The shipped roles keep Twenty's Member defaults for every other object, except
-that they may not destroy records. An admin's edit to a shipped role is undone by the next
-upgrade, because the app's definition wins: make a copy of a role to customise it.
-
-**Row access and Platform buttons.** While a row access rule is on, tick "Platform function role"
-on the see-all roles list (Settings → Applications → Platform), next to Admin and any role that
-must see every row. At the gate, with a rule on transfers and only Admin on the list, an Admin saw
-every transfer in Twenty's plain lists but only their own through Platform routes (the Overview
-counts, prints, Sign, Reserve); with the role ticked as well, the Admin saw all.
+**Roles.** Inventory access is the Inventory and Products blocks on the Roles page (see "Roles and row access"). Buttons that only a stock manager may use (Clear and Set to 0 on counts, Request a Count, Lock and Unlock, Relocate, the count conflict pop-up) need the right to update warehouses, which only Inventory Administrator has. Sign needs the right to update the transfer. An object a block does not list stays closed to it.
 
 **Screens.** Record pages are Twenty's own page with every field on the left; the app adds tabs
 for related lists and reports. Inventory lists open with at most 10 columns; the other fields are
@@ -247,8 +259,7 @@ on printed documents.
 - Buttons run as the clicking user (their role intersected with the app role), so the row
   rule applies: a rep cannot see or change another rep's lead. Each logic function checks the
   lead's state again; hiding a button is not a guard.
-- A lead made by a user gets the creator as salesperson (fork behaviour). A lead made by an API
-  key has none: only admins and see-all roles see it until someone sets it.
+- A lead made by a person gets the creator as salesperson (the lead trigger). A lead made by an API key or by Platform itself has none: people with Sales: Own Documents see it, and anyone with a wider rule.
 - Logic functions need `LOGIC_FUNCTION_TYPE=LOCAL` on the server and worker.
 
 ## Build and test
@@ -262,8 +273,8 @@ yarn twenty dev:build --tarball   # .twenty/output/platform-<version>.tgz
 ```
 
 The server's row access integration specs install that tarball. They find it through
-`SPIRIT_PLATFORM_APP_DIR`, or by default in this folder's `.twenty/output`. Run them with
-`SERVER_URL=http://localhost:4000`, so the install hook reaches the test server.
+`OWNER_ROW_ACCESS_APP_DIR`, or by default in this folder's `.twenty/output`. Run them with
+`SERVER_URL=http://localhost:4000` and `OWNER_ROW_ACCESS_APPLICATION_UNIVERSAL_IDENTIFIER=39a89e81-0862-4929-a8ae-7a897d52f0a3`, so the install hook reaches the test server.
 
 ## Publish
 

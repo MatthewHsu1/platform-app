@@ -131,20 +131,18 @@ const readOnly = (objectUniversalIdentifier: string) => ({
   canDestroyObjectRecords: false,
 });
 
-// Buttons and the row access settings page run as the signed-in user
-// intersected with this role, so a user gains nothing through it. The
-// install hook runs with this role alone: Data Model and Views let it make
-// the staff lists and the Pipeline board. Applications and Roles let the
-// settings page save Platform's row access variable and list roles. With
-// them the role can also list installed apps and edit timeline activity type
-// labels; Twenty refuses role changes, installs and workspace settings to
-// application tokens. Upload lets the sign route save the signature and the
-// signed delivery slip on a transfer.
+// Buttons and the Roles page run as the signed-in user intersected with this role, so a user gains
+// nothing through it. The install hook, triggers and the daily job run with this role alone; the
+// server lets this role read every row, so they see what they must keep consistent. Data Model and
+// Views let the install hook make the staff lists and boards. Applications lets the sync write the
+// row rules variable; Roles lets it make, rebuild, give and delete the mixed roles (the server lists
+// Platform as an application that may write roles). Upload lets the sign route save the signature
+// and the signed delivery slip on a transfer.
 export default defineApplicationRole({
   universalIdentifier: FUNCTION_ROLE_UNIVERSAL_IDENTIFIER,
   label: `${APP_DISPLAY_NAME} function role`,
   description:
-    'Runs the install hook, the CRM triggers, the lead buttons and the row access settings page.',
+    'Runs the install hook, the triggers, the daily job, the buttons and the Roles page.',
   canReadAllObjectRecords: false,
   canUpdateAllObjectRecords: false,
   canSoftDeleteAllObjectRecords: false,

@@ -1,1 +1,1 @@
-export type DailyJobStep = { order: number; name: string; run: (job: { startedAt: number }) => Promise<void> };
+export type DailyJobStep = { order: number; name: string; run: (job: { startedAt: number }) => Promise<void | string[]> };

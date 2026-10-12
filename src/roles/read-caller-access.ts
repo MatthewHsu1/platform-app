@@ -3,10 +3,13 @@ import { kv } from 'twenty-sdk/logic-function';
 import { BUILDING_BLOCKS } from 'src/roles/blocks/building-blocks';
 import { ADMIN_ROLE_UNIVERSAL_IDENTIFIER } from 'src/roles/constants/admin-role-universal-identifier.constant';
 import { MIX_TABLE_KEY } from 'src/roles/constants/mix-table-key.constant';
+import { NoPersonBehindRequestError } from 'src/roles/no-person-behind-request.error';
 import { type CallerAccess } from 'src/roles/types/caller-access.type';
 import { verifyMixTable } from 'src/roles/utils/verify-mix-table.util';
 import { requireData, twentyMetadata } from 'src/shared/twenty-graphql';
 import { hasPersonToken } from 'src/shared/utils/has-person-token.util';
+
+const NO_PERSON_CODES = ['FORBIDDEN', 'UNAUTHENTICATED'];
 
 // Who clicked, and which building blocks their role was made from. Admin counts as holding every
 // block; a role Platform did not make (Twenty's Member, one made by hand) as holding none. The
@@ -18,13 +21,16 @@ export const readCallerAccess = async (): Promise<CallerAccess> => {
     return { workspaceMemberId: null, isWorkspaceAdmin: false, blockKeys: [], canManageRoles: false };
   }
 
-  const me = requireData(
-    await twentyMetadata<{ currentUser: { currentUserWorkspace: { permissionFlags: string[] | null } | null; workspaceMember: { id: string } | null } | null }>(
-      'person',
-      '{ currentUser { currentUserWorkspace { permissionFlags } workspaceMember { id } } }',
-    ),
-    'Read the signed-in user',
+  const meResponse = await twentyMetadata<{ currentUser: { currentUserWorkspace: { permissionFlags: string[] | null } | null; workspaceMember: { id: string } | null } | null }>(
+    'person',
+    '{ currentUser { currentUserWorkspace { permissionFlags } workspaceMember { id } } }',
   );
+
+  // Twenty answers an API key, or an app without a user, with its own refusal; that is not an outage.
+  if ((meResponse.errors ?? []).some((error) => NO_PERSON_CODES.includes(String(error.extensions?.code)))) {
+    throw new NoPersonBehindRequestError();
+  }
+  const me = requireData(meResponse, 'Read the signed-in user');
   const workspaceMemberId = me.currentUser?.workspaceMember?.id ?? null;
   const canManageRoles = (me.currentUser?.currentUserWorkspace?.permissionFlags ?? []).includes('ROLES');
 

@@ -16,6 +16,7 @@ import { fillPickingTypeCodes } from 'src/stock/picking/fill-picking-type-codes'
 import { recomputePickingTypeNames } from 'src/stock/picking-type/recompute-picking-type-names';
 import { trimIndexViews } from 'src/shared/install/trim-index-views';
 import { twentyInstallApi } from 'src/shared/install/twenty-install-api';
+import { syncMixedRolesOnSchedule } from 'src/roles/sync/sync-on-schedule';
 import { runInstall } from 'src/shared/install/utils/run-install.util';
 import { UOM_INSTALL } from 'src/uom/uom-install';
 import { UTM_INSTALL, UTM_STAGE_INSTALL } from 'src/utm/utm-install';
@@ -41,6 +42,12 @@ const handler = async ({ previousVersion }: InstallPayload) => {
     ['filling the full names of operation types', () => recomputePickingTypeNames({})],
     ['drawing the stage columns of the lead boards', syncStageBoardGroups],
     ['finishing the CRM', () => finishCrmInstall(previousVersion)],
+    [
+      'rebuilding the mixed roles and the row rules',
+      async () => {
+        warnings.push(...(await syncMixedRolesOnSchedule()).warnings);
+      },
+    ],
     [
       'trimming the columns of the "All" lists',
       async () => {
@@ -88,7 +95,7 @@ export default definePostInstallLogicFunction({
   universalIdentifier: POST_INSTALL_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   name: 'platform-post-install',
   description:
-    'Makes the staff lists, default rows, boards, validation rules and list sorts each module needs, sets the default type of new leads, fills fields that older rows lack, and trims the columns of the "All" lists once. Adds only what is missing.',
+    'Makes the staff lists, default rows, boards, validation rules and list sorts each module needs, sets the default type of new leads, fills fields that older rows lack, and trims the columns of the "All" lists once. Adds only what is missing. Rebuilds the mixed roles from the building blocks and writes the row rules.',
   timeoutSeconds: 300,
   handler,
   shouldRunOnVersionUpgrade: true,

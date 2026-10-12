@@ -26,6 +26,7 @@ describe('runDailyJob', () => {
     expect(result).toEqual({
       ran: ['reserve waiting moves', 'stock rows and ledger', 'resume stale claims'],
       failures: ['reserve waiting moves: Rate limit exceeded'],
+      notes: [],
     });
   });
 });

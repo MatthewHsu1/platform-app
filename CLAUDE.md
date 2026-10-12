@@ -25,7 +25,11 @@ Twenty app (twenty-sdk 2.45.0, same as the server). Read `README.md` first. Desi
   calls and the util.
 - Logic functions call GraphQL through `src/shared/twenty-graphql.ts`. Say which access each
   call uses: `'person'` (the clicking user, row rule applies) or `'application'` (the app role
-  alone). Never make the app role see-all.
+  alone, which the server lets read every row). A route that writes with `'application'` first checks the clicking user's rights.
+- Staff access is building blocks, never `defineRole`: a module declares its blocks in
+  `src/roles/blocks/` (object rights, row rules per object, `implies`), adds them to
+  `BUILDING_BLOCKS`, and adds its drop-down and the owner field of each ruled object to
+  `ROLE_MODULES`. Platform makes one Twenty role per mix of blocks; block keys are never renamed.
 - The design notes for each module, including where its data model comes from, are in `docs/superpowers/` (not in git); read the handoff `docs/superpowers/sdd/2026-10-06-twenty-v2.45.6-upgrade/handoff.md` §9 before starting a module.
 - Twenty app docs: read the copy in the submodule, not the website. It matches our twenty-sdk
   version; the website follows Twenty's main branch. Paths are from this folder:

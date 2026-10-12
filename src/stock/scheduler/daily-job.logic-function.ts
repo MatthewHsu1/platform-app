@@ -21,7 +21,7 @@ export default defineLogicFunction({
   universalIdentifier: STOCK_DAILY_JOB_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   name: 'platform-stock-daily-job',
   description:
-    'Once a day: recomputes reordering rules and orders for the automatic ones, reserves waiting moves whose day has come, recomputes reserved stock, removes empty stock rows, checks stock levels against the done move lines, resumes stale runs, and goes on trimming the columns of the "All" lists until every list is done.',
+    'Once a day: recomputes reordering rules and orders for the automatic ones, reserves waiting moves whose day has come, recomputes reserved stock, removes empty stock rows, checks stock levels against the done move lines, resumes stale runs, rebuilds the mixed roles and the row rules, and goes on trimming the columns of the "All" lists until every list is done.',
   timeoutSeconds: DAILY_JOB_TIMEOUT_SECONDS,
   handler,
   cronTriggerSettings: { pattern: '0 0 * * *' },

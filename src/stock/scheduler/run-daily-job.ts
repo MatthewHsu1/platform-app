@@ -1,3 +1,5 @@
+import { makeMixedRolesStep } from 'src/roles/sync/mixed-roles-daily-step';
+import { syncMixedRolesOnSchedule } from 'src/roles/sync/sync-on-schedule';
 import { sweepFinishedClaims } from 'src/shared/claims/claim';
 import { runLotExpiryStep } from 'src/product-expiry/daily/lot-expiry-step';
 import { dailyOrderpointStep } from 'src/stock/orderpoint/daily-orderpoint-step';
@@ -8,6 +10,8 @@ import { runQuantTasks } from 'src/stock/scheduler/steps/quant-tasks';
 import { resumeStaleClaims } from 'src/stock/scheduler/steps/resume-stale-claims';
 import { trimListColumns } from 'src/stock/scheduler/steps/trim-list-columns';
 import { type DailyJobStep } from 'src/stock/scheduler/types/daily-job-step.type';
+
+const mixedRolesStep = makeMixedRolesStep(syncMixedRolesOnSchedule);
 
 // Reordering rules come first, so the reservation step already sees the receipts they make.
 export const DAILY_JOB_STEPS: DailyJobStep[] = [
@@ -20,23 +24,25 @@ export const DAILY_JOB_STEPS: DailyJobStep[] = [
   { order: 6, name: 'lot locations', run: repairLotLocations },
   { order: 7, name: 'finished claims', run: sweepFinishedClaims },
   { order: 8, name: 'print links', run: () => clearPrintPasses(new Date()) },
+  { order: 9, name: 'mixed roles and row rules', run: mixedRolesStep },
   // Last: it takes what time is left within its own budget.
-  { order: 9, name: 'list columns', run: trimListColumns },
+  { order: 10, name: 'list columns', run: trimListColumns },
 ];
 
 // A failed step is reported and the later steps still run.
 export const runDailyJob = async (steps: DailyJobStep[] = DAILY_JOB_STEPS, startedAt = Date.now()) => {
   const ran: string[] = [];
   const failures: string[] = [];
+  const notes: string[] = [];
 
   for (const step of [...steps].sort((left, right) => left.order - right.order)) {
     ran.push(step.name);
     try {
-      await step.run({ startedAt });
+      notes.push(...((await step.run({ startedAt })) ?? []).map((note) => `${step.name}: ${note}`));
     } catch (error) {
       failures.push(`${step.name}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  return { ran, failures };
+  return { ran, failures, notes };
 };

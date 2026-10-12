@@ -2,6 +2,26 @@
 
 All notable changes to this application are documented in this file.
 
+## 2.4.0 (unreleased)
+
+- Roles: building blocks per module (Employee; Inventory User and Administrator; Products:
+  Create; Sales: Own Documents, All Documents, Administrator) set on the new Roles page. Platform
+  makes one Twenty role per mix of blocks, gives it to the person, rebuilds it on every install and
+  daily, and deletes mixes nobody holds. The three Inventory roles of 2.3.0 are now blocks.
+- Row access: rules come from the blocks, per role and per object (`all`, `mine`,
+  `mineOrUnowned`); a create or edit must stay inside the person's rule. The row access settings
+  page is gone, and so are the see-all role list and the rules on Twenty's Company, Opportunity
+  and Task. Platform's own role sees every row.
+- Needs the Twenty image with the `owner-row-access` module and the two settings
+  `OWNER_ROW_ACCESS_APPLICATION_UNIVERSAL_IDENTIFIER` and `ROLE_MANAGER_APPLICATION_UNIVERSAL_IDENTIFIERS`
+  (in production `TWENTY_OWNER_ROW_ACCESS_APPLICATION_UNIVERSAL_IDENTIFIER` and
+  `TWENTY_ROLE_MANAGER_APPLICATION_UNIVERSAL_IDENTIFIERS` in `secrets/prod.env`).
+  Upgrade the image and Platform together: until Platform's install writes the new rules, members
+  see no rows of ruled objects. Release day changes nobody's role: restrict Member by hand, then
+  set each person's levels on the Roles page.
+- Mixed roles belong to the workspace's Custom application: an admin can edit one by hand and the
+  next sync puts it back; uninstalling Platform leaves them.
+
 ## 2.3.0 (unreleased)
 
 - Inventory: warehouses, locations, operation types, transfers, moves and move lines, stock
