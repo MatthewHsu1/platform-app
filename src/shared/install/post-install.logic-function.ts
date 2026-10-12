@@ -4,6 +4,7 @@ import { POST_INSTALL_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER } from 'src/constants/
 import { BASE_INSTALL } from 'src/base/base-install';
 import { CRM_INSTALL } from 'src/crm/crm-install';
 import { finishCrmInstall } from 'src/crm/finish-crm-install';
+import { CRM_SCREENS_INSTALL } from 'src/crm/crm-screens-install';
 import { CRM_STAGE_INSTALL } from 'src/crm/stage/crm-stage-install';
 import { syncStageBoardGroups } from 'src/crm/stage/stage-board-groups';
 import { PRODUCT_INSTALL } from 'src/product/product-install';
@@ -29,7 +30,7 @@ const handler = async ({ previousVersion }: InstallPayload) => {
   const startedAt = Date.now();
   const { skippedBoards, validationRulesSkipped, skippedViewSorts } = await runInstall({
     api: twentyInstallApi,
-    specs: [UTM_INSTALL, UTM_STAGE_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, SALES_TEAM_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL],
+    specs: [UTM_INSTALL, UTM_STAGE_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, SALES_TEAM_INSTALL, CRM_SCREENS_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL],
     previousVersion,
   });
   await finishStockInstall(previousVersion);

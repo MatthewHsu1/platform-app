@@ -1,3 +1,5 @@
+import { type ViewFilterSpec } from 'src/shared/install/types/view-filter-spec.type';
+
 // What each module asks the install hook to make. Field and view ids differ
 // per workspace, so specs name objects by universal id and fields by name.
 
@@ -29,6 +31,7 @@ export type BoardSpec = {
   icon: string;
   groupByFieldName: string;
   hideWhere?: { fieldName: string; values: string[] };
+  filters?: ViewFilterSpec[];
   aggregate?: { operation: 'SUM'; fieldName: string };
   // The fields a card shows, in order, the label field first. A board the
   // hook makes has none until it gets them.

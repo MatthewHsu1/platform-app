@@ -50,6 +50,31 @@ describe('planIndexViewTrim', () => {
   });
 });
 
+describe('planIndexViewTrim with the columns a list shows', () => {
+  it('hides the others and shows a wanted column that is hidden, wherever they sit', () => {
+    const fields = [
+      { fieldId: 'name', position: 0, isVisible: true },
+      { fieldId: 'noise-1', position: 1, isVisible: true },
+      { fieldId: 'stage', position: 2, isVisible: false },
+      { fieldId: 'noise-2', position: 3, isVisible: true },
+    ];
+
+    const plan = planIndexViewTrim({ fields, handled: [], only: ['name', 'stage'] });
+
+    expect(plan.hide).toEqual(['noise-1', 'noise-2']);
+    expect(plan.show).toEqual(['stage']);
+  });
+
+  it('leaves a column staff changed afterwards', () => {
+    const fields = [
+      { fieldId: 'name', position: 0, isVisible: true },
+      { fieldId: 'noise', position: 1, isVisible: true },
+    ];
+
+    expect(planIndexViewTrim({ fields, handled: ['name', 'noise'], only: ['name'] })).toMatchObject({ hide: [], show: [] });
+  });
+});
+
 describe('a trim stopped by its time limit', () => {
   it('remembers only the columns it reached, and the next run hides the rest', () => {
     const fields = visibleFields(14);

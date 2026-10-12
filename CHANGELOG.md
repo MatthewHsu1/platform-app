@@ -21,6 +21,23 @@ All notable changes to this application are documented in this file.
   set each person's levels on the Roles page.
 - Mixed roles belong to the workspace's Custom application: an admin can edit one by hand and the
   next sync puts it back; uninstalling Platform leaves them.
+- CRM stages are records with won stages, folding, rotting and team limits; the Pipeline board
+  has one column per stage. The upgrade replaces the old Stage list (no lead data is kept).
+- Save rules after each lead save: stage date, won stage at 100 %, closed date, assignment date,
+  team from the salesperson, prorated and recurring revenue, phone and email quality, rotting,
+  contact email and phone both ways. A lead in a won stage below 100 % is refused and undone with
+  a note.
+- Sales teams and members, recurring plans, UTM stages and tags, campaign stage and tags.
+- Buttons: Use automatic probability, Convert many, Merge, Similar leads; Mark lost for many
+  leads with a closing note; Restore keeps the closed date when the probability stays 0.
+- Lead assignment by rules, on a schedule or by button, with plug point `crm.assignment.v1`.
+- Predictive lead scoring with live counts, "Update probabilities" and a nightly rebuild (off);
+  the Probability tab explains a lead's score.
+- Rotting opportunities: a flag and days on each lead, a daily refresh and the Rotting list.
+- CRM settings page (Settings → Apps → Platform → CRM), saved by workspace administrators.
+- Screens: CRM and UTM folders, My pipeline board, counters on teams and members, a Leads tab on
+  companies.
+- Release: turn on `IS_VALIDATION_RULES_ENABLED` before installing.
 
 ## 2.3.0 (unreleased)
 

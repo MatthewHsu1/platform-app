@@ -4,9 +4,9 @@ Twenty app (twenty-sdk 2.45.0, same as the server). Read `README.md` first. Desi
 `docs/superpowers/specs/2026-10-06-twenty-platform-crm-design.md`.
 
 - One folder per module under `src/` (`src/crm/`, `src/utm/`, `src/uom/`,
-  `src/product/`, `src/stock/`, `src/stock-picking-batch/`, `src/product-expiry/`, `src/base/`).
+  `src/product/`, `src/stock/`, `src/stock-picking-batch/`, `src/product-expiry/`, `src/base/`, `src/sales-team/`).
   Each module keeps its universal ids in `*-universal-identifiers.constant.ts`. New ids are random UUID v4, never changed after
-  release.
+  release. Shared plug points live in `src/shared/plug/`.
 - Names: object = the module's reference model name in camelCase (`crm.lead` → `crmLead`); field = the
   reference field name in camelCase without `_id`/`_ids`. When Twenty reserves the name, pick a close one and note it
   on the object.
@@ -48,7 +48,11 @@ Twenty app (twenty-sdk 2.45.0, same as the server). Read `README.md` first. Desi
 - Triggers read rows, call a pure planner in `utils/`, and write only what differs. A trigger
   skips events the app itself caused (its writes run as `'application'`), re-reads the row before
   it puts a change back, and collects its errors instead of stopping at the first one, so one bad
-  row does not hide the rest. A second pass must find nothing to write: no loops.
+  row does not hide the rest. A second pass must find nothing to write: no loops. Exception: the
+  lead trigger applies the computed values (team, stage repair, status, money, quality, rotting,
+  score) to every write, and the save rules (stage date, won stage, closed date, assignment date,
+  contact push, scoring counts) only to writes the app did not make; app code that writes a lead
+  runs the save rules itself through `writeLeadsAsApplication`.
 - Validation-rule expressions name relation fields (`isDefined(productTmpl)`), never join columns
   (`productTmplId` does not parse). Fields the app fills after the save (vendor price
   `productTmpl`, template attribute value fields) get no required rule.

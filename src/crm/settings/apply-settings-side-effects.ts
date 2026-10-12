@@ -1,5 +1,5 @@
-import { CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/crm/crm-universal-identifiers.constant';
 import { LEAD_VIEW_NAMES, RECURRING_FIELD_NAMES, RECURRING_FIELDS_SHOWN_BY_VIEW_TYPE } from 'src/crm/lead/crm-lead-views.constant';
+import { readLeadObject } from 'src/crm/lead/read-lead-object';
 import { setLeadTypeDefault } from 'src/crm/lead/set-lead-type-default';
 import { CRM_SETTINGS_MESSAGES } from 'src/crm/settings/crm-settings-messages.constant';
 import { translate } from 'src/shared/i18n/translate';
@@ -25,29 +25,7 @@ const setTeamsUseLeads = async (useLeads: boolean) => {
   );
 };
 
-const readLeadObject = async () => {
-  const data = requireData(
-    await twentyMetadata<{ objects: { edges: { node: { id: string; fieldsList: { id: string; name: string }[] } }[] } }>(
-      'application',
-      `query LeadObject($universalIdentifier: UUID!) {
-        objects(filter: { universalIdentifier: { eq: $universalIdentifier } }, paging: { first: 1 }) {
-          edges { node { id fieldsList { id name } } }
-        }
-      }`,
-      { universalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER },
-    ),
-    'Read the lead object',
-  );
-  const object = data.objects.edges[0]?.node;
-
-  if (object === undefined) {
-    throw new Error('The Lead object is missing.');
-  }
-
-  return object;
-};
-
-const setRecurringFieldsVisible = async (isOn: boolean) => {
+export const setRecurringFieldsVisible = async (isOn: boolean) => {
   const object = await readLeadObject();
   const fieldIdOf = new Map(object.fieldsList.map((field) => [field.name, field.id]));
   const views = requireData(

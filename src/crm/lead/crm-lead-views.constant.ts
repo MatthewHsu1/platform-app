@@ -16,3 +16,19 @@ export const RECURRING_FIELDS_SHOWN_BY_VIEW_TYPE: Record<string, string[]> = {
   TABLE: ['recurringRevenueMonthly'],
   KANBAN: ['recurringRevenue', 'recurringPlan'],
 };
+
+// A sales card: the name, the expected revenue, the contact and customer (or
+// the names typed while neither is linked), priority, days rotting and the
+// salesperson. Tags are staff-owned, and Twenty refuses a card field the app
+// does not own.
+export const PIPELINE_CARD_FIELDS = [
+  'name',
+  'expectedRevenue',
+  'person',
+  'company',
+  'contactName',
+  'partnerName',
+  'priority',
+  'rottingDays',
+  'salesperson',
+];

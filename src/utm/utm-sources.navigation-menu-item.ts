@@ -3,7 +3,7 @@ import {
   NavigationMenuItemType,
 } from 'twenty-sdk/define';
 
-import { CRM_FOLDER_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER } from 'src/crm/crm-universal-identifiers.constant';
+import { CRM_SCREEN_IDS } from 'src/crm/screens-universal-identifiers.constant';
 import {
   UTM_SOURCE_OBJECT_UNIVERSAL_IDENTIFIER,
   UTM_SOURCES_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER,
@@ -15,5 +15,5 @@ export default defineNavigationMenuItem({
   position: 1,
   type: NavigationMenuItemType.OBJECT,
   targetObjectUniversalIdentifier: UTM_SOURCE_OBJECT_UNIVERSAL_IDENTIFIER,
-  folderUniversalIdentifier: CRM_FOLDER_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER,
+  folderUniversalIdentifier: CRM_SCREEN_IDS.utmFolder,
 });

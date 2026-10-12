@@ -6,6 +6,7 @@ import {
   CRM_STAGE_OBJECT_UNIVERSAL_IDENTIFIER,
   CRM_STAGE_SEED_KEYS,
 } from 'src/crm/crm-universal-identifiers.constant';
+import { PIPELINE_CARD_FIELDS } from 'src/crm/lead/crm-lead-views.constant';
 import { type ModuleInstallSpec } from 'src/shared/install/install-spec.type';
 
 const stageSeed = (seedKey: string, name: string, sequence: number, color: string, isWon: boolean) => ({
@@ -63,22 +64,9 @@ export const CRM_STAGE_INSTALL: ModuleInstallSpec = {
       groupByFieldName: 'stage',
       hideWhere: { fieldName: 'wonStatus', values: [WON_STATUS.LOST] },
       aggregate: { operation: 'SUM', fieldName: 'expectedRevenue' },
-      // A sales card: the name, the expected revenue, the contact and customer
-      // (or the names typed while neither is linked), priority, days rotting
-      // and the salesperson. Tags are staff-owned, and Twenty refuses a card
-      // field the app does not own. The stage columns are drawn by the stage
-      // board sync, as for every board of leads grouped by stage.
-      cardFields: [
-        'name',
-        'expectedRevenue',
-        'person',
-        'company',
-        'contactName',
-        'partnerName',
-        'priority',
-        'rottingDays',
-        'salesperson',
-      ],
+      // The stage columns are drawn by the stage board sync, as for every board of leads
+      // grouped by stage.
+      cardFields: PIPELINE_CARD_FIELDS,
     },
   ],
   validationRules: [

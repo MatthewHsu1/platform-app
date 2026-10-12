@@ -9,7 +9,7 @@ import {
 export default defineNavigationMenuItem({
   universalIdentifier: CRM_TEAMS_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER,
   name: 'Teams',
-  position: 7,
+  position: 2,
   type: NavigationMenuItemType.OBJECT,
   targetObjectUniversalIdentifier: CRM_TEAM_OBJECT_UNIVERSAL_IDENTIFIER,
   folderUniversalIdentifier: CRM_FOLDER_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER,

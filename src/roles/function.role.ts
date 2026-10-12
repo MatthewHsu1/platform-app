@@ -135,10 +135,11 @@ const readOnly = (objectUniversalIdentifier: string) => ({
 // Buttons and the Roles page run as the signed-in user intersected with this role, so a user gains
 // nothing through it. The install hook, triggers and the daily job run with this role alone; the
 // server lets this role read every row, so they see what they must keep consistent. Data Model and
-// Views let the install hook make the staff lists and boards. Applications lets the sync write the
-// row rules variable; Roles lets it make, rebuild, give and delete the mixed roles (the server lists
-// Platform as an application that may write roles). Upload lets the sign route save the signature
-// and the signed delivery slip on a transfer.
+// Views let the install hook make the staff lists and boards; Layouts lets it add the Pipeline
+// sidebar item. Applications lets the sync write the row rules variable; Roles lets it make,
+// rebuild, give and delete the mixed roles (the server lists Platform as an application that may
+// write roles). Upload lets the sign route save the signature and the signed delivery slip on a
+// transfer.
 export default defineApplicationRole({
   universalIdentifier: FUNCTION_ROLE_UNIVERSAL_IDENTIFIER,
   label: `${APP_DISPLAY_NAME} function role`,
@@ -246,6 +247,7 @@ export default defineApplicationRole({
   permissionFlagUniversalIdentifiers: [
     SystemPermissionFlag.DATA_MODEL,
     SystemPermissionFlag.VIEWS,
+    SystemPermissionFlag.LAYOUTS,
     SystemPermissionFlag.APPLICATIONS,
     SystemPermissionFlag.ROLES,
     SystemPermissionFlag.UPLOAD_FILE,

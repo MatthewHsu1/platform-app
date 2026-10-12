@@ -3,6 +3,7 @@ import {
   type ModuleInstallSpec,
   type SelectOption,
 } from 'src/shared/install/install-spec.type';
+import { type ViewFilterSpec } from 'src/shared/install/types/view-filter-spec.type';
 
 export type InstallApi = {
   listObjects: () => Promise<InstallObject[]>;
@@ -24,6 +25,7 @@ export type InstallApi = {
     icon: string;
     groupByFieldMetadataId: string;
     hideWhere?: { fieldMetadataId: string; values: string[] };
+    filters?: { fieldMetadataId: string; operand: 'IS' | 'IS_NOT'; value: string }[];
     aggregate?: { operation: 'SUM'; fieldMetadataId: string };
     cardFieldMetadataIds?: string[];
   }) => Promise<void>;
@@ -43,6 +45,14 @@ export type InstallApi = {
     message: string;
   }) => Promise<void>;
 };
+
+// The filter value as the view API stores it.
+export const viewFilterValue = (value: ViewFilterSpec['value']): string =>
+  value === 'CURRENT_MEMBER'
+    ? JSON.stringify({ isCurrentWorkspaceMemberSelected: true, selectedRecordIds: [] })
+    : typeof value === 'boolean'
+      ? String(value)
+      : JSON.stringify(value);
 
 const versionParts = (version: string) =>
   version.split('.').map((part) => Number.parseInt(part, 10) || 0);
@@ -226,6 +236,11 @@ export const runInstall = async ({
         icon: board.icon,
         groupByFieldMetadataId,
         hideWhere,
+        filters: board.filters?.map((filter) => ({
+          fieldMetadataId: findFieldId(object, filter.fieldName),
+          operand: filter.operand,
+          value: viewFilterValue(filter.value),
+        })),
         aggregate,
         cardFieldMetadataIds: board.cardFields?.map((fieldName) => findFieldId(object, fieldName)),
       });

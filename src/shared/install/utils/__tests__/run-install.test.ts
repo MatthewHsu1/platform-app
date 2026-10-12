@@ -417,6 +417,48 @@ describe('boards with an aggregate and card fields', () => {
   });
 });
 
+describe('board filters', () => {
+  const spec: ModuleInstallSpec = {
+    ...EMPTY_SPEC,
+    firstVersion: '2.4.0',
+    boards: [
+      {
+        objectUniversalIdentifier: LEAD,
+        name: 'My pipeline',
+        icon: 'IconLayoutKanban',
+        groupByFieldName: 'stage',
+        filters: [
+          { fieldName: 'salesperson', operand: 'IS', value: 'CURRENT_MEMBER' },
+          { fieldName: 'isRotting', operand: 'IS', value: true },
+          { fieldName: 'wonStatus', operand: 'IS_NOT', value: ['LOST'] },
+        ],
+      },
+    ],
+  };
+  const fields = [
+    { id: 'f-stage', name: 'stage' },
+    { id: 'f-salesperson', name: 'salesperson' },
+    { id: 'f-rotting', name: 'isRotting' },
+    { id: 'f-won', name: 'wonStatus' },
+  ];
+
+  it('passes each filter with its value as the view API stores it', async () => {
+    const { api, state } = makeFakeApi({ leadFields: fields });
+
+    await runInstall({ api, specs: [spec], previousVersion: undefined });
+
+    expect(state.createdBoards[0]?.filters).toEqual([
+      {
+        fieldMetadataId: 'f-salesperson',
+        operand: 'IS',
+        value: '{"isCurrentWorkspaceMemberSelected":true,"selectedRecordIds":[]}',
+      },
+      { fieldMetadataId: 'f-rotting', operand: 'IS', value: 'true' },
+      { fieldMetadataId: 'f-won', operand: 'IS_NOT', value: '["LOST"]' },
+    ]);
+  });
+});
+
 describe('view sorts', () => {
   const spec: ModuleInstallSpec = {
     ...EMPTY_SPEC,

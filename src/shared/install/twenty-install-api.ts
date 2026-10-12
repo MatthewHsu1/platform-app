@@ -85,7 +85,7 @@ export const twentyInstallApi: InstallApi = {
     return data.getViews.map((view) => view.name);
   },
 
-  createBoard: async ({ objectMetadataId, name, icon, groupByFieldMetadataId, hideWhere, aggregate, cardFieldMetadataIds }) => {
+  createBoard: async ({ objectMetadataId, name, icon, groupByFieldMetadataId, hideWhere, filters, aggregate, cardFieldMetadataIds }) => {
     const data = requireData(
       await twentyMetadata<{ createView: { id: string } }>(
         'application',
@@ -124,6 +124,19 @@ export const twentyInstallApi: InstallApi = {
               value: JSON.stringify(hideWhere.values),
             },
           },
+        ),
+        `Filter view ${name}`,
+      );
+    }
+
+    for (const filter of filters ?? []) {
+      requireData(
+        await twentyMetadata(
+          'application',
+          `mutation FilterBoard($input: CreateViewFilterInput!) {
+            createViewFilter(input: $input) { id }
+          }`,
+          { input: { viewId: data.createView.id, ...filter } },
         ),
         `Filter view ${name}`,
       );

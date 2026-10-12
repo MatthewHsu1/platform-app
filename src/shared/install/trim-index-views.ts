@@ -1,5 +1,9 @@
 import { kv } from 'twenty-sdk/logic-function';
 
+import { CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/crm/crm-universal-identifiers.constant';
+import { readLeadObject } from 'src/crm/lead/read-lead-object';
+import { readCrmSettings } from 'src/crm/settings/read-crm-settings';
+import { leadListColumnNames } from 'src/crm/lead/views/lead-list-columns';
 import { PLATFORM_CLAIM_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/shared/claims/claims-universal-identifiers.constant';
 import { type IndexViewTrimResult } from 'src/shared/install/types/index-view-trim-result.type';
 import { planIndexViewTrim, settleIndexViewTrim } from 'src/shared/install/utils/plan-index-view-trim.util';
@@ -63,9 +67,9 @@ const readIndexViewFields = async (objectMetadataId: string): Promise<ViewField[
 };
 
 // Twenty runs one updateViewField per request (a second alias of it is refused) and has no bulk
-// view-field update, so the columns go one by one until the time is up. Returns the fields hidden.
-const hideViewFields = async (fields: ViewField[], stopAt: number) => {
-  const hidden: string[] = [];
+// view-field update, so the columns go one by one until the time is up. Returns the fields changed.
+const setViewFieldsVisible = async (fields: ViewField[], isVisible: boolean, stopAt: number) => {
+  const changed: string[] = [];
 
   for (const field of fields) {
     if (Date.now() >= stopAt) {
@@ -74,25 +78,38 @@ const hideViewFields = async (fields: ViewField[], stopAt: number) => {
     requireData(
       await twentyMetadata(
         'application',
-        `mutation HideColumn($input: UpdateViewFieldInput!) { updateViewField(input: $input) { id } }`,
-        { input: { id: field.id, update: { isVisible: false } } },
+        `mutation SetColumnVisibility($input: UpdateViewFieldInput!) { updateViewField(input: $input) { id } }`,
+        { input: { id: field.id, update: { isVisible } } },
       ),
-      'Hide column',
+      'Change column',
     );
-    hidden.push(field.fieldMetadataId);
+    changed.push(field.fieldMetadataId);
   }
 
-  return hidden;
+  return changed;
 };
 
-// Returns how many columns are still to hide.
+// The lead list shows its own nine columns, chosen by field, so the monthly recurring amount is
+// the tenth when recurring revenues are on. Other lists keep their first ten.
+const readOnlyColumns = async (object: AppObject): Promise<string[] | undefined> => {
+  if (object.universalIdentifier !== CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER) {
+    return undefined;
+  }
+  const { fieldsList } = await readLeadObject();
+  const names = leadListColumnNames((await readCrmSettings()).useRecurringRevenues);
+
+  return fieldsList.filter((field) => names.includes(field.name)).map((field) => field.id);
+};
+
+// Returns how many columns are still to change.
 const trimIndexView = async (object: AppObject, stopAt: number) => {
   const fields = await readIndexViewFields(object.id);
 
   if (fields === null) {
     return 0;
   }
-  const key = memoryKey(object.universalIdentifier);
+  const only = await readOnlyColumns(object);
+  const key = memoryKey(object.universalIdentifier) + (only === undefined ? '' : ':columns');
   const stored = await kv.get<unknown>(key, KV_OPTIONS);
   const handled = Array.isArray(stored) ? stored.filter((id): id is string => typeof id === 'string') : [];
   const plan = planIndexViewTrim({
@@ -102,13 +119,15 @@ const trimIndexView = async (object: AppObject, stopAt: number) => {
       isVisible: field.isVisible,
     })),
     handled,
+    only,
   });
   const toHide = new Set(plan.hide);
-  const hidden = await hideViewFields(
-    fields.filter((field) => toHide.has(field.fieldMetadataId)),
-    stopAt,
-  );
-  const progress = settleIndexViewTrim({ plan, hidden });
+  const toShow = new Set(plan.show);
+  const changed = [
+    ...(await setViewFieldsVisible(fields.filter((field) => toHide.has(field.fieldMetadataId)), false, stopAt)),
+    ...(await setViewFieldsVisible(fields.filter((field) => toShow.has(field.fieldMetadataId)), true, stopAt)),
+  ];
+  const progress = settleIndexViewTrim({ plan, hidden: changed });
 
   if (progress.handled.length !== handled.length) {
     await kv.set(key, progress.handled, KV_OPTIONS);
