@@ -11,9 +11,9 @@ import {
   STOCK_PICKING_BATCH_ROUTE_PATHS,
 } from 'src/stock-picking-batch/stock-picking-batch-universal-identifiers.constant';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
-import { readWorkspaceMembers } from 'src/stock/read-workspace-members';
+import { readWorkspaceMembers } from 'src/shared/front-components/read-workspace-members';
 import { queryAsUser } from 'src/shared/front-components/query-as-user';
-import { type WorkspaceMemberChoice } from 'src/stock/types/workspace-member-choice.type';
+import { type WorkspaceMemberChoice } from 'src/shared/front-components/types/workspace-member-choice.type';
 import { readStockStyles } from 'src/stock/stock-theme';
 import { ChoiceSelect, FieldRow, PopupPanel } from 'src/stock/tracking-controls';
 

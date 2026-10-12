@@ -11,6 +11,10 @@ import {
 } from 'src/crm/lead/actions/mark-won.front-component';
 import { LEADS_NOT_FOUND, SELECT_ONE_LEAD, SELECT_SOME_LEADS } from 'src/crm/lead/actions/lead-action-route';
 import { LEAD_ACTION_TEXTS } from 'src/crm/lead/actions/mark-lost.front-component';
+import { MERGE_TEXTS } from 'src/crm/lead/actions/merge-leads.front-component';
+import { MERGE_MESSAGES } from 'src/crm/lead/merge/merge-messages.constant';
+import { leadRow } from 'src/crm/lead/merge/utils/__tests__/fixtures/lead-row.fixture';
+import { planMergeSummary } from 'src/crm/lead/merge/utils/plan-merge-summary.util';
 import { PERSON_PUSH_MESSAGES } from 'src/crm/lead/apply-person-pushes';
 import {
   AUTOMATIC_ALREADY,
@@ -95,5 +99,70 @@ describe('lead rule texts', () => {
 
     expect(LEAD_ACTION_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
     expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
+  });
+
+  it('lists every text of the merge and its summary note, and the catalog holds each', () => {
+    const used = new Set<string>(Object.values(MERGE_MESSAGES));
+    const label = (message: string) => {
+      used.add(message);
+      return message;
+    };
+    const filled = {
+      createdAt: '2026-02-01T00:00:00.000Z',
+      name: 'Gym',
+      probability: 40,
+      lostReasonId: 'reason',
+      dateDeadline: '2026-03-01',
+      description: { markdown: 'Notes' },
+      language: 'en',
+      referred: 'Ann',
+      tags: ['Gym'],
+      salespersonId: 'member',
+      teamId: 'team',
+      contactName: 'Ann',
+      partnerName: 'Gym Inc',
+      jobPosition: 'Owner',
+      emailFrom: { primaryEmail: 'ann@gym.example', additionalEmails: null },
+      phone: { primaryPhoneNumber: '2025550123', primaryPhoneCountryCode: 'US', primaryPhoneCallingCode: '+1', additionalPhones: null },
+      website: { primaryLinkUrl: 'gym.example', primaryLinkLabel: null, secondaryLinks: null },
+      contactAddress: {
+        addressStreet1: '1 Main St',
+        addressStreet2: null,
+        addressCity: 'Austin',
+        addressPostcode: null,
+        addressState: null,
+        addressCountry: null,
+      },
+      campaignId: 'campaign',
+      mediumId: 'medium',
+      sourceId: 'source',
+      stageId: 'stage',
+    };
+    const tails = [
+      leadRow({ ...filled, id: 'a', leadType: 'OPPORTUNITY', priority: 'LOW', expectedRevenue: { amountMicros: 1e9, currencyCode: 'USD' } }),
+      leadRow({ ...filled, id: 'b', priority: 'MEDIUM', recurringRevenue: { amountMicros: 1e9, currencyCode: 'USD' } }),
+      leadRow({ ...filled, id: 'c', priority: 'HIGH' }),
+      leadRow({ ...filled, id: 'd', priority: 'VERY_HIGH' }),
+    ];
+    const names = { stage: 'Stage', member: 'Ann', team: 'Team', reason: 'Price', campaign: 'Spring', medium: 'Email', source: 'Web' };
+
+    planMergeSummary({
+      tails,
+      names: {
+        stages: names,
+        teams: names,
+        members: names,
+        plans: names,
+        lostReasons: names,
+        campaigns: names,
+        mediums: names,
+        sources: names,
+      },
+      label,
+    });
+    const listed = new Set(MERGE_TEXTS.map((descriptor) => descriptor.message));
+
+    expect([...used].filter((text) => !listed.has(text))).toEqual([]);
+    expect([...listed].filter((text) => !(text in CATALOG))).toEqual([]);
   });
 });

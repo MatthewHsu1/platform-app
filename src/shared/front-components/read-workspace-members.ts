@@ -1,5 +1,5 @@
 import { queryAsUser } from 'src/shared/front-components/query-as-user';
-import { type WorkspaceMemberChoice } from 'src/stock/types/workspace-member-choice.type';
+import { type WorkspaceMemberChoice } from 'src/shared/front-components/types/workspace-member-choice.type';
 
 type MemberPage = {
   workspaceMembers: { edges: { node: WorkspaceMemberChoice }[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } };

@@ -14,10 +14,16 @@ type LeadPage = {
 
 // Every matching lead that is not in the trash, page by page. With the person
 // caller the user's row rule applies: a lead they cannot see is not returned.
+// Tags and language are read only when asked, by callers that write them back.
+// With a limit, only the first leads up to it.
 export const queryLeads = async (
   caller: GraphqlCaller,
   filter: Record<string, unknown>,
-  { orderBy }: { orderBy?: Record<string, string>[] } = {},
+  {
+    orderBy,
+    withScoringFields = false,
+    limit,
+  }: { orderBy?: Record<string, string>[]; withScoringFields?: boolean; limit?: number } = {},
 ): Promise<LeadRow[]> => {
   const sendable = pruneEmptyLists(filter);
 
@@ -33,8 +39,8 @@ export const queryLeads = async (
       await twentyGraphql<LeadPage>(
         caller,
         `query QueryLeads($filter: CrmLeadFilterInput, $after: String, $orderBy: [CrmLeadOrderByInput]) {
-          crmLeads(filter: $filter, first: ${PAGE_SIZE}, after: $after, orderBy: $orderBy) {
-            edges { node { ${leadSelection({ withTeam: true })} } }
+          crmLeads(filter: $filter, first: ${Math.min(limit ?? PAGE_SIZE, PAGE_SIZE)}, after: $after, orderBy: $orderBy) {
+            edges { node { ${leadSelection({ withTeam: true, withScoringFields })} } }
             pageInfo { hasNextPage endCursor }
           }
         }`,
@@ -44,8 +50,8 @@ export const queryLeads = async (
     );
 
     found.push(...page.crmLeads.edges.map(({ node }) => readLeadRow(node)));
-    after = page.crmLeads.pageInfo.hasNextPage ? page.crmLeads.pageInfo.endCursor : null;
+    after = page.crmLeads.pageInfo.hasNextPage && (limit === undefined || found.length < limit) ? page.crmLeads.pageInfo.endCursor : null;
   } while (after !== null);
 
-  return found;
+  return limit === undefined ? found : found.slice(0, limit);
 };

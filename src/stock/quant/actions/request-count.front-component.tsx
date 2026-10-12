@@ -5,9 +5,9 @@ import { Button, Input } from 'twenty-ui/primitives/input';
 
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
 import { localToday } from 'src/shared/utils/local-today.util';
-import { readWorkspaceMembers } from 'src/stock/read-workspace-members';
+import { readWorkspaceMembers } from 'src/shared/front-components/read-workspace-members';
 import { readStockStyles } from 'src/stock/stock-theme';
-import { type WorkspaceMemberChoice } from 'src/stock/types/workspace-member-choice.type';
+import { type WorkspaceMemberChoice } from 'src/shared/front-components/types/workspace-member-choice.type';
 import {
   REQUEST_COUNT_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
   REQUEST_COUNT_ROUTE_PATH,
