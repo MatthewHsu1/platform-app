@@ -5,9 +5,8 @@ import { type ConvertManyApi } from 'src/crm/lead/actions/types/convert-many-api
 import { type ConvertManyInput } from 'src/crm/lead/actions/types/convert-many-input.type';
 import { type ConvertOptions } from 'src/crm/lead/actions/types/convert-options.type';
 import { planDedupeWalkOrder, planFinalList } from 'src/crm/lead/actions/utils/plan-mass-convert.util';
+import { MERGE_LIMIT } from 'src/crm/lead/merge/merge-limit.constant';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
-
-const MERGE_LIMIT = 5;
 
 // The groups to merge, found before anything is written. A lead already in a
 // group is not searched again, nor taken into a later group. A selected lead

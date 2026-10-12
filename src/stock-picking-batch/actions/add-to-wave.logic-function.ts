@@ -12,7 +12,7 @@ import {
   STOCK_PICKING_BATCH_ROUTE_PATHS,
 } from 'src/stock-picking-batch/stock-picking-batch-universal-identifiers.constant';
 import { filterReadableIds } from 'src/stock/stock-access';
-import { readCurrentMemberId } from 'src/stock/stock-current-member';
+import { readCurrentMemberId } from 'src/shared/current-member';
 import { StockUserError } from 'src/stock/stock-errors';
 import { readIds, stockRouteHandler } from 'src/stock/stock-route';
 

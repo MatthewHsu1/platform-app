@@ -1,4 +1,4 @@
-import { STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from 'src/row-access/constants/standard-object-universal-identifiers.constant';
+import { STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from 'src/shared/standard-object-universal-identifiers.constant';
 import { type MetadataObject } from 'src/row-access/types/metadata-object.type';
 
 const AUDITED_STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS = new Set<string>([

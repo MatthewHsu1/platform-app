@@ -29,7 +29,7 @@ export const makeConvertAndAllocate = (api: ConvertApi) => async (leads: LeadRow
 
   requireRight('crmLead');
 
-  const stages = await api.readStages();
+  const { stages, teams, memberships } = await api.readStagesAndTeams();
   const allocation = planAllocation({
     leads,
     salespersonIds: options.salespersonIds,
@@ -187,7 +187,7 @@ export const makeConvertAndAllocate = (api: ConvertApi) => async (leads: LeadRow
             ...(customer.companyId !== lead.companyId && { companyId: customer.companyId }),
           }
         : planConversion({ lead, customer, stages, now });
-    const save = planConvertSave({ conversion: data, allocated: allocation.get(lead.id), stages });
+    const save = planConvertSave({ lead, conversion: data, allocated: allocation.get(lead.id), stages, teams, memberships });
 
     if (Object.keys(save).length > 0) {
       await api.updateLead(lead.id, save);

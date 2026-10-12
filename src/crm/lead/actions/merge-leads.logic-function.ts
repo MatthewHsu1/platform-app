@@ -9,8 +9,7 @@ import {
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
 import { MERGE_MESSAGES } from 'src/crm/lead/merge/merge-messages.constant';
 import { mergeLeads } from 'src/crm/lead/merge/merge-leads';
-
-const optionalId = (value: unknown) => (typeof value === 'string' && value.length > 0 ? value : null);
+import { optionalId } from 'src/shared/utils/optional-id.util';
 
 // Won leads are left out of a merge; what remains must be two to five leads.
 const handler = leadRouteHandler(async (body) => {

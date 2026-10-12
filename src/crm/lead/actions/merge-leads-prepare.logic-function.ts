@@ -9,8 +9,7 @@ import {
 import { loadLeadContext } from 'src/crm/lead/load-lead-context';
 import { sortForMerge } from 'src/crm/lead/merge/utils/plan-lead-merge.util';
 import { planMergeTeam } from 'src/crm/lead/merge/utils/plan-merge-team.util';
-
-const optionalId = (value: unknown) => (typeof value === 'string' && value.length > 0 ? value : null);
+import { optionalId } from 'src/shared/utils/optional-id.util';
 
 // The selected leads in merge order with the won ones left out, and the team
 // that follows a chosen salesperson.

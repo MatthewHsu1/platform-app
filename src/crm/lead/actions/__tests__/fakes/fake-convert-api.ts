@@ -36,7 +36,7 @@ export const makeFakeConvertApi = (state: FakeConvertState, failAt: { step: Step
 
   return {
     updatableObjects: async () => new Set(state.updatable ?? ['crmLead', 'person', 'company']),
-    readStages: async () => SAMPLE_STAGES,
+    readStagesAndTeams: async () => ({ stages: SAMPLE_STAGES, teams: [], memberships: [] }),
     readPerson: async (personId) => state.people.find((person) => person.id === personId) ?? null,
     findPersonByEmail: async (email) => state.people.find((person) => person.emails?.primaryEmail === email) ?? null,
     findCompanyIdByExactName: async (name) => state.companies.find((company) => company.name === name)?.id ?? null,

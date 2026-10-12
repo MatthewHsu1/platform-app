@@ -3,13 +3,15 @@ import { type PersonInput } from 'src/crm/lead/actions/utils/types/person-input.
 import { type AddressValue } from 'src/crm/lead/types/address-value.type';
 import { type PartnerPersonRow } from 'src/crm/lead/types/partner-person-row.type';
 import { type StageRow } from 'src/crm/lead/types/stage-row.type';
+import { type MembershipRow } from 'src/sales-team/team/types/membership-row.type';
+import { type TeamRow } from 'src/sales-team/team/types/team-row.type';
 
 type ConvertObject = 'crmLead' | 'person' | 'company';
 
 export type ConvertApi = {
   // The objects whose records the clicking user may create and change.
   updatableObjects: () => Promise<ReadonlySet<ConvertObject>>;
-  readStages: () => Promise<StageRow[]>;
+  readStagesAndTeams: () => Promise<{ stages: StageRow[]; teams: TeamRow[]; memberships: MembershipRow[] }>;
   readPerson: (personId: string) => Promise<PartnerPersonRow | null>;
   findPersonByEmail: (email: string) => Promise<PartnerPersonRow | null>;
   findCompanyIdByExactName: (name: string) => Promise<string | null>;

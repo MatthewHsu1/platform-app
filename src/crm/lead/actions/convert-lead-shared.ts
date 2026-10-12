@@ -15,8 +15,7 @@ import { normaliseEmail } from 'src/crm/lead/utils/email.util';
 import { NOT_ALLOWED_MESSAGE } from 'src/shared/not-allowed';
 import { requireData, twentyGraphql } from 'src/shared/twenty-graphql';
 import { UserError } from 'src/shared/user-error';
-
-export const optionalId = (value: unknown) => (typeof value === 'string' && value.length > 0 ? value : null);
+import { optionalId } from 'src/shared/utils/optional-id.util';
 
 export const optionalIds = (value: unknown) =>
   Array.isArray(value) ? [...new Set(value.filter((id): id is string => typeof id === 'string' && id.length > 0))] : [];

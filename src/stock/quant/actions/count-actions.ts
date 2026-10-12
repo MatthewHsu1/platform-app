@@ -3,7 +3,7 @@ import { readCountQuantViews } from 'src/stock/quant/actions/read-count-quant-vi
 import { writeQuantCounts } from 'src/stock/quant/write-quant-counts';
 import { filterReadableIds, requireStockManagerRight } from 'src/stock/stock-access';
 import { requireUpdateRights } from 'src/shared/object-rights';
-import { readCurrentMemberId } from 'src/stock/stock-current-member';
+import { readCurrentMemberId } from 'src/shared/current-member';
 import { StockUserError } from 'src/stock/stock-errors';
 import { stockQuants } from 'src/stock/stock-records';
 import { QUANT_ROW } from 'src/stock/stock-rows';

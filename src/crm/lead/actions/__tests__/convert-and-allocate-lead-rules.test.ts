@@ -43,9 +43,9 @@ const membership = (teamId: string, userId: string): MembershipRow => ({
 });
 
 // The old salesperson belongs to Sales only, not to the lead's team A; the
-// new one belongs to B.
+// new one belongs to B, and a third one to A.
 const TEAMS = [team('team-sales', 1), team('team-a', 2), team('team-b', 3)];
-const MEMBERSHIPS = [membership('team-sales', 'old-rep'), membership('team-b', 'new-rep')];
+const MEMBERSHIPS = [membership('team-sales', 'old-rep'), membership('team-b', 'new-rep'), membership('team-a', 'a-rep')];
 const STAGES = [
   stageRow({ id: 'a-1', sequence: 1, teamIds: ['team-a'] }),
   stageRow({ id: 'b-1', sequence: 2, teamIds: ['team-b'] }),
@@ -77,7 +77,7 @@ const convertWithLateRules = async (lead: LeadRow, convertOptions: ConvertOption
   convertState.people.push(CONTACT);
   const api = {
     ...makeFakeConvertApi(convertState),
-    readStages: async () => STAGES,
+    readStagesAndTeams: async () => ({ stages: STAGES, teams: TEAMS, memberships: MEMBERSHIPS }),
     updateLead: async (id: string, data: Record<string, unknown>) => {
       const before = store.rows.get(id) as LeadRow;
       const after = { ...before, ...data, updatedBy: STAFF } as LeadRow;
@@ -125,5 +125,12 @@ describe('convert one lead, with the lead rules running late', () => {
     const converted = await convertWithLateRules(leadInTeamA(null), options({ salespersonIds: ['new-rep'] }));
 
     expect([converted.salespersonId, converted.teamId, converted.stageId]).toEqual(['new-rep', 'team-b', 'b-1']);
+  });
+
+  it('gives an opportunity with no stage the first stage of its team when the new salesperson keeps that team', async () => {
+    const opportunity = { ...leadInTeamA(null), leadType: 'OPPORTUNITY' };
+    const converted = await convertWithLateRules(opportunity, options({ salespersonIds: ['a-rep'] }));
+
+    expect([converted.salespersonId, converted.teamId, converted.stageId]).toEqual(['a-rep', 'team-a', 'a-1']);
   });
 });

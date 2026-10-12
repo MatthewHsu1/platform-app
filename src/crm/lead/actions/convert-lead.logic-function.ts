@@ -4,7 +4,6 @@ import { LEAD_TYPE, WON_STATUS } from 'src/crm/crm-options.constant';
 import { convertAndAllocate } from 'src/crm/lead/actions/convert-and-allocate';
 import { currentAutomatedProbability } from 'src/crm/lead/actions/current-automated-probability';
 import {
-  optionalId,
   planMergedHead,
   refuseUnconvertible,
   requireCustomerRights,
@@ -29,6 +28,7 @@ import { type CustomerAction } from 'src/crm/lead/actions/utils/types/customer-a
 import { loadLeadContext } from 'src/crm/lead/load-lead-context';
 import { mergeLeads } from 'src/crm/lead/merge/merge-leads';
 import { writeLeadsAsApplication } from 'src/crm/lead/write-leads-as-application';
+import { optionalId } from 'src/shared/utils/optional-id.util';
 import { randomId } from 'src/shared/utils/random-id.util';
 
 // A merge cannot be undone: when the kept lead will need a new customer, the

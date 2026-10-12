@@ -9,7 +9,8 @@ import {
   SALES_TEAM_RULE_TEXTS,
   UTM_RULE_TEXTS,
 } from 'src/crm/lead/actions/mark-won.front-component';
-import { LEADS_NOT_FOUND, SELECT_ONE_LEAD, SELECT_SOME_LEADS } from 'src/crm/lead/actions/lead-action-route';
+import { SELECT_ONE_LEAD, SELECT_SOME_LEADS } from 'src/crm/lead/actions/lead-action-route';
+import { LEADS_NOT_FOUND } from 'src/crm/lead/lead-messages.constant';
 import { CONVERT_MESSAGES } from 'src/crm/lead/actions/convert-messages.constant';
 import { CONVERT_TEXTS } from 'src/crm/lead/actions/convert-lead.front-component';
 import { LEAD_ACTION_TEXTS } from 'src/crm/lead/actions/mark-lost.front-component';

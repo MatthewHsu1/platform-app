@@ -1,7 +1,6 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
 import {
-  optionalId,
   readCompanyLabel,
   refuseUnconvertible,
   requestedId,
@@ -13,6 +12,7 @@ import {
   CONVERT_LEAD_PREPARE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   CONVERT_LEAD_PREPARE_ROUTE_PATH,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
+import { optionalId } from 'src/shared/utils/optional-id.util';
 
 // Two leads or more found (the lead itself counts) suggest a merge.
 const MERGE_THRESHOLD = 2;

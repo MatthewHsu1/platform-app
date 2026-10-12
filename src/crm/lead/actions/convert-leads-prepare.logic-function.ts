@@ -1,10 +1,10 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { findPendingDuplicates, readLeadsLeftInPlay } from 'src/crm/lead/actions/convert-many';
-import { optionalId, optionalIds } from 'src/crm/lead/actions/convert-lead-shared';
+import { optionalIds } from 'src/crm/lead/actions/convert-lead-shared';
 import { CONVERT_MESSAGES } from 'src/crm/lead/actions/convert-messages.constant';
 import { LeadActionError } from 'src/crm/lead/actions/lead-action-error';
-import { leadRouteHandler, readCurrentMemberId, readLeadIds } from 'src/crm/lead/actions/lead-action-route';
+import { leadRouteHandler, readLeadIds } from 'src/crm/lead/actions/lead-action-route';
 import {
   CONVERT_LEADS_PREPARE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   CONVERT_LEADS_PREPARE_ROUTE_PATH,
@@ -12,6 +12,8 @@ import {
 import { planMassTeam } from 'src/crm/lead/actions/utils/plan-mass-convert.util';
 import { loadLeadContext } from 'src/crm/lead/load-lead-context';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
+import { readCurrentMemberId } from 'src/shared/current-member';
+import { optionalId } from 'src/shared/utils/optional-id.util';
 
 // Each selected lead whose search finds two pending leads or more, with the
 // leads found. Some may lie outside the selection; a lost or won selected

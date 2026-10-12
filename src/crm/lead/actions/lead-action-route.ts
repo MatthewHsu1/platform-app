@@ -2,6 +2,7 @@ import { type RoutePayload } from 'twenty-sdk/define';
 
 import { LeadActionError } from 'src/crm/lead/actions/lead-action-error';
 import { type LeadUpdatePlan } from 'src/crm/lead/actions/utils/types/lead-update-plan.type';
+import { LEADS_NOT_FOUND } from 'src/crm/lead/lead-messages.constant';
 import { queryLeads } from 'src/crm/lead/query-leads';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
@@ -9,13 +10,12 @@ import { translate } from 'src/shared/i18n/translate';
 import { notAllowedResponse } from 'src/shared/not-allowed';
 import { jsonResponse, readBody } from 'src/shared/route-response';
 import { MUTATION_MAXIMUM_RECORDS } from 'src/shared/triggers/records';
-import { GraphqlForbiddenError, requireData, twentyGraphql, twentyMetadata } from 'src/shared/twenty-graphql';
+import { GraphqlForbiddenError, requireData, twentyGraphql } from 'src/shared/twenty-graphql';
 import { UserError } from 'src/shared/user-error';
 import { chunks } from 'src/shared/utils/chunks.util';
 
 type RouteResponse = ReturnType<typeof jsonResponse>;
 
-export const LEADS_NOT_FOUND = '{count} of the selected leads were not found.';
 export const SELECT_ONE_LEAD = 'Select one lead.';
 export const SELECT_SOME_LEADS = 'Select at least one lead.';
 
@@ -157,13 +157,4 @@ export const updateLeadAsUser = async (leadId: string, data: Record<string, unkn
     ),
     `Update lead ${leadId}`,
   );
-};
-
-export const readCurrentMemberId = async () => {
-  const response = await twentyMetadata<{ currentUser: { workspaceMember: { id: string } | null } | null }>(
-    'person',
-    `{ currentUser { workspaceMember { id } } }`,
-  );
-
-  return response.data?.currentUser?.workspaceMember?.id ?? null;
 };

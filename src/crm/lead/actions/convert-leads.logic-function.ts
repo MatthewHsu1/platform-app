@@ -1,6 +1,6 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
-import { optionalId, optionalIds } from 'src/crm/lead/actions/convert-lead-shared';
+import { optionalIds } from 'src/crm/lead/actions/convert-lead-shared';
 import { convertMany } from 'src/crm/lead/actions/convert-many';
 import { CONVERT_MESSAGES } from 'src/crm/lead/actions/convert-messages.constant';
 import { LeadActionError } from 'src/crm/lead/actions/lead-action-error';
@@ -10,6 +10,7 @@ import {
   CONVERT_LEADS_ROUTE_PATH,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
 import { type CustomerAction } from 'src/crm/lead/actions/utils/types/customer-action.type';
+import { optionalId } from 'src/shared/utils/optional-id.util';
 import { randomId } from 'src/shared/utils/random-id.util';
 
 const CUSTOMER_ACTIONS: CustomerAction[] = ['EACH_EXIST_OR_CREATE', 'CREATE', 'EXIST'];

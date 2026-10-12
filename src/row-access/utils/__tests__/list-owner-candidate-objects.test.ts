@@ -1,7 +1,7 @@
 import { STANDARD_OBJECT } from 'twenty-sdk/define';
 import { describe, expect, it } from 'vitest';
 
-import { STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from 'src/row-access/constants/standard-object-universal-identifiers.constant';
+import { STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from 'src/shared/standard-object-universal-identifiers.constant';
 import { type MetadataObject } from 'src/row-access/types/metadata-object.type';
 import {
   listOwnerCandidateObjects,

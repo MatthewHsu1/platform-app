@@ -14,7 +14,8 @@ import {
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
 
 // A merge changes the kept lead; the merged-away leads go to the trash as part of it, so only the right to change
-// leads is needed. The logic function checks the count and the leads again.
+// leads is needed. The logic function checks the count and the leads again. The SDK reads the condition as text, so
+// the 5 is MERGE_LIMIT written out.
 export default defineCommandMenuItem({
   universalIdentifier: MERGE_LEADS_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIER,
   label: 'Merge leads',

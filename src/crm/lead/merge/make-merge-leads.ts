@@ -1,5 +1,6 @@
 import { LeadActionError } from 'src/crm/lead/actions/lead-action-error';
-import { LEADS_NOT_FOUND } from 'src/crm/lead/actions/lead-action-route';
+import { LEADS_NOT_FOUND } from 'src/crm/lead/lead-messages.constant';
+import { MERGE_LIMIT } from 'src/crm/lead/merge/merge-limit.constant';
 import { MERGE_MESSAGES } from 'src/crm/lead/merge/merge-messages.constant';
 import { mergeTexts } from 'src/crm/lead/merge/merge-texts';
 import { type MergeApi } from 'src/crm/lead/merge/types/merge-api.type';
@@ -14,8 +15,6 @@ import { toLeadInput } from 'src/crm/lead/utils/to-lead-input.util';
 import { translate } from 'src/shared/i18n/translate';
 import { type GraphqlCaller } from 'src/shared/twenty-graphql';
 import { derivedId } from 'src/shared/utils/derived-id.util';
-
-const BUTTON_MERGE_LIMIT = 5;
 
 // The file names a moved attachment takes; a name already renamed by an
 // earlier run is left out.
@@ -42,7 +41,7 @@ export const makeMergeLeads =
     {
       salespersonId,
       teamId,
-      maxLength = BUTTON_MERGE_LIMIT,
+      maxLength = MERGE_LIMIT,
       caller,
     }: { salespersonId?: string | null; teamId?: string | null; maxLength?: number; caller: GraphqlCaller },
   ) => {

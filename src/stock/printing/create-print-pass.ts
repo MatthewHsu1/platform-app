@@ -3,7 +3,7 @@ import { kv } from 'twenty-sdk/logic-function';
 
 import { isUuid } from 'src/shared/utils/is-uuid.util';
 import { filterReadableIds } from 'src/stock/stock-access';
-import { readCurrentMemberId } from 'src/stock/stock-current-member';
+import { readCurrentMemberId } from 'src/shared/current-member';
 import { StockUserError } from 'src/stock/stock-errors';
 import { PRINT_MESSAGES } from 'src/stock/printing/print-messages.constant';
 import { AFTER_PRINT, OPTION_RECORDS, printableObject, printOptionsParserOf } from 'src/stock/printing/printable-objects';

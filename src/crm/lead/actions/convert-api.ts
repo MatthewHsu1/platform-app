@@ -5,7 +5,7 @@ import { CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/crm/crm-universal-iden
 import { loadLeadContext } from 'src/crm/lead/load-lead-context';
 import { type AddressValue } from 'src/crm/lead/types/address-value.type';
 import { type PartnerPersonRow } from 'src/crm/lead/types/partner-person-row.type';
-import { STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from 'src/row-access/constants/standard-object-universal-identifiers.constant';
+import { STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from 'src/shared/standard-object-universal-identifiers.constant';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { filterUpdatableObjects } from 'src/shared/object-rights';
 import { addNote } from 'src/shared/triggers/put-back';
@@ -65,7 +65,11 @@ export const twentyConvertApi: ConvertApi = {
 
     return new Set((Object.keys(OBJECTS) as (keyof typeof OBJECTS)[]).filter((object) => allowed.has(OBJECTS[object])));
   },
-  readStages: async () => (await loadLeadContext([])).stages,
+  readStagesAndTeams: async () => {
+    const { stages, teams, memberships } = await loadLeadContext([]);
+
+    return { stages, teams, memberships };
+  },
   readPerson: (personId) => firstPerson({ id: { eq: personId } }),
   findPersonByEmail: (email) => firstPerson({ emails: { primaryEmail: { ilike: escapeLike(email) } } }),
   findCompanyIdByExactName: async (name) => {
