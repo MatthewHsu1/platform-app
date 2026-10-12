@@ -5,20 +5,12 @@ import {
   ASSIGN_TEAM_LEADS_ROUTE_PATH,
   ASSIGNMENT_DOOR_UNIVERSAL_IDENTIFIERS,
 } from 'src/crm/assignment/assignment-universal-identifiers.constant';
-import { readTeamDoorTeamIds } from 'src/crm/assignment/team-door-team-ids';
+import { makeFindDoorTeam, readTeamDoorTeamIds } from 'src/crm/assignment/team-door-team-ids';
 import { readBody } from 'src/shared/route-response';
-import { requireData, twentyGraphql } from 'src/shared/twenty-graphql';
+import { twentyGraphql } from 'src/shared/twenty-graphql';
 
 // Read as the clicking user: a team they cannot see is not found.
-const findTeam = async (teamId: string) =>
-  requireData(
-    await twentyGraphql<{ crmTeam: { useLeads: boolean | null; useOpportunities: boolean | null } | null }>(
-      'person',
-      'query TeamForAssignment($id: UUID!) { crmTeam(filter: { id: { eq: $id } }) { useLeads useOpportunities } }',
-      { id: teamId },
-    ),
-    'Read the team',
-  ).crmTeam;
+const findTeam = makeFindDoorTeam((query, variables) => twentyGraphql('person', query, variables));
 
 const handler = (payload: RoutePayload) =>
   runManualAssignment({
