@@ -87,7 +87,7 @@ const handler = leadRouteHandler(async (body) => {
   await requireHeadCustomerRights(mergeIds, options);
 
   const { headId } = await mergeLeads(mergeIds, { caller: 'person' });
-  let [head] = await readLeadsAsUser([headId]);
+  let [head] = await readLeadsAsUser([headId], { withScoringFields: true });
 
   // A lost lead kept by the merge comes back into the pipeline, as Restore brings it back.
   if (head.wonStatus === WON_STATUS.LOST) {

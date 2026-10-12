@@ -129,6 +129,7 @@
   "Choose one record.": "Choose one record.",
   "Choose the batch transfer to add the transfers to.": "Choose the batch transfer to add the transfers to.",
   "Choose the contact to link.": "Choose the contact to link.",
+  "Choose the day from which leads are counted.": "Choose the day from which leads are counted.",
   "Choose the delivery moves, their quantities and the incoming moves.": "Choose the delivery moves, their quantities and the incoming moves.",
   "Choose the wave transfer to add the lines to.": "Choose the wave transfer to add the lines to.",
   "Choose Type of Labels To Print": "Choose Type of Labels To Print",
@@ -462,6 +463,7 @@
   "Only a pending lead can be converted. Restore a lost lead first.": "Only a pending lead can be converted. Restore a lost lead first.",
   "Only a pending lead can follow the automatic probability.": "Only a pending lead can follow the automatic probability.",
   "Only a sales administrator can assign leads.": "Only a sales administrator can assign leads.",
+  "Only a workspace administrator can update the probabilities.": "Only a workspace administrator can update the probabilities.",
   "Only an admin can change roles.": "Only an admin can change roles.",
   "Only an opportunity can be marked won. Convert the lead first.": "Only an opportunity can be marked won. Convert the lead first.",
   "Only deliveries can be signed.": "Only deliveries can be signed.",
@@ -1179,6 +1181,7 @@
     "Location type": "Location type",
     "Locations": "Locations",
     "Locked": "Locked",
+    "Lost count": "Lost count",
     "Lost reason": "Lost reason",
     "Lot label format to auto-print": "Lot label format to auto-print",
     "Lot stock compensations": "Lot stock compensations",
@@ -1380,6 +1383,7 @@
     "Salesperson": "Salesperson",
     "Scheduled date": "Scheduled date",
     "Scheduled Date": "Scheduled Date",
+    "Scoring rows": "Scoring rows",
     "Scrap": "Scrap",
     "Scrap location": "Scrap location",
     "Scrap reason": "Scrap reason",
@@ -1466,6 +1470,7 @@
     "Value": "Value",
     "Value count": "Value count",
     "Values": "Values",
+    "Variable": "Variable",
     "Variant": "Variant",
     "Variant creation": "Variant creation",
     "Variant image": "Variant image",
@@ -1509,6 +1514,7 @@
     "When this value is chosen": "When this value is chosen",
     "Whether the move was added after the picking's confirmation": "Whether the move was added after the picking's confirmation",
     "Width": "Width",
+    "Won count": "Won count",
     "Won status": "Won status"
   },
   "navigationMenuItem.name": {
@@ -1634,7 +1640,8 @@
     "Where a package was moved, in which container, by which transfers": "Where a package was moved, in which container, by which transfers",
     "Where products arriving in a location are stored": "Where products arriving in a location are stored",
     "Why a lead was lost": "Why a lead was lost",
-    "Why goods were scrapped": "Why goods were scrapped"
+    "Why goods were scrapped": "Why goods were scrapped",
+    "Won and lost counts per lead value, used to compute the automated probability": "Won and lost counts per lead value, used to compute the automated probability"
   },
   "objectMetadata.labelPlural": {
     "Attribute lines": "Attribute lines",
@@ -1692,6 +1699,7 @@
     "Route warehouse links": "Route warehouse links",
     "Routes": "Routes",
     "Sales teams": "Sales teams",
+    "Scoring rows": "Scoring rows",
     "Scrap reason links": "Scrap reason links",
     "Scrap reason tags": "Scrap reason tags",
     "Scraps": "Scraps",
@@ -1770,6 +1778,7 @@
     "Route product link": "Route product link",
     "Route warehouse link": "Route warehouse link",
     "Sales team": "Sales team",
+    "Scoring row": "Scoring row",
     "Scrap": "Scrap",
     "Scrap reason link": "Scrap reason link",
     "Scrap reason tag": "Scrap reason tag",

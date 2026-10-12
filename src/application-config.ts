@@ -7,6 +7,9 @@ import {
   ANNUAL_INVENTORY_MONTH_VARIABLE_UNIVERSAL_IDENTIFIER,
   APPLICATION_UNIVERSAL_IDENTIFIER,
   CRM_ASSIGNMENT_VARIABLE_UNIVERSAL_IDENTIFIERS,
+  CRM_PLS_FIELDS_VARIABLE_UNIVERSAL_IDENTIFIER,
+  CRM_PLS_REBUILD_CRON_VARIABLE_UNIVERSAL_IDENTIFIER,
+  CRM_PLS_START_DATE_VARIABLE_UNIVERSAL_IDENTIFIER,
   PLUG_VARIABLE_UNIVERSAL_IDENTIFIERS,
   PRODUCT_UNIT_DIGITS_VARIABLE_UNIVERSAL_IDENTIFIER,
   ROW_ACCESS_CONFIG_VARIABLE_UNIVERSAL_IDENTIFIER,
@@ -14,6 +17,7 @@ import {
   SHOW_EXPECTED_QUANTITY_COUNT_VARIABLE_UNIVERSAL_IDENTIFIER,
 } from 'src/constants/universal-identifiers';
 import { DEFAULT_PLUG_POINTS } from 'src/crm/assignment/plug/assignment-plug.constant';
+import { PLS_FIELD_KEYS } from 'src/crm/scoring/scoring-variables.constant';
 import { EMPTY_ROW_ACCESS_CONFIG } from 'src/roles/constants/empty-row-access-config.constant';
 import { ROW_ACCESS_CONFIG_VARIABLE_KEY } from 'src/roles/constants/row-access-config-variable-key.constant';
 import { PLUG_POINTS_VARIABLE_KEY } from 'src/shared/plug/plug-points-variable-key.constant';
@@ -138,6 +142,29 @@ export default defineApplication({
       description: 'A new lead waits this long before it can be assigned.',
       type: FieldType.NUMBER,
       value: 0,
+      isSecret: false,
+    },
+    CRM_PLS_FIELDS: {
+      universalIdentifier: CRM_PLS_FIELDS_VARIABLE_UNIVERSAL_IDENTIFIER,
+      label: 'Lead scoring fields',
+      description: 'Lead fields the automated probability uses besides the stage. Changed from the CRM settings page.',
+      type: FieldType.ARRAY,
+      value: [...PLS_FIELD_KEYS],
+      isSecret: false,
+    },
+    CRM_PLS_START_DATE: {
+      universalIdentifier: CRM_PLS_START_DATE_VARIABLE_UNIVERSAL_IDENTIFIER,
+      label: 'Lead scoring start date',
+      description: 'Only leads created on or after this day feed the automated probability.',
+      type: FieldType.DATE,
+      isSecret: false,
+    },
+    CRM_PLS_REBUILD_CRON: {
+      universalIdentifier: CRM_PLS_REBUILD_CRON_VARIABLE_UNIVERSAL_IDENTIFIER,
+      label: 'Rebuild lead scoring every night',
+      description: 'When on, the scoring counts are rebuilt from the closed leads every day at 03:00 UTC.',
+      type: FieldType.BOOLEAN,
+      value: false,
       isSecret: false,
     },
     [PLUG_POINTS_VARIABLE_KEY]: {

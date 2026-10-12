@@ -29,6 +29,11 @@ describe('readLeadRow', () => {
     expect(lead.isRotting).toBeNull();
   });
 
+  it('reads an empty tag list as no tags, as Twenty stores it', () => {
+    expect(readLeadRow({ id: 'l1', createdAt: 'x', tags: [] }).tags).toBeNull();
+    expect(readLeadRow({ id: 'l1', createdAt: 'x', tags: ['OTHER'] }).tags).toEqual(['OTHER']);
+  });
+
   it('keeps a probability of zero', () => {
     expect(readLeadRow({ id: 'l1', createdAt: 'x', probability: 0 }).probability).toBe(0);
   });

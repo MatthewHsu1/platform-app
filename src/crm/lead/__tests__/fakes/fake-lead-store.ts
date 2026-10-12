@@ -44,6 +44,7 @@ export const makeFakeLeadStore = ({
   companies = [],
   teams = [],
   memberships = [],
+  score,
 }: {
   leads: LeadRow[];
   stages: StageRow[];
@@ -52,6 +53,7 @@ export const makeFakeLeadStore = ({
   companies?: PartnerCompanyRow[];
   teams?: TeamRow[];
   memberships?: MembershipRow[];
+  score?: LeadContext['score'];
 }) => {
   const rows = new Map(leads.map((row) => [row.id, row]));
   const writes: Write[] = [];
@@ -69,6 +71,7 @@ export const makeFakeLeadStore = ({
     memberships,
     people: contacts,
     companies: new Map(companies.map((company) => [company.id, company])),
+    ...(score === undefined ? {} : { score }),
   };
 
   const apply = (id: string, data: Record<string, unknown>) => {

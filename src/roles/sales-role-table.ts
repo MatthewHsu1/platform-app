@@ -4,6 +4,7 @@ import {
   CRM_RECURRING_PLAN_OBJECT_UNIVERSAL_IDENTIFIER,
   CRM_STAGE_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/crm/crm-universal-identifiers.constant';
+import { CRM_LEAD_SCORING_FREQUENCY_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/crm/scoring/scoring-universal-identifiers.constant';
 import { type Rights } from 'src/roles/types/rights.type';
 import { type SalesRoleRow } from 'src/roles/types/sales-role-row.type';
 import {
@@ -37,6 +38,8 @@ export const SALES_ROLE_TABLE: SalesRoleRow[] = [
   row(CRM_TEAM_MEMBER_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'R', 'RUD'),
   row(CRM_LOST_REASON_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'R', 'RUD'),
   row(CRM_RECURRING_PLAN_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'R', 'RUD'),
+  // Only the app writes the scoring counts.
+  row(CRM_LEAD_SCORING_FREQUENCY_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'R', 'R'),
   row(UTM_CAMPAIGN_OBJECT_UNIVERSAL_IDENTIFIER, 'RU', 'RU', 'RUD'),
   row(UTM_SOURCE_OBJECT_UNIVERSAL_IDENTIFIER, 'RU', 'RU', 'RUD'),
   row(UTM_MEDIUM_OBJECT_UNIVERSAL_IDENTIFIER, 'RU', 'RU', 'RUD'),

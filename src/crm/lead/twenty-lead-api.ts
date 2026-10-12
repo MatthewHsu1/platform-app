@@ -1,8 +1,9 @@
 import { applyPersonPushes } from 'src/crm/lead/apply-person-pushes';
-import { leadSelection, leadSelectionFields, readLeadRow } from 'src/crm/lead/lead-selection';
+import { leadSelectionFields, readLeadRow } from 'src/crm/lead/lead-selection';
 import { loadLeadContext } from 'src/crm/lead/load-lead-context';
 import { type AppLeadWriteApi } from 'src/crm/lead/types/app-lead-write-api.type';
 import { type LeadTriggerApi } from 'src/crm/lead/types/lead-trigger-api.type';
+import { readWithScoringFields } from 'src/crm/lead/utils/read-with-scoring-fields.util';
 import { applyStatusMoves } from 'src/crm/scoring/apply-status-moves';
 import { updateWhere } from 'src/shared/compare-and-set';
 import { readMemberLocale } from 'src/shared/i18n/read-user-locale';
@@ -14,14 +15,18 @@ import { readInChunks } from 'src/shared/utils/read-in-chunks.util';
 const LEADS = { objectSingular: 'crmLead', objectPlural: 'crmLeads' } as const;
 const leads = records(LEADS.objectSingular, LEADS.objectPlural);
 
-// Every Platform read of a lead uses this selection.
-export const LEAD_SELECTION = leadSelection({ withTeam: true });
-export const LEAD_SELECTION_FIELDS = leadSelectionFields({ withTeam: true });
+// The lead rules read every lead with tags and language: a save rescores the
+// lead and counts it when it is won or lost.
+export const LEAD_SELECTION_FIELDS = leadSelectionFields({ withTeam: true, withScoringFields: true });
 
-export const readLeadsById = async (ids: string[]) =>
+type FindLeads = (filter: Record<string, unknown>, selection: string) => Promise<Record<string, unknown>[]>;
+
+export const makeReadLeadsById = (find: FindLeads) => async (ids: string[]) =>
   (
-    await readInChunks(ids, (part) => leads.find<Record<string, unknown>>({ id: { in: part } }, LEAD_SELECTION))
+    await readInChunks(ids, (part) => readWithScoringFields((selection) => find({ id: { in: part } }, selection), { withTeam: true }))
   ).map(readLeadRow);
+
+export const readLeadsById = makeReadLeadsById((filter, selection) => leads.find<Record<string, unknown>>(filter, selection));
 
 export const TWENTY_LEAD_TRIGGER_API: LeadTriggerApi = {
   now: () => new Date().toISOString(),

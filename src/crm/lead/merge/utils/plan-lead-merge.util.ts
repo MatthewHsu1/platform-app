@@ -197,6 +197,14 @@ export const planLeadMerge = ({
 
   // Left out when unchanged, so the save rules do not see a salesperson or
   // team change that did not happen.
+  // Tags and language are staff lists staff may delete. With no value on any
+  // merged lead the head already has none, so they are left out of the write.
+  if (data.tags?.length === 0) {
+    delete data.tags;
+  }
+  if (data.language === null) {
+    delete data.language;
+  }
   if (data.salespersonId === head.salespersonId) {
     delete data.salespersonId;
   }

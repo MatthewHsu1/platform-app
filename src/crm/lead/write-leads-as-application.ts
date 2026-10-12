@@ -23,19 +23,12 @@ export const makeWriteLeadsAsApplication =
     const movesOf = new Map<string, { lead: LeadRow; moves: StatusMoves }>();
     const pushOf = new Map<string, LeadPersonPush>();
 
-    for (const write of writes) {
-      const lead = byId.get(write.leadId);
-
-      if (lead === undefined) {
-        skipped.push(write.leadId);
-        continue;
-      }
-      const after = { ...lead, ...write.data } as LeadRow;
-      const plan = planLeadWrite({
+    const planFor = (lead: LeadRow, data: Record<string, unknown>) =>
+      planLeadWrite({
         operation: 'updated',
         before: lead,
-        after,
-        written: new Set(Object.keys(write.data)),
+        after: { ...lead, ...data } as LeadRow,
+        written: new Set(Object.keys(data)),
         applySaveRules: true,
         now,
         context,
@@ -43,11 +36,28 @@ export const makeWriteLeadsAsApplication =
         rescore: options.rescore,
       });
 
+    for (const write of writes) {
+      const lead = byId.get(write.leadId);
+
+      if (lead === undefined) {
+        skipped.push(write.leadId);
+        continue;
+      }
+      let data = write.data;
+      let plan = planFor(lead, data);
+
+      // A probability moved by a rescore the app asked for is written as a
+      // probability: the closed date and the won and lost counts follow it.
+      if (options.rescore === true && plan.kind === 'write' && !('probability' in data) && typeof plan.data.probability === 'number') {
+        data = { ...data, probability: plan.data.probability };
+        plan = planFor(lead, data);
+      }
       if (plan.kind === 'refuse') {
         skipped.push(write.leadId);
         continue;
       }
-      const payload = { ...write.data, ...plan.data };
+      const after = { ...lead, ...data } as LeadRow;
+      const payload = { ...data, ...plan.data };
 
       if (Object.keys(payload).length === 0) {
         written.push(write.leadId);

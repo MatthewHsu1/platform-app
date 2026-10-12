@@ -6,9 +6,8 @@ import {
   MARK_WON_ROUTE_PATH,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
 import { planMarkWon } from 'src/crm/lead/actions/utils/plan-won-lost.util';
-import { readLeadRow } from 'src/crm/lead/lead-selection';
+import { leadSelection, readLeadRow } from 'src/crm/lead/lead-selection';
 import { loadLeadContext } from 'src/crm/lead/load-lead-context';
-import { LEAD_SELECTION } from 'src/crm/lead/twenty-lead-api';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
 import { jsonResponse, readBody } from 'src/shared/route-response';
@@ -23,7 +22,7 @@ const handler = async (payload: RoutePayload) => {
   if (leadId === null) {
     return jsonResponse(400, { error: translate(locale, 'leadId is required.') });
   }
-  const found = await findLead<Record<string, unknown>>(leadId, LEAD_SELECTION);
+  const found = await findLead<Record<string, unknown>>(leadId, leadSelection({ withTeam: true }));
 
   if (found === null) {
     return jsonResponse(404, { error: translate(locale, 'Lead not found.') });

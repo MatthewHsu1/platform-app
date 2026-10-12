@@ -114,8 +114,9 @@ export const leadRouteHandler = makeLeadRouteHandler(readUserLocale);
 
 // In the order given. A lead the user's row rule hides counts as not found,
 // and the whole action stops: acting on part of a selection would surprise.
-export const readLeadsAsUser = async (leadIds: string[]): Promise<LeadRow[]> => {
-  const found = await queryLeads('person', { id: { in: leadIds } });
+// A route that scores the lead asks for the tags and language as well.
+export const readLeadsAsUser = async (leadIds: string[], { withScoringFields = false }: { withScoringFields?: boolean } = {}): Promise<LeadRow[]> => {
+  const found = await queryLeads('person', { id: { in: leadIds } }, { withScoringFields });
   const byId = new Map(found.map((lead) => [lead.id, lead]));
   const missing = leadIds.filter((id) => !byId.has(id));
 

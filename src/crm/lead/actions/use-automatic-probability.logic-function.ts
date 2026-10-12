@@ -26,7 +26,7 @@ const handler = leadRouteHandler(async (body) => {
   if (leadId === null) {
     throw new LeadActionError(SELECT_ONE_LEAD, {}, 400);
   }
-  const [lead] = await readLeadsAsUser([leadId]);
+  const [lead] = await readLeadsAsUser([leadId], { withScoringFields: true });
   const plan = planUseAutomaticProbability({
     wonStatus: lead.wonStatus,
     probability: lead.probability,

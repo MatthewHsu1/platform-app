@@ -1,6 +1,11 @@
 import { defineObject, FieldType, OnDeleteAction, STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from 'twenty-sdk/define';
 
 import { CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/crm/crm-universal-identifiers.constant';
+import {
+  CRM_LEAD_SCORING_FREQUENCY_FIELD_UNIVERSAL_IDENTIFIERS,
+  CRM_LEAD_SCORING_FREQUENCY_OBJECT_UNIVERSAL_IDENTIFIER,
+  CRM_TEAM_SCORING_FREQUENCIES_FIELD_UNIVERSAL_IDENTIFIER,
+} from 'src/crm/scoring/scoring-universal-identifiers.constant';
 import { activeField, appWritten, booleanField, manyToOneField, numberField, oneToManyField, seedKeyField, textField } from 'src/shared/fields';
 import {
   CRM_STAGE_TEAM_FIELD_UNIVERSAL_IDENTIFIERS,
@@ -71,6 +76,16 @@ export default defineObject({
       targetObjectUniversalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
       targetFieldUniversalIdentifier: INVERSE_IDS.crmLeadTeam,
     }),
+    appWritten(
+      oneToManyField({
+        universalIdentifier: CRM_TEAM_SCORING_FREQUENCIES_FIELD_UNIVERSAL_IDENTIFIER,
+        name: 'scoringFrequencies',
+        label: 'Scoring rows',
+        icon: 'IconChartBar',
+        targetObjectUniversalIdentifier: CRM_LEAD_SCORING_FREQUENCY_OBJECT_UNIVERSAL_IDENTIFIER,
+        targetFieldUniversalIdentifier: CRM_LEAD_SCORING_FREQUENCY_FIELD_UNIVERSAL_IDENTIFIERS.team,
+      }),
+    ),
     seedKeyField(FIELD_IDS.seedKey),
   ],
 });

@@ -1,5 +1,6 @@
 import { leadSelection, readLeadRow } from 'src/crm/lead/lead-selection';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
+import { readWithScoringFields } from 'src/crm/lead/utils/read-with-scoring-fields.util';
 import { pruneEmptyLists } from 'src/shared/triggers/records';
 import { type GraphqlCaller, requireData, twentyGraphql } from 'src/shared/twenty-graphql';
 
@@ -31,27 +32,31 @@ export const queryLeads = async (
     return [];
   }
 
-  const found: LeadRow[] = [];
-  let after: string | null = null;
+  const readAll = async (selection: string) => {
+    const found: LeadRow[] = [];
+    let after: string | null = null;
 
-  do {
-    const page: LeadPage = requireData(
-      await twentyGraphql<LeadPage>(
-        caller,
-        `query QueryLeads($filter: CrmLeadFilterInput, $after: String, $orderBy: [CrmLeadOrderByInput]) {
-          crmLeads(filter: $filter, first: ${Math.min(limit ?? PAGE_SIZE, PAGE_SIZE)}, after: $after, orderBy: $orderBy) {
-            edges { node { ${leadSelection({ withTeam: true, withScoringFields })} } }
-            pageInfo { hasNextPage endCursor }
-          }
-        }`,
-        { filter: sendable, after, orderBy: orderBy ?? [{ createdAt: 'AscNullsLast' }, { id: 'AscNullsLast' }] },
-      ),
-      'Find leads',
-    );
+    do {
+      const page: LeadPage = requireData(
+        await twentyGraphql<LeadPage>(
+          caller,
+          `query QueryLeads($filter: CrmLeadFilterInput, $after: String, $orderBy: [CrmLeadOrderByInput]) {
+            crmLeads(filter: $filter, first: ${Math.min(limit ?? PAGE_SIZE, PAGE_SIZE)}, after: $after, orderBy: $orderBy) {
+              edges { node { ${selection} } }
+              pageInfo { hasNextPage endCursor }
+            }
+          }`,
+          { filter: sendable, after, orderBy: orderBy ?? [{ createdAt: 'AscNullsLast' }, { id: 'AscNullsLast' }] },
+        ),
+        'Find leads',
+      );
 
-    found.push(...page.crmLeads.edges.map(({ node }) => readLeadRow(node)));
-    after = page.crmLeads.pageInfo.hasNextPage && (limit === undefined || found.length < limit) ? page.crmLeads.pageInfo.endCursor : null;
-  } while (after !== null);
+      found.push(...page.crmLeads.edges.map(({ node }) => readLeadRow(node)));
+      after = page.crmLeads.pageInfo.hasNextPage && (limit === undefined || found.length < limit) ? page.crmLeads.pageInfo.endCursor : null;
+    } while (after !== null);
 
-  return limit === undefined ? found : found.slice(0, limit);
+    return limit === undefined ? found : found.slice(0, limit);
+  };
+
+  return withScoringFields ? readWithScoringFields(readAll, { withTeam: true }) : readAll(leadSelection({ withTeam: true }));
 };

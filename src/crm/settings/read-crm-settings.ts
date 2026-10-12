@@ -1,4 +1,5 @@
 import { type CrmSettings } from 'src/crm/settings/types/crm-settings.type';
+import { parseDateSetting, parsePlsFields } from 'src/crm/settings/utils/parse-setting-values.util';
 import { readApplicationVariable } from 'src/shared/application-variables/read-application-variable';
 
 const KEYS = [
@@ -9,6 +10,9 @@ const KEYS = [
   'CRM_AUTO_ASSIGNMENT_INTERVAL_TYPE',
   'CRM_AUTO_ASSIGNMENT_NEXT_RUN',
   'CRM_ASSIGNMENT_DELAY_HOURS',
+  'CRM_PLS_FIELDS',
+  'CRM_PLS_START_DATE',
+  'CRM_PLS_REBUILD_CRON',
 ] as const;
 
 type Values = Partial<Record<(typeof KEYS)[number], string>>;
@@ -44,5 +48,9 @@ export const readCrmSettings = async (): Promise<CrmSettings> => {
     intervalType: asChoice(values.CRM_AUTO_ASSIGNMENT_INTERVAL_TYPE, ['MINUTES', 'HOURS', 'DAYS', 'WEEKS'] as const, 'DAYS'),
     nextRun: asDate(values.CRM_AUTO_ASSIGNMENT_NEXT_RUN),
     assignmentDelayHours: asNumber(values.CRM_ASSIGNMENT_DELAY_HOURS, 0),
+    // Unlike the other keys, an empty fields list is a choice: no field besides the stage.
+    plsFields: parsePlsFields(values.CRM_PLS_FIELDS),
+    plsStartDate: parseDateSetting(values.CRM_PLS_START_DATE),
+    plsRebuildCron: asBoolean(values.CRM_PLS_REBUILD_CRON, false),
   };
 };

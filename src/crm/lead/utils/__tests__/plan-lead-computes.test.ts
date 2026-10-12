@@ -137,6 +137,25 @@ describe('automatic probability', () => {
     expect(compute(before, { ...before, stageId: 'qualified' }, ['stageId'], { score }).probability).toBeUndefined();
   });
 
+  it('scores the lead again when a value the score reads changes', () => {
+    const before = lead({ stageId: 'new', probability: 40, automatedProbability: 40, contactAddress: { addressCountry: 'c0' } });
+    const after = { ...before, contactAddress: { ...before.contactAddress!, addressCountry: 'c1' } };
+
+    expect(compute(before, after, ['contactAddress'], { score, scoringFields: ['country'] })).toMatchObject({
+      automatedProbability: 25,
+      probability: 25,
+    });
+  });
+
+  it('keeps the probability when only a value the score does not read changes', () => {
+    const before = lead({ stageId: 'new', probability: 40, automatedProbability: 40, contactAddress: { addressCountry: 'c0' } });
+    const after = { ...before, contactAddress: { ...before.contactAddress!, addressCountry: 'c1' } };
+    const values = compute(before, after, ['contactAddress'], { score, scoringFields: ['source'] });
+
+    expect(values.automatedProbability).toBeUndefined();
+    expect(values.probability).toBeUndefined();
+  });
+
   it('changes nothing while no score exists for an open stage', () => {
     const before = lead({ stageId: 'new', probability: 40, automatedProbability: 40 });
     const values = compute(before, { ...before, stageId: 'qualified' }, ['stageId']);

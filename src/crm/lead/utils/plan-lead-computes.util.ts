@@ -12,6 +12,7 @@ import { planTeamDefault } from 'src/crm/lead/utils/plan-team-default.util';
 import { sameProbability } from 'src/crm/lead/utils/probability.util';
 import { cleanWebsite } from 'src/crm/lead/utils/website.util';
 import { planWonStatus } from 'src/crm/lead/utils/won-status.util';
+import { scoringPairs } from 'src/crm/scoring/utils/scoring-pairs.util';
 import { sameValue } from 'src/shared/utils/same-value.util';
 
 export const DEFAULT_OPPORTUNITY_NAME_TEMPLATE = "{name}'s opportunity";
@@ -114,11 +115,24 @@ export const planLeadComputes = (input: LeadComputesInput): Partial<LeadRow> => 
   set('emailState', emailState(lead.emailFrom));
 
   // No stage scores 0 and a won stage 100; an open stage takes the score of
-  // past leads when one exists, else nothing changes.
+  // past leads when one exists, else nothing changes. A change to a value the
+  // score reads scores the lead again.
   const archived = lead.wonStatus === WON_STATUS.LOST;
   const restoredFromLost = before?.wonStatus === WON_STATUS.LOST && !archived;
+  const scoredValuesChanged =
+    before !== null &&
+    context.scoringFields !== undefined &&
+    !sameValue(scoringPairs(before, context.scoringFields), scoringPairs(lead, context.scoringFields));
 
-  if (isCreate || operation === 'restored' || input.rescore === true || restoredFromLost || changed('stageId') || changed('teamId')) {
+  if (
+    isCreate ||
+    operation === 'restored' ||
+    input.rescore === true ||
+    restoredFromLost ||
+    changed('stageId') ||
+    changed('teamId') ||
+    scoredValuesChanged
+  ) {
     const stage = stageOf(lead.stageId);
     const score = lead.stageId === null ? 0 : stage?.isWon === true ? 100 : (context.score?.(lead) ?? null);
 

@@ -141,7 +141,7 @@ export const readLeadRow = (node: Record<string, unknown>): LeadRow => ({
   jobPosition: text(node.jobPosition),
   referred: text(node.referred),
   description: composite(node.description, { markdown: 'text' }),
-  tags: Array.isArray(node.tags) ? node.tags.map(String) : null,
+  tags: listOrNull(node.tags)?.map(String) ?? null,
   language: text(node.language),
   phoneState: text(node.phoneState),
   emailState: text(node.emailState),

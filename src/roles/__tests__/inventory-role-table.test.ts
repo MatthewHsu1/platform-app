@@ -30,6 +30,7 @@ const OUTSIDE_INVENTORY = [
   'crmLostReason',
   'crmStage',
   'crmRecurringPlan',
+  'crmLeadScoringFrequency',
   'crmTeam',
   'crmTeamMember',
   'crmStageTeam',

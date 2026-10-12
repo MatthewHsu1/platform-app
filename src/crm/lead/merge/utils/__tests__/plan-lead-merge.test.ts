@@ -166,6 +166,14 @@ describe('planLeadMerge', () => {
     );
   });
 
+  it('leaves tags and language out of the write when no merged lead has one', () => {
+    const leads = Object.values(sampleLeads()).map((lead) => ({ ...lead, tags: null, language: null }));
+    const plan = planLeadMerge({ leads, stages: SAMPLE_STAGES });
+
+    expect(Object.keys(plan.data)).not.toContain('tags');
+    expect(Object.keys(plan.data)).not.toContain('language');
+  });
+
   it('carries the first lost reason when every lead is at 0 %', () => {
     const leads = Object.values(sampleLeads()).map((lead) => ({ ...lead, probability: 0, automatedProbability: 50 }));
     const plan = planLeadMerge({ leads, stages: SAMPLE_STAGES });

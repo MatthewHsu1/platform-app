@@ -117,6 +117,28 @@ describe('writeLeadsAsApplication', () => {
     });
   });
 
+  it('writes a fresh score on a lead won in a stage no longer won as a probability: it reopens and leaves the won counts', async () => {
+    const store = makeFakeLeadStore({
+      leads: [
+        lead('l1', {
+          stageId: 'new',
+          probability: 100,
+          automatedProbability: 100,
+          wonStatus: 'WON',
+          dateClosed: '2026-10-01T09:00:00.000Z',
+        }),
+      ],
+      stages: STAGES,
+      now: NOW,
+      score: () => 25,
+    });
+
+    await makeWriteLeadsAsApplication(store.writeApi)([{ leadId: 'l1', data: {} }], { rescore: true });
+
+    expect(store.rows.get('l1')).toMatchObject({ probability: 25, automatedProbability: 25, wonStatus: 'PENDING', dateClosed: null });
+    expect(store.moves.map((entry) => entry.moves)).toEqual([{ won: -1, lost: 0 }]);
+  });
+
   it('skips a lead that no longer exists', async () => {
     const store = makeFakeLeadStore({ leads: [], stages: STAGES, now: NOW });
 

@@ -251,6 +251,8 @@ on printed documents.
 - Add your own fields to our objects in Settings → Data model. Upgrades keep them. Do not give
   them one of those names: if a later version adds a field with the same name, the upgrade stops
   until you rename yours.
+- Deleting or deactivating the Tags or Language field on leads turns those scoring factors off;
+  the lead rules go on without them.
 - **Uninstalling the app deletes its objects with every staff field, staff list and board on
   them.** A reinstall brings back only the defaults.
 
