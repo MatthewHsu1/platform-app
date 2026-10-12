@@ -215,6 +215,7 @@ describe('listOwnerCandidateObjects: audited objects only', () => {
     expect(STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS).toEqual({
       company: STANDARD_OBJECT.company.universalIdentifier,
       opportunity: STANDARD_OBJECT.opportunity.universalIdentifier,
+      person: STANDARD_OBJECT.person.universalIdentifier,
       task: STANDARD_OBJECT.task.universalIdentifier,
       workspaceMember: STANDARD_OBJECT.workspaceMember.universalIdentifier,
     });

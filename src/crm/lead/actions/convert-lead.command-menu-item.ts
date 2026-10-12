@@ -1,7 +1,9 @@
 import {
   defineCommandMenuItem,
-  everyEquals,
+  isSelectAll,
+  noneEquals,
   numberOfSelectedRecords,
+  objectPermissions,
   selectedRecords,
 } from 'twenty-sdk/define';
 
@@ -11,7 +13,9 @@ import {
   CONVERT_LEAD_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
 
-// Hiding the button is a convenience; the logic function checks again.
+// The lead's type and status may be hidden columns of the view, where the
+// condition cannot read them; the logic function refuses a lead that cannot
+// be converted.
 export default defineCommandMenuItem({
   universalIdentifier: CONVERT_LEAD_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIER,
   label: 'Convert to opportunity',
@@ -21,6 +25,9 @@ export default defineCommandMenuItem({
   availabilityType: 'RECORD_SELECTION',
   availabilityObjectUniversalIdentifier: CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER,
   conditionalAvailabilityExpression:
-    numberOfSelectedRecords === 1 && everyEquals(selectedRecords, 'leadType', 'LEAD') && everyEquals(selectedRecords, 'wonStatus', 'PENDING'),
+    numberOfSelectedRecords === 1 &&
+    !isSelectAll &&
+    objectPermissions.canUpdateObjectRecords &&
+    noneEquals(selectedRecords, 'recordPermissions.canUpdate', false),
   frontComponentUniversalIdentifier: CONVERT_LEAD_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
 });

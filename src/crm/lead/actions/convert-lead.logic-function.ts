@@ -1,150 +1,144 @@
-import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
+import { defineLogicFunction } from 'twenty-sdk/define';
 
+import { LEAD_TYPE, WON_STATUS } from 'src/crm/crm-options.constant';
+import { convertAndAllocate } from 'src/crm/lead/actions/convert-and-allocate';
+import { twentyConvertApi } from 'src/crm/lead/actions/convert-api';
+import { currentAutomatedProbability } from 'src/crm/lead/actions/current-automated-probability';
+import { optionalId, refuseUnconvertible, resolveConvertDefaults } from 'src/crm/lead/actions/convert-lead-shared';
+import { CONVERT_MESSAGES } from 'src/crm/lead/actions/convert-messages.constant';
+import { LeadActionError } from 'src/crm/lead/actions/lead-action-error';
 import {
-  findLead,
+  leadRouteHandler,
   readLeadId,
-  withLeadRouteErrors,
+  readLeadsAsUser,
+  SELECT_ONE_LEAD,
+  updateLeadAsUser,
 } from 'src/crm/lead/actions/lead-action-route';
 import {
   CONVERT_LEAD_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   CONVERT_LEAD_ROUTE_PATH,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
-import { planLeadConversion } from 'src/crm/lead/actions/utils/plan-lead-conversion.util';
-import { describeGraphqlErrors, twentyGraphql } from 'src/shared/twenty-graphql';
-import { jsonResponse, readBody } from 'src/shared/route-response';
-import { type LeadToConvert } from 'src/crm/lead/actions/utils/types/lead-to-convert.type';
+import { type ConvertOptions } from 'src/crm/lead/actions/types/convert-options.type';
+import { planCreateCustomer } from 'src/crm/lead/actions/utils/plan-create-customer.util';
+import { planRestore } from 'src/crm/lead/actions/utils/plan-won-lost.util';
+import { type CustomerAction } from 'src/crm/lead/actions/utils/types/customer-action.type';
+import { mergeLeads } from 'src/crm/lead/merge/merge-leads';
+import { planLeadMerge } from 'src/crm/lead/merge/utils/plan-lead-merge.util';
+import { loadLeadContext } from 'src/crm/lead/load-lead-context';
+import { writeLeadsAsApplication } from 'src/crm/lead/write-leads-as-application';
+import { NOT_ALLOWED_MESSAGE } from 'src/shared/not-allowed';
+import { UserError } from 'src/shared/user-error';
+import { randomId } from 'src/shared/utils/random-id.util';
 
-const findPersonIdByEmail = async (email: string | null | undefined) => {
-  if (!email) {
-    return null;
+// A merge cannot be undone: when the kept lead will need a new customer, the
+// user's right to make one is checked before the merge, not after it.
+const requireHeadCustomerRights = async (mergeIds: string[], options: ConvertOptions) => {
+  if (options.customerAction !== 'CREATE' || options.personId !== null) {
+    return;
   }
+  const leads = await readLeadsAsUser(mergeIds);
+  const { stages } = await loadLeadContext([]);
+  const plan = planLeadMerge({ leads, stages });
+  const head = leads.find((candidate) => candidate.id === plan.headId);
+  const merged = head === undefined ? null : { ...head, ...plan.data };
 
-  const found = await twentyGraphql<{ people: { edges: { node: { id: string } }[] } }>(
-    'person',
-    `query PersonByEmail($email: String!) {
-      people(filter: { emails: { primaryEmail: { eq: $email } } }, first: 1) {
-        edges { node { id } }
-      }
-    }`,
-    { email },
-  );
+  if (merged === null || merged.leadType !== LEAD_TYPE.LEAD || merged.personId !== null || merged.companyId !== null) {
+    return;
+  }
+  const customer = planCreateCustomer({
+    lead: merged,
+    chosenCompanyId: options.companyId,
+    companyIdByName: null,
+    existingCompanyAddress: null,
+    salespersonId: options.salespersonIds[0] ?? null,
+  });
+  const updatable = await twentyConvertApi.updatableObjects();
+  const needed = [
+    ...(customer.person === null ? [] : (['person'] as const)),
+    ...(customer.company !== null && 'create' in customer.company ? (['company'] as const) : []),
+  ];
 
-  return found.data?.people.edges[0]?.node.id ?? null;
+  if (needed.some((object) => !updatable.has(object))) {
+    throw new UserError(NOT_ALLOWED_MESSAGE);
+  }
 };
 
-const findCompanyIdByName = async (name: string | null) => {
-  if (!name?.trim()) {
-    return null;
-  }
-
-  const found = await twentyGraphql<{ companies: { edges: { node: { id: string } }[] } }>(
-    'person',
-    `query CompanyByName($name: String!) {
-      companies(filter: { name: { eq: $name } }, first: 1) { edges { node { id } } }
-    }`,
-    { name: name.trim() },
-  );
-
-  return found.data?.companies.edges[0]?.node.id ?? null;
-};
-
-const create = async (objectName: 'Company' | 'Person', data: Record<string, unknown>) => {
-  const created = await twentyGraphql<Record<string, { id: string } | null>>(
-    'person',
-    `mutation CreateForConvert($data: ${objectName}CreateInput!) {
-      create${objectName}(data: $data) { id }
-    }`,
-    { data },
-  );
-  const id = created.data?.[`create${objectName}`]?.id;
-
-  if (id === undefined) {
-    throw new Error(
-      `Could not create the ${objectName.toLowerCase()}: ${describeGraphqlErrors(created.errors)}`,
-    );
-  }
-
-  return id;
-};
-
-// Runs as the clicking user: row rules apply to the lead, people and companies.
-const handler = async (payload: RoutePayload) => {
-  const leadId = readLeadId(readBody(payload));
+const handler = leadRouteHandler(async (body) => {
+  const leadId = readLeadId(body);
 
   if (leadId === null) {
-    return jsonResponse(400, { error: 'leadId is required.' });
+    throw new LeadActionError(SELECT_ONE_LEAD, {}, 400);
   }
 
-  const lead = await findLead<LeadToConvert>(
-    leadId,
-    `id name leadType wonStatus personId companyId contactName partnerName jobPosition
-     emailFrom { primaryEmail }
-     phone { primaryPhoneNumber primaryPhoneCountryCode primaryPhoneCallingCode }
-     website { primaryLinkUrl }
-     contactAddress {
-       addressStreet1 addressStreet2 addressCity addressState addressPostcode addressCountry
-     }`,
-  );
+  const [lead] = await readLeadsAsUser([leadId]);
 
-  if (lead === null) {
-    return jsonResponse(404, { error: 'Lead not found.' });
+  refuseUnconvertible(lead);
+
+  const customerAction: CustomerAction = body.customerAction === 'EXIST' ? 'EXIST' : 'CREATE';
+  const personId = optionalId(body.personId);
+  const salespersonId = optionalId(body.salespersonId);
+  const teamId = optionalId(body.teamId);
+  const force = body.force !== false;
+  // Without the dialog's run id (a call from outside the dialog) a repeat makes its customer again.
+  const options: ConvertOptions = {
+    customerAction,
+    personId,
+    companyId: optionalId(body.companyId),
+    salespersonIds: salespersonId === null ? [] : [salespersonId],
+    teamId,
+    force,
+    runId: optionalId(body.runId) ?? randomId(),
+  };
+
+  if (customerAction === 'EXIST' && personId === null && lead.personId === null && lead.companyId === null) {
+    throw new LeadActionError(CONVERT_MESSAGES.chooseContact, {}, 400);
   }
 
-  const plan = planLeadConversion({
-    lead,
-    foundPersonId: lead.personId === null ? await findPersonIdByEmail(lead.emailFrom?.primaryEmail) : null,
-    foundCompanyId: lead.companyId === null ? await findCompanyIdByName(lead.partnerName) : null,
-    now: new Date().toISOString(),
-  });
+  if (body.conversion !== 'MERGE') {
+    await convertAndAllocate([lead], options);
 
-  if (plan.kind === 'refuse') {
-    return jsonResponse(409, { error: plan.reason });
+    return { leadId };
   }
 
-  try {
-    const companyId =
-      plan.company === null
-        ? null
-        : 'id' in plan.company
-          ? plan.company.id
-          : await create('Company', plan.company.create);
-    const personId =
-      plan.person === null
-        ? null
-        : 'id' in plan.person
-          ? plan.person.id
-          : await create('Person', { ...plan.person.create, companyId });
+  const { duplicates } = await resolveConvertDefaults(lead, { customerAction, personId });
+  const mergeIds = [...new Set([leadId, ...duplicates.map((duplicate) => duplicate.id)])];
 
-    const updated = await twentyGraphql<{ updateCrmLead: { id: string } | null }>(
-      'person',
-      `mutation ConvertLead($id: UUID!, $data: CrmLeadUpdateInput!) {
-        updateCrmLead(id: $id, data: $data) { id }
-      }`,
-      { id: leadId, data: { ...plan.leadUpdate, personId, companyId } },
-    );
+  await requireHeadCustomerRights(mergeIds, options);
 
-    if (!updated.data?.updateCrmLead) {
-      return jsonResponse(500, {
-        error: `Could not update the lead: ${describeGraphqlErrors(updated.errors)}`,
-      });
+  const { headId } = await mergeLeads(mergeIds, { caller: 'person' });
+  let [head] = await readLeadsAsUser([headId]);
+
+  // A lost lead kept by the merge comes back into the pipeline, as Restore brings it back.
+  if (head.wonStatus === WON_STATUS.LOST) {
+    const restore = planRestore({
+      wonStatus: head.wonStatus,
+      storedAutomated: head.automatedProbability,
+      newAutomated: await currentAutomatedProbability(head),
+    });
+
+    if (restore.kind === 'update') {
+      if (restore.appData !== null) {
+        await writeLeadsAsApplication([{ leadId: headId, data: restore.appData }]);
+      }
+      await updateLeadAsUser(headId, restore.userData);
     }
-  } catch (error) {
-    return jsonResponse(500, { error: error instanceof Error ? error.message : String(error) });
+    [head] = await readLeadsAsUser([headId]);
   }
 
-  return jsonResponse(200, { leadId });
-};
+  if (head.leadType === LEAD_TYPE.LEAD) {
+    await convertAndAllocate([head], options);
+  } else if (head.salespersonId === null || force) {
+    await updateLeadAsUser(headId, { salespersonId, teamId });
+  }
+
+  return { leadId: headId };
+});
 
 export default defineLogicFunction({
   universalIdentifier: CONVERT_LEAD_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   name: 'convert-lead',
-  description:
-    'Turns a lead into an opportunity and links or makes its contact and customer.',
-  timeoutSeconds: 30,
-  handler: withLeadRouteErrors(handler),
-  httpRouteTriggerSettings: {
-    path: CONVERT_LEAD_ROUTE_PATH,
-    httpMethod: 'POST',
-    isAuthRequired: true,
-  },
+  description: 'Converts a lead into an opportunity, or merges it with its duplicates, and assigns it.',
+  timeoutSeconds: 300,
+  handler,
+  httpRouteTriggerSettings: { path: CONVERT_LEAD_ROUTE_PATH, httpMethod: 'POST', isAuthRequired: true },
 });

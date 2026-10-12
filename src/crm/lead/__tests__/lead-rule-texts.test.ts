@@ -10,6 +10,8 @@ import {
   UTM_RULE_TEXTS,
 } from 'src/crm/lead/actions/mark-won.front-component';
 import { LEADS_NOT_FOUND, SELECT_ONE_LEAD, SELECT_SOME_LEADS } from 'src/crm/lead/actions/lead-action-route';
+import { CONVERT_MESSAGES } from 'src/crm/lead/actions/convert-messages.constant';
+import { CONVERT_TEXTS } from 'src/crm/lead/actions/convert-lead.front-component';
 import { LEAD_ACTION_TEXTS } from 'src/crm/lead/actions/mark-lost.front-component';
 import { MERGE_TEXTS } from 'src/crm/lead/actions/merge-leads.front-component';
 import { MERGE_MESSAGES } from 'src/crm/lead/merge/merge-messages.constant';
@@ -98,6 +100,13 @@ describe('lead rule texts', () => {
     ];
 
     expect(LEAD_ACTION_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
+    expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
+  });
+
+  it('lists every answer and note of the convert buttons, and the catalog holds each', () => {
+    const texts = Object.values(CONVERT_MESSAGES);
+
+    expect(CONVERT_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
     expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
   });
 

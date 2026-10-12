@@ -1,4 +1,5 @@
 import { readAddressValue, readEmailsValue, readLinksValue, readPhonesValue } from 'src/crm/lead/lead-selection';
+import { type AddressValue } from 'src/crm/lead/types/address-value.type';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { type PartnerCompanyRow } from 'src/crm/lead/types/partner-company-row.type';
 import { type PartnerPersonRow } from 'src/crm/lead/types/partner-person-row.type';
@@ -11,6 +12,8 @@ import { sameValue } from 'src/shared/utils/same-value.util';
 const ADDRESS_PARTS = ['addressStreet1', 'addressStreet2', 'addressCity', 'addressPostcode', 'addressState', 'addressCountry'] as const;
 
 const filled = (value: string | null | undefined): value is string => value !== null && value !== undefined && value.trim() !== '';
+
+const hasAddress = (address: AddressValue | null | undefined) => ADDRESS_PARTS.some((part) => filled(address?.[part]));
 
 // Compared after normalising; a value that does not normalise is compared as typed.
 const emailKey = (email: string | null | undefined) => (filled(email) ? (normaliseEmail(email) ?? email.trim()) : null);
@@ -129,10 +132,15 @@ export const planPartnerSync = ({
       });
     }
 
-    // All six parts or none, so a lead never mixes two addresses.
-    if (ADDRESS_PARTS.some((part) => filled(company.address?.[part]))) {
-      values.contactAddress = readAddressValue(Object.fromEntries(ADDRESS_PARTS.map((part) => [part, company.address?.[part] ?? null])));
-    }
+  }
+
+  // The contact's own address, else its company's: the customer company, or
+  // the contact's company when the lead has none. All six parts or none, so a
+  // lead never mixes two addresses.
+  const address = [person?.address, company?.address, person === null ? null : personCompany?.address].find(hasAddress);
+
+  if (address !== undefined) {
+    values.contactAddress = readAddressValue(Object.fromEntries(ADDRESS_PARTS.map((part) => [part, address?.[part] ?? null])));
   }
 
   return Object.fromEntries(

@@ -47,7 +47,7 @@ export const loadLeadContext = async (leads: LeadRow[]): Promise<LeadContext> =>
       of: records('person', 'people'),
       filter: { id: { in: presentIds(leads.map((lead) => lead.personId)) } },
       selection:
-        'id name { firstName lastName } emails { primaryEmail additionalEmails } phones { primaryPhoneNumber primaryPhoneCountryCode primaryPhoneCallingCode additionalPhones } jobTitle companyId',
+        'id name { firstName lastName } emails { primaryEmail additionalEmails } phones { primaryPhoneNumber primaryPhoneCountryCode primaryPhoneCallingCode additionalPhones } jobTitle companyId address { addressStreet1 addressStreet2 addressCity addressPostcode addressState addressCountry }',
     },
     companies: {
       of: companyRecords,

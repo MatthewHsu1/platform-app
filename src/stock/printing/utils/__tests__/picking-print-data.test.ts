@@ -35,7 +35,7 @@ describe('backorderChains', () => {
 });
 
 describe('pickingContacts', () => {
-  const ann = { kind: 'person' as const, name: 'Ann Lee', company: { name: 'Gym A', address: '1 Main St' } };
+  const ann = { kind: 'person' as const, name: 'Ann Lee', address: '', company: { name: 'Gym A', address: '1 Main St' } };
   const depot = { kind: 'company' as const, name: 'Gym A Depot', address: '7 Dock Rd' };
 
   it('names the company behind a person and delivers to the first move\'s contact', () => {
@@ -47,6 +47,14 @@ describe('pickingContacts', () => {
       commercialPartnerAddress: '1 Main St',
       deliveryPartnerName: 'Gym A Depot',
       deliveryPartnerAddress: '7 Dock Rd',
+    });
+  });
+
+  it("prints a person's own address when they have one, their company's otherwise", () => {
+    expect(pickingContacts({ ...ann, address: '9 Elm St' }, null)).toMatchObject({
+      partnerAddress: '9 Elm St',
+      commercialPartnerAddress: '1 Main St',
+      deliveryPartnerAddress: '9 Elm St',
     });
   });
 

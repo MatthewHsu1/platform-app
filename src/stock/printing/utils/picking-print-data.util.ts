@@ -1,7 +1,7 @@
 import { type PickingPrintOpenPackage } from 'src/stock/printing/types/picking-print-open-package.type';
 
 type ContactCompany = { name: string; address: string };
-type Contact = { kind: 'person'; name: string; company: ContactCompany | null } | { kind: 'company'; name: string; address: string };
+type Contact = { kind: 'person'; name: string; address: string; company: ContactCompany | null } | { kind: 'company'; name: string; address: string };
 
 // Every backorder down the chain of each printed transfer, nearest first, marked when it is a
 // backorder of the printed transfer itself.
@@ -32,9 +32,13 @@ export const backorderChains = (rootIds: string[], backorders: { id: string; bac
 };
 
 const contactName = (contact: Contact | null) => contact?.name ?? '';
-// A person has no address of their own here: their company's stands in.
+// A person's own address, else their company's.
 const contactAddress = (contact: Contact | null) =>
-  contact === null ? '' : contact.kind === 'company' ? contact.address : (contact.company?.address ?? '');
+  contact === null
+    ? ''
+    : contact.kind === 'company' || contact.address !== ''
+      ? contact.address
+      : (contact.company?.address ?? '');
 
 // The transfer's contact (else its first move's), the company behind a person contact, and where a
 // delivery goes (the first move's contact, else the transfer's).

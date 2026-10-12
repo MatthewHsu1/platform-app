@@ -26,6 +26,32 @@ describe('transferGroupValues', () => {
     ).toMatchObject({ partnerKey: 'ann', partnerName: 'Ann Lee', countryKey: 'France', countryName: 'France' });
   });
 
+  it("takes the contact person's own country before their company's", () => {
+    expect(
+      transferGroupValues(
+        transfer({
+          person: {
+            id: 'ann',
+            name: { firstName: 'Ann', lastName: 'Lee' },
+            address: { addressCountry: 'Spain' },
+            company: { address: { addressCountry: 'France' } },
+          },
+          company: acme,
+        }),
+      ),
+    ).toMatchObject({ partnerKey: 'ann', countryKey: 'Spain', countryName: 'Spain' });
+  });
+
+  it("takes the person's company country when the person's own country is empty", () => {
+    expect(
+      transferGroupValues(
+        transfer({
+          person: { id: 'ann', name: null, address: { addressCountry: '' }, company: { address: { addressCountry: 'France' } } },
+        }),
+      ),
+    ).toMatchObject({ countryKey: 'France' });
+  });
+
   it('takes the contact company when the transfer has no person', () => {
     expect(transferGroupValues(transfer({ company: acme }))).toMatchObject({
       partnerKey: 'acme',

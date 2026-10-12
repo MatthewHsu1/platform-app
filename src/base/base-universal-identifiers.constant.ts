@@ -10,3 +10,5 @@ export const IR_SEQUENCE_FIELD_UNIVERSAL_IDENTIFIERS = {
   seedKey: '70020b27-9db1-4f88-8f8e-659cb5491a05',
   pickingTypes: '6fbf6f8c-ad66-4014-9ca1-6bc3c978dad6',
 } as const;
+
+export const PERSON_ADDRESS_FIELD_UNIVERSAL_IDENTIFIER = '13fc2d9b-6edd-4994-90ea-543f11877a38';

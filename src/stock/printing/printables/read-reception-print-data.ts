@@ -24,6 +24,7 @@ type Address = {
 type CompanyNode = { name: string | null; address: Address } | null;
 type PersonNode = {
   name: { firstName: string | null; lastName: string | null } | null;
+  address: Address;
   phones: { primaryPhoneNumber: string | null; primaryPhoneCallingCode: string | null } | null;
   company: CompanyNode;
 } | null;
@@ -40,7 +41,7 @@ type MoveRow = {
 // Twenty returns a nested to-one relation as null unless its deletedAt is selected.
 const ADDRESS = 'address { addressStreet1 addressStreet2 addressCity addressState addressPostcode addressCountry }';
 const PICKING_SELECTION = `id name state company { id deletedAt name ${ADDRESS} }
-  person { id deletedAt name { firstName lastName } phones { primaryPhoneNumber primaryPhoneCallingCode } company { id deletedAt name ${ADDRESS} } }`;
+  person { id deletedAt name { firstName lastName } ${ADDRESS} phones { primaryPhoneNumber primaryPhoneCallingCode } company { id deletedAt name ${ADDRESS} } }`;
 
 const text = (value: string | null | undefined) => value ?? '';
 
@@ -52,20 +53,27 @@ const addressLines = (address: Address) =>
     address?.addressCountry,
   ].filter((line): line is string => typeof line === 'string' && line !== '');
 
+const personLines = (person: NonNullable<PersonNode>) => {
+  const own = addressLines(person.address);
+
+  return own.length > 0 ? own : addressLines(person.company?.address ?? null);
+};
+
 const partnerName = (picking: PickingRow | undefined) =>
   picking?.person
     ? [picking.person.name?.firstName, picking.person.name?.lastName].filter(Boolean).join(' ')
     : text(picking?.company?.name);
 
-// The contact's name, address and phone, one per line. A person has no address of their own here:
-// their company's stands in.
+// The contact's name, address and phone, one per line. A person's own address, else their company's.
 const partnerAddress = (picking: PickingRow | undefined) => {
   const phone = picking?.person?.phones?.primaryPhoneNumber ?? '';
   const callingCode = picking?.person?.phones?.primaryPhoneCallingCode ?? '';
 
   return [
     partnerName(picking),
-    ...addressLines(picking?.person ? (picking.person.company?.address ?? null) : (picking?.company?.address ?? null)),
+    ...(picking?.person
+      ? personLines(picking.person)
+      : addressLines(picking?.company?.address ?? null)),
     phone === '' ? '' : `${callingCode} ${phone}`.trim(),
   ]
     .filter((line) => line !== '')

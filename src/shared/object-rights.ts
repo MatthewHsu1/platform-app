@@ -52,6 +52,13 @@ const requireRight = async (right: keyof ObjectRights, objectUniversalIdentifier
   }
 };
 
+// The objects among these whose records the clicking user may create and change.
+export const filterUpdatableObjects = async (objectUniversalIdentifiers: string[]) => {
+  const rights = await readObjectRights();
+
+  return new Set(objectUniversalIdentifiers.filter((id) => rights.get(id)?.canUpdateObjectRecords === true));
+};
+
 // Whether a report should offer its buttons that change records.
 export const hasUpdateRights = (objectUniversalIdentifiers: string[]) =>
   hasRight('canUpdateObjectRecords', objectUniversalIdentifiers);

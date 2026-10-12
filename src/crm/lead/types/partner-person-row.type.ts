@@ -1,3 +1,4 @@
+import { type AddressValue } from 'src/crm/lead/types/address-value.type';
 import { type EmailsValue } from 'src/crm/lead/types/emails-value.type';
 import { type PhonesValue } from 'src/crm/lead/types/phones-value.type';
 
@@ -8,4 +9,6 @@ export type PartnerPersonRow = {
   phones: PhonesValue | null;
   jobTitle: string | null;
   companyId: string | null;
+  // Read only where the lead's address follows its contact.
+  address?: AddressValue | null;
 };
