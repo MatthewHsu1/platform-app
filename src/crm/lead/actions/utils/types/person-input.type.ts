@@ -5,5 +5,5 @@ export type PersonInput = {
   emails?: { primaryEmail: string };
   phones?: { primaryPhoneNumber: string | null; primaryPhoneCountryCode: string | null; primaryPhoneCallingCode: string | null };
   jobTitle?: string;
-  address?: AddressValue;
+  postalAddress?: AddressValue;
 };

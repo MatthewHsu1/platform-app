@@ -137,7 +137,7 @@ export const planPartnerSync = ({
   // The contact's own address, else its company's: the customer company, or
   // the contact's company when the lead has none. All six parts or none, so a
   // lead never mixes two addresses.
-  const address = [person?.address, company?.address, person === null ? null : personCompany?.address].find(hasAddress);
+  const address = [person?.postalAddress, company?.address, person === null ? null : personCompany?.address].find(hasAddress);
 
   if (address !== undefined) {
     values.contactAddress = readAddressValue(Object.fromEntries(ADDRESS_PARTS.map((part) => [part, address?.[part] ?? null])));

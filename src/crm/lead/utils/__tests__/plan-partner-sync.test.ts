@@ -130,13 +130,13 @@ describe('planPartnerSync', () => {
   it("takes the contact's own address before its company's", () => {
     const own = { ...EMPTY_ADDRESS, addressStreet1: '9 Elm St', addressCity: 'Dayton' };
 
-    expect(sync({ lead: lead({ personId: 'P', companyId: 'C' }), person: person({ address: own }), company: company() })).toMatchObject({
+    expect(sync({ lead: lead({ personId: 'P', companyId: 'C' }), person: person({ postalAddress: own }), company: company() })).toMatchObject({
       contactAddress: own,
     });
   });
 
   it("takes the contact's company address when the contact has none and the lead has no customer company", () => {
-    expect(sync({ lead: lead({ personId: 'P' }), person: person({ address: { ...EMPTY_ADDRESS } }), personCompany: company() })).toMatchObject({
+    expect(sync({ lead: lead({ personId: 'P' }), person: person({ postalAddress: { ...EMPTY_ADDRESS } }), personCompany: company() })).toMatchObject({
       contactAddress: { ...EMPTY_ADDRESS, addressStreet1: '1 Main St', addressCity: 'Columbus', addressCountry: 'United States' },
     });
   });

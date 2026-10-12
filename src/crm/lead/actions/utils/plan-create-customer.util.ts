@@ -41,7 +41,7 @@ const personFromLead = (lead: LeadRow, name: string, address: AddressValue | nul
         },
       }),
     ...(jobTitle !== null && { jobTitle }),
-    ...(address !== null && { address }),
+    ...(address !== null && { postalAddress: address }),
   };
 };
 

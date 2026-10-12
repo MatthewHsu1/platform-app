@@ -10,5 +10,5 @@ export type PartnerPersonRow = {
   jobTitle: string | null;
   companyId: string | null;
   // Read only where the lead's address follows its contact.
-  address?: AddressValue | null;
+  postalAddress?: AddressValue | null;
 };

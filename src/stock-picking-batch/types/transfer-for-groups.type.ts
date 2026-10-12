@@ -9,6 +9,7 @@ export type TransferForGroups = {
     id: string;
     name: { firstName: string | null; lastName: string | null } | null;
     company: Country | null;
-  } & Partial<Country> | null;
+    postalAddress?: Country['address'];
+  } | null;
   company: ({ id: string; name: string | null } & Country) | null;
 };

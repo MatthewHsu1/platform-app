@@ -30,7 +30,7 @@ const PERSON = {
   emails: { primaryEmail: 'jane@northside.example' },
   phones: { primaryPhoneNumber: '5551234567', primaryPhoneCountryCode: 'US', primaryPhoneCallingCode: '+1' },
   jobTitle: 'Owner',
-  address: base.contactAddress,
+  postalAddress: base.contactAddress,
 };
 
 describe('planCreateCustomer', () => {
@@ -55,7 +55,7 @@ describe('planCreateCustomer', () => {
       planCreateCustomer({ lead: base, chosenCompanyId: null, companyIdByName: 'company-9', existingCompanyAddress: companyAddress, salespersonId: null }),
     ).toEqual({
       company: { id: 'company-9' },
-      person: { create: { ...PERSON, address: companyAddress } },
+      person: { create: { ...PERSON, postalAddress: companyAddress } },
     });
   });
 
@@ -64,8 +64,8 @@ describe('planCreateCustomer', () => {
     const plan = (address: typeof companyAddress | null) =>
       planCreateCustomer({ lead: base, chosenCompanyId: 'company-chosen', companyIdByName: null, existingCompanyAddress: address, salespersonId: null });
 
-    expect(plan(companyAddress).person?.create.address).toEqual(companyAddress);
-    const { address: _leadAddress, ...withoutAddress } = PERSON;
+    expect(plan(companyAddress).person?.create.postalAddress).toEqual(companyAddress);
+    const { postalAddress: _leadAddress, ...withoutAddress } = PERSON;
 
     expect(plan(null).person?.create).toEqual(withoutAddress);
   });
@@ -83,7 +83,7 @@ describe('planCreateCustomer', () => {
     expect(planCustomerCompany({ lead, chosenCompanyId: null, companyIdByName: null })).toEqual({ id: 'company-7' });
     expect(
       planCreateCustomer({ lead, chosenCompanyId: null, companyIdByName: null, existingCompanyAddress: companyAddress, salespersonId: null }),
-    ).toEqual({ company: { id: 'company-7' }, person: { create: { ...PERSON, address: companyAddress } } });
+    ).toEqual({ company: { id: 'company-7' }, person: { create: { ...PERSON, postalAddress: companyAddress } } });
   });
 
   it('makes the company the customer when there is no contact name', () => {

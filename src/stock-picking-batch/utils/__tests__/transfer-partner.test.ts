@@ -33,7 +33,7 @@ describe('transferGroupValues', () => {
           person: {
             id: 'ann',
             name: { firstName: 'Ann', lastName: 'Lee' },
-            address: { addressCountry: 'Spain' },
+            postalAddress: { addressCountry: 'Spain' },
             company: { address: { addressCountry: 'France' } },
           },
           company: acme,
@@ -46,7 +46,7 @@ describe('transferGroupValues', () => {
     expect(
       transferGroupValues(
         transfer({
-          person: { id: 'ann', name: null, address: { addressCountry: '' }, company: { address: { addressCountry: 'France' } } },
+          person: { id: 'ann', name: null, postalAddress: { addressCountry: '' }, company: { address: { addressCountry: 'France' } } },
         }),
       ),
     ).toMatchObject({ countryKey: 'France' });

@@ -24,7 +24,7 @@ type Address = {
 type CompanyNode = { name: string | null; address: Address } | null;
 type PersonNode = {
   name: { firstName: string | null; lastName: string | null } | null;
-  address: Address;
+  postalAddress: Address;
   phones: { primaryPhoneNumber: string | null; primaryPhoneCallingCode: string | null } | null;
   company: CompanyNode;
 } | null;
@@ -39,9 +39,11 @@ type MoveRow = {
 };
 
 // Twenty returns a nested to-one relation as null unless its deletedAt is selected.
-const ADDRESS = 'address { addressStreet1 addressStreet2 addressCity addressState addressPostcode addressCountry }';
+const ADDRESS_PARTS = 'addressStreet1 addressStreet2 addressCity addressState addressPostcode addressCountry';
+const ADDRESS = `address { ${ADDRESS_PARTS} }`;
+const POSTAL_ADDRESS = `postalAddress { ${ADDRESS_PARTS} }`;
 const PICKING_SELECTION = `id name state company { id deletedAt name ${ADDRESS} }
-  person { id deletedAt name { firstName lastName } ${ADDRESS} phones { primaryPhoneNumber primaryPhoneCallingCode } company { id deletedAt name ${ADDRESS} } }`;
+  person { id deletedAt name { firstName lastName } ${POSTAL_ADDRESS} phones { primaryPhoneNumber primaryPhoneCallingCode } company { id deletedAt name ${ADDRESS} } }`;
 
 const text = (value: string | null | undefined) => value ?? '';
 
@@ -54,7 +56,7 @@ const addressLines = (address: Address) =>
   ].filter((line): line is string => typeof line === 'string' && line !== '');
 
 const personLines = (person: NonNullable<PersonNode>) => {
-  const own = addressLines(person.address);
+  const own = addressLines(person.postalAddress);
 
   return own.length > 0 ? own : addressLines(person.company?.address ?? null);
 };

@@ -29,7 +29,7 @@ type Address = {
 };
 type CompanyNode = { name: string | null; address: Address | null; pickingWarnMsg?: string | null };
 type FullName = { firstName: string | null; lastName: string | null };
-type PersonNode = { name: FullName | null; address?: Address | null; pickingWarnMsg?: string | null; company: CompanyNode | null };
+type PersonNode = { name: FullName | null; postalAddress?: Address | null; pickingWarnMsg?: string | null; company: CompanyNode | null };
 type PickingNode = {
   id: string;
   name: string | null;
@@ -105,11 +105,13 @@ type PackageNode = {
 const ID_CHUNK = 200;
 
 // Twenty returns a nested to-one relation as null unless its deletedAt is selected.
-const ADDRESS = 'address { addressStreet1 addressStreet2 addressCity addressState addressPostcode addressCountry }';
+const ADDRESS_PARTS = 'addressStreet1 addressStreet2 addressCity addressState addressPostcode addressCountry';
+const ADDRESS = `address { ${ADDRESS_PARTS} }`;
+const POSTAL_ADDRESS = `postalAddress { ${ADDRESS_PARTS} }`;
 const COMPANY = `id deletedAt name ${ADDRESS}`;
-const PERSON = `id deletedAt name { firstName lastName } ${ADDRESS} company { ${COMPANY} }`;
+const PERSON = `id deletedAt name { firstName lastName } ${POSTAL_ADDRESS} company { ${COMPANY} }`;
 const PICKING_SELECTION = `id name origin state pickingTypeCode scheduledDate dateDone note { markdown }
-  person { id deletedAt name { firstName lastName } ${ADDRESS} pickingWarnMsg company { ${COMPANY} pickingWarnMsg } }
+  person { id deletedAt name { firstName lastName } ${POSTAL_ADDRESS} pickingWarnMsg company { ${COMPANY} pickingWarnMsg } }
   company { ${COMPANY} pickingWarnMsg }
   responsibleUser { deletedAt name { firstName lastName } }
   pickingType { deletedAt code warehouse { deletedAt name partner { ${COMPANY} } } }
@@ -147,7 +149,7 @@ const contactOf = (person: PersonNode | null, company: CompanyNode | null) =>
     ? {
         kind: 'person' as const,
         name: fullName(person.name),
-        address: addressText(person.address),
+        address: addressText(person.postalAddress),
         company: person.company === null ? null : { name: text(person.company.name), address: addressText(person.company.address) },
       }
     : company !== null

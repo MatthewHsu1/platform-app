@@ -234,9 +234,10 @@ export default defineApplicationRole({
     readWriteAndDestroy(STOCK_LOCATION_STOCK_PICKING_TYPE_REL_OBJECT_UNIVERSAL_IDENTIFIER),
     readWriteAndDestroy(PLATFORM_CLAIM_OBJECT_UNIVERSAL_IDENTIFIER),
     readAndWrite(STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.note.universalIdentifier),
-    readAndWrite(STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.noteTarget.universalIdentifier),
+    readWriteAndDestroy(STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.noteTarget.universalIdentifier),
     readAndWrite(STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.task.universalIdentifier),
-    readAndWrite(STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.taskTarget.universalIdentifier),
+    readWriteAndDestroy(STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.taskTarget.universalIdentifier),
+    readAndWrite(STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.attachment.universalIdentifier),
     readOnly(
       STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.workspaceMember.universalIdentifier,
     ),
