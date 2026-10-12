@@ -10,6 +10,7 @@ import {
   CONVERT_LEAD_PREPARE_ROUTE_PATH,
   CONVERT_LEAD_ROUTE_PATH,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
+import { convertRequestCompanyId } from 'src/crm/lead/actions/utils/convert-request-company.util';
 import { ChoiceSelect } from 'src/shared/front-components/choice-select';
 import { DataTable } from 'src/shared/front-components/data-table';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
@@ -111,7 +112,7 @@ const ConvertLead = () => {
       conversion: state.conversion,
       customerAction: state.customerAction,
       personId: state.personId,
-      companyId: state.companyId,
+      companyId: convertRequestCompanyId(state),
       salespersonId: state.salespersonId,
       teamId: state.teamId,
       force,

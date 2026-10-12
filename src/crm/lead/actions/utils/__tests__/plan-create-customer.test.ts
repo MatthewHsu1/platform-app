@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { contactNameFromEmail } from 'src/crm/lead/actions/utils/contact-name-from-email.util';
-import { planCreateCustomer } from 'src/crm/lead/actions/utils/plan-create-customer.util';
+import { planCreateCustomer, planCustomerCompany } from 'src/crm/lead/actions/utils/plan-create-customer.util';
 import { leadRow } from 'src/crm/lead/merge/utils/__tests__/fixtures/lead-row.fixture';
 
 const base = leadRow({
@@ -74,6 +74,16 @@ describe('planCreateCustomer', () => {
     expect(planCreateCustomer({ lead: base, chosenCompanyId: 'company-chosen', companyIdByName: 'company-9', existingCompanyAddress: null, salespersonId: null }).company).toEqual({
       id: 'company-chosen',
     });
+  });
+
+  it("puts a contact made for a lead whose customer is a company, with no company name, in that company at its address", () => {
+    const lead = { ...base, partnerName: null, companyId: 'company-7' };
+    const companyAddress = { ...base.contactAddress!, addressStreet1: '9 Lake Shore Dr' };
+
+    expect(planCustomerCompany({ lead, chosenCompanyId: null, companyIdByName: null })).toEqual({ id: 'company-7' });
+    expect(
+      planCreateCustomer({ lead, chosenCompanyId: null, companyIdByName: null, existingCompanyAddress: companyAddress, salespersonId: null }),
+    ).toEqual({ company: { id: 'company-7' }, person: { create: { ...PERSON, address: companyAddress } } });
   });
 
   it('makes the company the customer when there is no contact name', () => {

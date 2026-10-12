@@ -3,7 +3,7 @@ import { CONVERT_MESSAGES } from 'src/crm/lead/actions/convert-messages.constant
 import { type ConvertApi } from 'src/crm/lead/actions/types/convert-api.type';
 import { type ConvertOptions } from 'src/crm/lead/actions/types/convert-options.type';
 import { planAllocation, planConversion } from 'src/crm/lead/actions/utils/plan-conversion.util';
-import { planCreateCustomer } from 'src/crm/lead/actions/utils/plan-create-customer.util';
+import { planCreateCustomer, planCustomerCompany } from 'src/crm/lead/actions/utils/plan-create-customer.util';
 import { planCustomerTarget } from 'src/crm/lead/actions/utils/plan-customer-target.util';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { normaliseEmail } from 'src/crm/lead/utils/email.util';
@@ -75,7 +75,8 @@ export const makeConvertAndAllocate = (api: ConvertApi) => async (leads: LeadRow
     const companyMade = await api.recordExists('company', newCompanyId);
     const companyIdByName =
       companyMade || options.companyId !== null || partnerName.length === 0 ? null : await api.findCompanyIdByExactName(partnerName);
-    const existingCompanyId = options.companyId ?? companyIdByName;
+    const companyTarget = planCustomerCompany({ lead, chosenCompanyId: options.companyId, companyIdByName });
+    const existingCompanyId = companyTarget !== null && 'id' in companyTarget ? companyTarget.id : null;
     const plan = planCreateCustomer({
       lead,
       chosenCompanyId: options.companyId,

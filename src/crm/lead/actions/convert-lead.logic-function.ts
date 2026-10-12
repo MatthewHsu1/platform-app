@@ -2,9 +2,14 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 
 import { LEAD_TYPE, WON_STATUS } from 'src/crm/crm-options.constant';
 import { convertAndAllocate } from 'src/crm/lead/actions/convert-and-allocate';
-import { twentyConvertApi } from 'src/crm/lead/actions/convert-api';
 import { currentAutomatedProbability } from 'src/crm/lead/actions/current-automated-probability';
-import { optionalId, refuseUnconvertible, resolveConvertDefaults } from 'src/crm/lead/actions/convert-lead-shared';
+import {
+  optionalId,
+  planMergedHead,
+  refuseUnconvertible,
+  requireCustomerRights,
+  resolveConvertDefaults,
+} from 'src/crm/lead/actions/convert-lead-shared';
 import { CONVERT_MESSAGES } from 'src/crm/lead/actions/convert-messages.constant';
 import { LeadActionError } from 'src/crm/lead/actions/lead-action-error';
 import {
@@ -19,47 +24,23 @@ import {
   CONVERT_LEAD_ROUTE_PATH,
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
 import { type ConvertOptions } from 'src/crm/lead/actions/types/convert-options.type';
-import { planCreateCustomer } from 'src/crm/lead/actions/utils/plan-create-customer.util';
 import { planRestore } from 'src/crm/lead/actions/utils/plan-won-lost.util';
 import { type CustomerAction } from 'src/crm/lead/actions/utils/types/customer-action.type';
-import { mergeLeads } from 'src/crm/lead/merge/merge-leads';
-import { planLeadMerge } from 'src/crm/lead/merge/utils/plan-lead-merge.util';
 import { loadLeadContext } from 'src/crm/lead/load-lead-context';
+import { mergeLeads } from 'src/crm/lead/merge/merge-leads';
 import { writeLeadsAsApplication } from 'src/crm/lead/write-leads-as-application';
-import { NOT_ALLOWED_MESSAGE } from 'src/shared/not-allowed';
-import { UserError } from 'src/shared/user-error';
 import { randomId } from 'src/shared/utils/random-id.util';
 
 // A merge cannot be undone: when the kept lead will need a new customer, the
-// user's right to make one is checked before the merge, not after it.
+// user's right to make one is checked before the merge, not after it. Only a
+// lead is converted after the merge; an opportunity keeps its customer.
 const requireHeadCustomerRights = async (mergeIds: string[], options: ConvertOptions) => {
-  if (options.customerAction !== 'CREATE' || options.personId !== null) {
-    return;
-  }
-  const leads = await readLeadsAsUser(mergeIds);
   const { stages } = await loadLeadContext([]);
-  const plan = planLeadMerge({ leads, stages });
-  const head = leads.find((candidate) => candidate.id === plan.headId);
-  const merged = head === undefined ? null : { ...head, ...plan.data };
+  const head = planMergedHead(await readLeadsAsUser(mergeIds), stages);
 
-  if (merged === null || merged.leadType !== LEAD_TYPE.LEAD || merged.personId !== null || merged.companyId !== null) {
-    return;
-  }
-  const customer = planCreateCustomer({
-    lead: merged,
-    chosenCompanyId: options.companyId,
-    companyIdByName: null,
-    existingCompanyAddress: null,
-    salespersonId: options.salespersonIds[0] ?? null,
-  });
-  const updatable = await twentyConvertApi.updatableObjects();
-  const needed = [
-    ...(customer.person === null ? [] : (['person'] as const)),
-    ...(customer.company !== null && 'create' in customer.company ? (['company'] as const) : []),
-  ];
-
-  if (needed.some((object) => !updatable.has(object))) {
-    throw new UserError(NOT_ALLOWED_MESSAGE);
+  if (head !== null && head.leadType === LEAD_TYPE.LEAD) {
+    // A company name on the kept lead counts as a company to create, even when one of that name exists.
+    await requireCustomerRights([head], options);
   }
 };
 

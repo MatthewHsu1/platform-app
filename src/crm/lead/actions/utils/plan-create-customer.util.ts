@@ -45,6 +45,30 @@ const personFromLead = (lead: LeadRow, name: string, address: AddressValue | nul
   };
 };
 
+// The company a new customer goes under: the one chosen in the dialog, else
+// one with exactly the lead's company name (a new one of that name when none
+// has it), else the lead's own customer company.
+export const planCustomerCompany = ({
+  lead,
+  chosenCompanyId,
+  companyIdByName,
+}: {
+  lead: LeadRow;
+  chosenCompanyId: string | null;
+  companyIdByName: string | null;
+}): { id: string } | { name: string } | null => {
+  const partnerName = text(lead.partnerName);
+
+  if (chosenCompanyId !== null) {
+    return { id: chosenCompanyId };
+  }
+  if (partnerName !== null) {
+    return companyIdByName !== null ? { id: companyIdByName } : { name: partnerName };
+  }
+
+  return lead.companyId !== null ? { id: lead.companyId } : null;
+};
+
 // The customer made from a lead: a company from the company name (one with
 // exactly that name is reused), a contact from the contact name inside it;
 // with no contact name the company alone; with neither, a contact named after
@@ -64,7 +88,6 @@ export const planCreateCustomer = ({
   salespersonId: string | null;
 }): CustomerPlan => {
   const contactName = text(lead.contactName) ?? contactNameFromEmail(lead.emailFrom?.primaryEmail ?? null);
-  const partnerName = text(lead.partnerName);
   const website = text(lead.website?.primaryLinkUrl);
   const address = filledAddress(lead.contactAddress);
   const accountOwnerId = salespersonId ?? lead.salespersonId;
@@ -78,16 +101,8 @@ export const planCreateCustomer = ({
     },
   });
 
-  const company: CustomerPlan['company'] =
-    chosenCompanyId !== null
-      ? { id: chosenCompanyId }
-      : partnerName !== null
-        ? companyIdByName !== null
-          ? { id: companyIdByName }
-          : newCompany(partnerName)
-        : lead.companyId !== null
-          ? { id: lead.companyId }
-          : null;
+  const target = planCustomerCompany({ lead, chosenCompanyId, companyIdByName });
+  const company: CustomerPlan['company'] = target !== null && 'name' in target ? newCompany(target.name) : target;
 
   const personAddress = company !== null && 'id' in company ? filledAddress(existingCompanyAddress) : address;
 
