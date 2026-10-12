@@ -775,6 +775,7 @@
   "The minimum quantity must be less than or equal to the maximum quantity.": "The minimum quantity must be less than or equal to the maximum quantity.",
   "The move could not be read.": "The move could not be read.",
   "The name \"{name}\" is already used. The change was undone.": "The name \"{name}\" is already used. The change was undone.",
+  "The note on team {team} could not be written: {reason}": "The note on team {team} could not be written: {reason}",
   "The open batch transfers could not be read.": "The open batch transfers could not be read.",
   "The open transfers could not be read.": "The open transfers could not be read.",
   "The open wave transfers could not be read.": "The open wave transfers could not be read.",

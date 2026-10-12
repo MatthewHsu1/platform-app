@@ -4,6 +4,7 @@ import { SCORING_VARIABLE, TAG_MIN_COUNT } from 'src/crm/scoring/scoring-variabl
 import { type PlsFieldKey } from 'src/crm/scoring/types/pls-field-key.type';
 import { type ScoringFactor } from 'src/crm/scoring/types/scoring-factor.type';
 import { type ScoringRow } from 'src/crm/scoring/types/scoring-row.type';
+import { type ScoringTotal } from 'src/crm/scoring/types/scoring-total.type';
 import { scoringPairs } from 'src/crm/scoring/utils/scoring-pairs.util';
 import { floatRound } from 'src/shared/utils/float-round.util';
 
@@ -31,23 +32,35 @@ const variableOf = (bucket: Bucket, variable: string) => {
 // Rows of one key are summed in the summed bucket. In a team's bucket the
 // newest row of a key gives its counts, while the variable totals still take
 // every row.
-const addCounts = (bucket: Bucket, row: ScoringRow, newestWins: boolean) => {
+const addCounts = (bucket: Bucket, row: ScoringRow, newestWins: boolean, addToTotals: boolean) => {
   const counts = variableOf(bucket, row.variable);
   const value = newestWins ? { won: 0, lost: 0 } : (counts.values.get(row.value) ?? { won: 0, lost: 0 });
 
   value.won += row.wonCount;
   value.lost += row.lostCount;
   counts.values.set(row.value, value);
-  counts.wonTotal += row.wonCount;
-  counts.lostTotal += row.lostCount;
+  if (addToTotals) {
+    counts.wonTotal += row.wonCount;
+    counts.lostTotal += row.lostCount;
+  }
+};
+
+const teamBucketOf = (buckets: Map<string, Bucket>, teamId: string) => {
+  const bucket = buckets.get(teamId) ?? new Map<string, VariableCounts>();
+
+  buckets.set(teamId, bucket);
+  return bucket;
 };
 
 // One bucket per team that has rows of the used variables (its own rows
 // only), and one of every row summed. A team keeps its bucket even when its
 // only rows are rare tags: its leads are then scored on that bucket, not on
-// the summed one.
-const buildBuckets = (rows: ScoringRow[], variables: ReadonlySet<string>) => {
+// the summed one. The totals of a variable given in `totals` come from there,
+// as its rows hold only some of its values.
+const buildBuckets = (rows: ScoringRow[], variables: ReadonlySet<string>, totals: ScoringTotal[] = []) => {
   const buckets = new Map<string, Bucket>([[GLOBAL_BUCKET, new Map()]]);
+  const global = buckets.get(GLOBAL_BUCKET) ?? new Map<string, VariableCounts>();
+  const summed = new Set(totals.map((total) => total.variable));
 
   const oldestFirst = [...rows].sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id));
 
@@ -55,18 +68,27 @@ const buildBuckets = (rows: ScoringRow[], variables: ReadonlySet<string>) => {
     if (!variables.has(row.variable)) {
       continue;
     }
-    const teamBucket = row.teamId === null ? undefined : (buckets.get(row.teamId) ?? new Map<string, VariableCounts>());
+    const teamBucket = row.teamId === null ? undefined : teamBucketOf(buckets, row.teamId);
 
-    if (row.teamId !== null && teamBucket !== undefined) {
-      buckets.set(row.teamId, teamBucket);
-    }
     if (row.variable === SCORING_VARIABLE.tag && row.wonCount + row.lostCount < TAG_MIN_COUNT) {
       continue;
     }
     if (teamBucket !== undefined) {
-      addCounts(teamBucket, row, true);
+      addCounts(teamBucket, row, true, !summed.has(row.variable));
     }
-    addCounts(buckets.get(GLOBAL_BUCKET) ?? new Map(), row, false);
+    addCounts(global, row, false, !summed.has(row.variable));
+  }
+
+  for (const total of totals) {
+    if (!variables.has(total.variable)) {
+      continue;
+    }
+    for (const bucket of total.teamId === null ? [global] : [teamBucketOf(buckets, total.teamId), global]) {
+      const counts = variableOf(bucket, total.variable);
+
+      counts.wonTotal += total.wonCount;
+      counts.lostTotal += total.lostCount;
+    }
   }
 
   return buckets;
@@ -147,14 +169,16 @@ const usedVariables = (leads: LeadRow[], fields: readonly PlsFieldKey[]) =>
   new Set(leads.flatMap((lead) => scoringPairs(lead, fields).map(([variable]) => variable)));
 
 // The automated probability of each lead: null when the counts cannot give
-// one, so the lead keeps its stored values.
+// one, so the lead keeps its stored values. `totals` holds the totals of the
+// variables of which `rows` holds only the values the leads have.
 export const scoreLeads = (
   leads: LeadRow[],
   rows: ScoringRow[],
   stages: StageRow[],
   fields: readonly PlsFieldKey[],
+  totals: ScoringTotal[] = [],
 ): Map<string, number | null> => {
-  const buckets = buildBuckets(rows, usedVariables(leads, fields));
+  const buckets = buildBuckets(rows, usedVariables(leads, fields), totals);
   const firstStageId = firstSharedStage(stages)?.id;
 
   return new Map(leads.map((lead) => [lead.id, scoreOne(lead, buckets, stages, firstStageId, fields).probability]));

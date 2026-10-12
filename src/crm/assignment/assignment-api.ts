@@ -6,7 +6,7 @@ import { validateAssignmentAnswer } from 'src/crm/assignment/plug/utils/validate
 import { type AssignmentApi } from 'src/crm/assignment/types/assignment-api.type';
 import { leadDayCountFilter } from 'src/crm/assignment/utils/assignment-filters.util';
 import { loadLeadContext } from 'src/crm/lead/load-lead-context';
-import { findLeadDuplicates } from 'src/crm/lead/merge/find-lead-duplicates';
+import { findEmailDuplicatesOfMany } from 'src/crm/lead/merge/find-lead-duplicates';
 import { mergeLeads } from 'src/crm/lead/merge/merge-leads';
 import { queryLeads } from 'src/crm/lead/query-leads';
 import { writeLeadsAsApplication } from 'src/crm/lead/write-leads-as-application';
@@ -64,29 +64,16 @@ export const makeAssignmentApi = (locale: string): AssignmentApi => ({
     }
     return counts;
   },
-  findDuplicateIds: async (lead) =>
+  findDuplicateIds: (leads) => findEmailDuplicatesOfMany(leads, 'application'),
+  writeTeams: async (writes) =>
     (
-      await findLeadDuplicates({
-        email: lead.emailFrom?.primaryEmail ?? null,
-        personId: null,
-        companyId: null,
-        includeLost: false,
-        caller: 'application',
-      })
-    ).map((duplicate) => duplicate.id),
-  writeTeam: async (leadId, teamId) => {
-    const { written } = await writeLeadsAsApplication([
-      { leadId, data: { teamId }, guard: { teamId: { is: 'NULL' }, salespersonId: { is: 'NULL' } } },
-    ]);
-
-    return written.includes(leadId);
-  },
+      await writeLeadsAsApplication(
+        writes.map(({ leadId, teamId }) => ({ leadId, data: { teamId }, guard: { teamId: { is: 'NULL' }, salespersonId: { is: 'NULL' } } })),
+      )
+    ).written,
   mergeLeads: (leadIds) => mergeLeads(leadIds, { maxLength: 0, caller: 'application', locale }),
-  writeAssignment: async (leadId, data) => {
-    const { written } = await writeLeadsAsApplication([{ leadId, data, guard: { salespersonId: { is: 'NULL' } } }]);
-
-    return written.includes(leadId);
-  },
+  writeAssignments: async (writes) =>
+    (await writeLeadsAsApplication(writes.map(({ leadId, data }) => ({ leadId, data, guard: { salespersonId: { is: 'NULL' } } })))).written,
   addTeamNote: (teamId, body) =>
     addNote({ objectSingular: 'crmTeam', recordId: teamId, title: translate(locale, ASSIGNMENT_MESSAGES.noteTitle), body }),
   translateMessage: (message, values) => translate(locale, message, values),

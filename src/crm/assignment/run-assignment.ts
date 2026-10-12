@@ -107,40 +107,38 @@ const allocateLeads = async ({
     leads.forEach((lead) => candidates.set(lead.id, lead));
     allocations.push({ teamId: team.id, weight: team.assignmentMax, leadIds: leads.map((lead) => lead.id) });
   }
-  // Duplicates are found once, before any lead moves; leads merged away
-  // later are dropped at use.
-  const duplicatesOf = new Map<string, string[]>();
-
-  for (const lead of candidates.values()) {
-    duplicatesOf.set(lead.id, await api.findDuplicateIds(lead));
-  }
-  const removed = new Set<string>();
-
-  await runAllocationLoop({
+  // Duplicates are found once, before any lead moves. The draws are made
+  // first and the teams written after, in one request per team: a lead
+  // another writer gave a team or a salesperson meanwhile is then neither
+  // counted nor merged, and its duplicates wait for the next run.
+  const duplicatesOf = await api.findDuplicateIds([...candidates.values()]);
+  const { allocations: drawn } = await runAllocationLoop({
     teams: allocations,
     random: api.random,
-    allocate: async (teamId, leadId) => {
-      const teamResult = result.teams[teamId];
-      const known = (duplicatesOf.get(leadId) ?? []).filter((id) => !removed.has(id));
-
-      // Another writer gave the lead a team or a salesperson meanwhile.
-      if (!(await api.writeTeam(leadId, teamId))) {
-        return { done: [leadId] };
-      }
-      const group = known.length <= 1 ? known : await stillThere(api, known);
-
-      if (group.length <= 1) {
-        teamResult.assigned.push(leadId);
-        return { done: [leadId] };
-      }
-      const { headId, tailIds } = await api.mergeLeads(group);
-
-      tailIds.forEach((id) => removed.add(id));
-      teamResult.merged.push(headId);
-      teamResult.duplicates.push(...tailIds);
-      return { done: [leadId, ...group] };
-    },
+    allocate: async (_teamId, leadId) => ({ done: [leadId, ...(duplicatesOf.get(leadId) ?? [])] }),
   });
+  const written = new Set(await api.writeTeams(drawn.map(({ teamId, leadId }) => ({ leadId, teamId }))));
+  const removed = new Set<string>();
+
+  for (const { teamId, leadId } of drawn) {
+    const teamResult = result.teams[teamId];
+    const known = (duplicatesOf.get(leadId) ?? []).filter((id) => !removed.has(id));
+
+    if (!written.has(leadId)) {
+      continue;
+    }
+    const group = known.length <= 1 ? known : await stillThere(api, known);
+
+    if (group.length <= 1) {
+      teamResult.assigned.push(leadId);
+      continue;
+    }
+    const { headId, tailIds } = await api.mergeLeads(group);
+
+    tailIds.forEach((id) => removed.add(id));
+    teamResult.merged.push(headId);
+    teamResult.duplicates.push(...tailIds);
+  }
 };
 
 // Which of the team's leads each member's filters take. A member with a
@@ -226,26 +224,53 @@ const assignToMembers = async ({
     );
     const leadById = new Map(teamLeads.map((lead) => [lead.id, lead]));
     const userOf = new Map(ordered.map((member) => [member.id, member.userId]));
-    const assigned = await runAssignmentLoops({
-      leads: teamLeads.map((lead) => ({ id: lead.id, probability: lead.probability })),
-      members: ordered.map((member) => member.id),
-      quotas,
-      eligible,
-      preferred,
-      assign: (leadId, membershipId) =>
-        api.writeAssignment(
-          leadId,
-          planAssignmentWrite({
-            lead: leadById.get(leadId) as LeadRow,
-            salespersonId: userOf.get(membershipId) as string,
-            stages,
-            now: now.toISOString(),
-          }),
-        ),
-    });
+    const taken = new Set<string>();
+    const quotaLeft = new Map(quotas);
 
-    for (const [membershipId, assignedIds] of assigned) {
-      result.members[membershipId].assigned.push(...assignedIds);
+    // The loops are planned in memory and the plan written in one request per
+    // set of values. A lead another writer took meanwhile costs no quota: the
+    // loops run again over the leads still free with the quota still left.
+    for (;;) {
+      const planned: { leadId: string; membershipId: string }[] = [];
+
+      await runAssignmentLoops({
+        leads: teamLeads.filter((lead) => !taken.has(lead.id)).map((lead) => ({ id: lead.id, probability: lead.probability })),
+        members: ordered.map((member) => member.id).filter((id) => (quotaLeft.get(id) ?? 0) > 0),
+        quotas: quotaLeft,
+        eligible,
+        preferred,
+        assign: async (leadId, membershipId) => {
+          planned.push({ leadId, membershipId });
+          return true;
+        },
+      });
+      if (planned.length === 0) {
+        break;
+      }
+      const written = new Set(
+        await api.writeAssignments(
+          planned.map(({ leadId, membershipId }) => ({
+            leadId,
+            data: planAssignmentWrite({
+              lead: leadById.get(leadId) as LeadRow,
+              salespersonId: userOf.get(membershipId) as string,
+              stages,
+              now: now.toISOString(),
+            }),
+          })),
+        ),
+      );
+
+      for (const { leadId, membershipId } of planned) {
+        taken.add(leadId);
+        if (written.has(leadId)) {
+          result.members[membershipId].assigned.push(leadId);
+          quotaLeft.set(membershipId, (quotaLeft.get(membershipId) ?? 0) - 1);
+        }
+      }
+      if (written.size === planned.length) {
+        break;
+      }
     }
   }
 };
@@ -274,8 +299,15 @@ const report = async (api: AssignmentApi, input: AssignLeadsInput, teams: TeamRo
     '\n\n',
   );
 
+  // The leads are written by now: a note that fails is reported, not a failed run.
   for (const team of teams) {
-    await api.addTeamNote(team.id, body);
+    try {
+      await api.addTeamNote(team.id, body);
+    } catch (error) {
+      result.messages.push(
+        api.translateMessage(ASSIGNMENT_MESSAGES.noteFailed, { team: teamName(team), reason: error instanceof Error ? error.message : String(error) }),
+      );
+    }
   }
 };
 

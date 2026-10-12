@@ -1,37 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { type PlsFieldKey } from 'src/crm/scoring/types/pls-field-key.type';
-import { lead, row, STAGES } from 'src/crm/scoring/utils/__tests__/scoring-fixtures';
+import { lead, row, STAGES, TOOLTIP_FIELDS, TOOLTIP_LEAD, TOOLTIP_ROWS } from 'src/crm/scoring/utils/__tests__/scoring-fixtures';
 import { scoreLeads, scoringFactors } from 'src/crm/scoring/utils/score-leads.util';
-
-// The rows of the worked example: one team, five closed leads (two won in New,
-// two lost in New, one lost in Proposition), every email correct.
-const TOOLTIP_ROWS = [
-  row('team', 'stage', 'new', 2.1, 3.1),
-  row('team', 'stage', 'qualified', 2.1, 1.1),
-  row('team', 'stage', 'proposition', 2.1, 1.1),
-  row('team', 'stage', 'won', 2.1, 0.1),
-  row('team', 'country', 'c0', 1.1, 1.1),
-  row('team', 'country', 'c1', 1.1, 0.1),
-  row('team', 'state', 's0', 2.1, 0.1),
-  row('team', 'state', 's1', 0.1, 1.1),
-  row('team', 'emailState', 'CORRECT', 2.1, 3.1),
-  row('team', 'phoneState', 'CORRECT', 2.1, 1.1),
-  row('team', 'phoneState', 'INCORRECT', 0.1, 2.1),
-  row('team', 'source', 'src1', 1.1, 0.1),
-  row('team', 'source', 'src0', 0.1, 2.1),
-];
-const TOOLTIP_FIELDS: PlsFieldKey[] = ['country', 'state', 'emailState', 'phoneState', 'source'];
-const TOOLTIP_LEAD = lead({
-  id: 'x',
-  teamId: 'team',
-  stageId: 'qualified',
-  country: 'c0',
-  state: 's0',
-  sourceId: 'src0',
-  phoneState: 'CORRECT',
-  emailState: 'CORRECT',
-});
 
 describe('scoreLeads', () => {
   it('scores the worked example at 74.30', () => {

@@ -58,6 +58,7 @@ export const makeFakeLeadStore = ({
   const rows = new Map(leads.map((row) => [row.id, row]));
   const writes: Write[] = [];
   const updateCalls: string[][] = [];
+  const guardedCalls: string[][] = [];
   const notes: { id: string; reason: string }[] = [];
   const destroyed: string[] = [];
   const moves: { lead: LeadRow; moves: StatusMoves }[] = [];
@@ -97,6 +98,19 @@ export const makeFakeLeadStore = ({
     readLeads,
     loadContext: async () => context,
     updateLead: async (id, data) => apply(id, data),
+    // A hundred rows a request, as the real update does; a request fails whole.
+    updateLeads: async (ids, data) => {
+      for (let start = 0; start < ids.length; start += 100) {
+        const part = ids.slice(start, start + 100);
+        const refused = part.find((id) => failOn.has(id));
+
+        if (refused !== undefined) {
+          throw new Error(`write refused for ${refused}`);
+        }
+        updateCalls.push(part);
+        part.forEach((id) => apply(id, data));
+      }
+    },
     putBackLead: async (id, data, reason) => {
       apply(id, data);
       notes.push({ id, reason });
@@ -124,14 +138,17 @@ export const makeFakeLeadStore = ({
       ids.forEach((id) => apply(id, data));
     },
     updateLeadWhere: async (filter, data) => {
-      const { id, ...guard } = filter as { id: { eq: string } } & Record<string, unknown>;
-      const row = rows.get(id.eq);
+      const { id, ...guard } = filter as { id: { eq?: string; in?: string[] } } & Record<string, unknown>;
+      const ids = id.in ?? (id.eq === undefined ? [] : [id.eq]);
+      const reached = ids.filter((leadId) => {
+        const row = rows.get(leadId);
 
-      if (row === undefined || !matchesGuard(row, guard)) {
-        return [];
-      }
-      apply(id.eq, data);
-      return [id.eq];
+        return row !== undefined && matchesGuard(row, guard);
+      });
+
+      guardedCalls.push(ids);
+      reached.forEach((leadId) => apply(leadId, data));
+      return reached;
     },
     applyStatusMoves: triggerApi.applyStatusMoves,
     pushPeople: triggerApi.pushPeople,
@@ -143,5 +160,5 @@ export const makeFakeLeadStore = ({
       leadEvent({ recordId: write.id, properties: { before: write.before, after: write.after, updatedFields: write.fields } }),
     );
 
-  return { rows, writes, updateCalls, notes, destroyed, moves, failOn, pushes, contacts, triggerApi, writeApi, takeAppWriteEvents };
+  return { rows, writes, updateCalls, guardedCalls, notes, destroyed, moves, failOn, pushes, contacts, triggerApi, writeApi, takeAppWriteEvents };
 };

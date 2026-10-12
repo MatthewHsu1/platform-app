@@ -218,4 +218,63 @@ describe('lead trigger', () => {
     ).rejects.toThrow('bad');
     expect(store.rows.get('good')?.wonStatus).toBe('WON');
   });
+
+  it('writes the leads of a batch that get the same values in one request, so their own pass comes as one batch', async () => {
+    const created = ['a', 'b', 'c'].map((id) => lead(id, { stageId: null, createdBy: STAFF, createdAt: NOW, dateLastStageUpdate: null }));
+    const store = makeFakeLeadStore({ leads: created, stages: STAGES, now: NOW });
+    const run = makeRunLeadTrigger(store.triggerApi);
+
+    await run({
+      operation: 'created',
+      events: created.map((row) => leadEvent({ recordId: row.id, workspaceMemberId: 'm1', properties: { after: row } })),
+    });
+
+    expect(store.updateCalls).toEqual([['a', 'b', 'c']]);
+    expect(store.rows.get('b')).toMatchObject({ stageId: 'new', salespersonId: 'm1', dateLastStageUpdate: NOW });
+  });
+
+  it('counts the status moves of the leads written only, when a shared write fails for one of them', async () => {
+    const goodBefore = lead('good', { stageId: 'new', probability: 40, automatedProbability: 40 });
+    const badBefore = lead('bad', { stageId: 'new', probability: 40, automatedProbability: 40 });
+    const store = makeFakeLeadStore({
+      leads: [
+        { ...goodBefore, stageId: 'won' },
+        { ...badBefore, stageId: 'won' },
+      ],
+      stages: STAGES,
+      now: NOW,
+    });
+    store.failOn.add('bad');
+
+    await expect(
+      makeRunLeadTrigger(store.triggerApi)({
+        operation: 'updated',
+        events: [
+          updateEvent(badBefore, { ...badBefore, stageId: 'won' }, ['stageId']),
+          updateEvent(goodBefore, { ...goodBefore, stageId: 'won' }, ['stageId']),
+        ],
+      }),
+    ).rejects.toThrow('bad');
+    expect(store.moves.map((entry) => entry.lead.id)).toEqual(['good']);
+  });
+
+  it('makes a failed shared write again lead by lead for its own hundred leads only', async () => {
+    const befores = Array.from({ length: 150 }, (_, index) => lead(`l${index}`, { stageId: 'new', probability: 40, automatedProbability: 40 }));
+    const store = makeFakeLeadStore({ leads: befores.map((row) => ({ ...row, stageId: 'won' })), stages: STAGES, now: NOW });
+    store.failOn.add('l120');
+
+    await expect(
+      makeRunLeadTrigger(store.triggerApi)({
+        operation: 'updated',
+        events: befores.map((row) => updateEvent(row, { ...row, stageId: 'won' }, ['stageId'])),
+      }),
+    ).rejects.toThrow('l120');
+    const writesOf = (id: string) => store.writes.filter((write) => write.id === id).length;
+
+    expect(writesOf('l0')).toBe(1);
+    expect(writesOf('l99')).toBe(1);
+    expect(writesOf('l100')).toBe(1);
+    expect(writesOf('l120')).toBe(0);
+    expect(store.moves).toHaveLength(149);
+  });
 });

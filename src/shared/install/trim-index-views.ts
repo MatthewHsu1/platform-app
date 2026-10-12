@@ -6,6 +6,7 @@ import { readCrmSettings } from 'src/crm/settings/read-crm-settings';
 import { leadListColumnNames } from 'src/crm/lead/views/lead-list-columns';
 import { PLATFORM_CLAIM_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/shared/claims/claims-universal-identifiers.constant';
 import { type IndexViewTrimResult } from 'src/shared/install/types/index-view-trim-result.type';
+import { orderTrimLists } from 'src/shared/install/utils/order-trim-lists.util';
 import { planIndexViewTrim, settleIndexViewTrim } from 'src/shared/install/utils/plan-index-view-trim.util';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
 import { requireData, twentyMetadata } from 'src/shared/twenty-graphql';
@@ -22,6 +23,9 @@ type ViewField = {
   isActive: boolean;
   deletedAt: string | null;
 };
+
+// The lead list is the one staff open most, so it is trimmed before the others.
+const TRIM_FIRST = [CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER];
 
 const memoryKey = (objectUniversalIdentifier: string) => `index-view-trim:${objectUniversalIdentifier}`;
 
@@ -138,10 +142,10 @@ const trimIndexView = async (object: AppObject, stopAt: number) => {
 
 // Twenty's own "All" list of an object shows every field and the app cannot define it. Each
 // column is trimmed once and remembered, so a column staff switch back on stays on. Columns and
-// lists not reached by `stopAt` are left for the next run.
-export const trimIndexViews = async (stopAt: number): Promise<IndexViewTrimResult> => {
+// lists not reached by `stopAt` are left for the next run. `onlyLeads` trims the lead list alone.
+export const trimIndexViews = async (stopAt: number, { onlyLeads = false }: { onlyLeads?: boolean } = {}): Promise<IndexViewTrimResult> => {
   const errors = errorCollector();
-  const objects = await listAppObjects();
+  const objects = orderTrimLists(await listAppObjects(), TRIM_FIRST, { onlyFirst: onlyLeads });
   let columnsLeft = 0;
   let reached = 0;
 

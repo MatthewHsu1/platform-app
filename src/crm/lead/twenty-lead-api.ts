@@ -34,6 +34,7 @@ export const TWENTY_LEAD_TRIGGER_API: LeadTriggerApi = {
   readLeads: readLeadsById,
   loadContext: loadLeadContext,
   updateLead: (id, data) => leads.update(id, data),
+  updateLeads: (ids, data) => leads.updateMany(ids, data),
   putBackLead: (id, data, reason) => putBack({ ...LEADS, recordId: id, data, reason }),
   destroyLead: async (id) => {
     await leads.destroyMany([id]);

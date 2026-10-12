@@ -21,10 +21,12 @@ export type AssignmentApi = {
   // Tags and language are read only when asked: the plug request sends them.
   findLeads: (filter: Record<string, unknown>, options?: { withTagsAndLanguage?: boolean }) => Promise<LeadRow[]>;
   countLeadDays: (input: { teamIds: string[]; userIds: string[]; since: Date }) => Promise<Map<string, number>>;
-  findDuplicateIds: (lead: LeadRow) => Promise<string[]>;
-  writeTeam: (leadId: string, teamId: string) => Promise<boolean>;
+  // The duplicates of each lead, the lead itself included, found in one search for many leads.
+  findDuplicateIds: (leads: LeadRow[]) => Promise<Map<string, string[]>>;
+  // Guarded writes: the ids written; a lead another writer changed first is left out.
+  writeTeams: (writes: { leadId: string; teamId: string }[]) => Promise<string[]>;
   mergeLeads: (leadIds: string[]) => Promise<{ headId: string; tailIds: string[] }>;
-  writeAssignment: (leadId: string, data: Record<string, unknown>) => Promise<boolean>;
+  writeAssignments: (writes: { leadId: string; data: Record<string, unknown> }[]) => Promise<string[]>;
   addTeamNote: (teamId: string, body: string) => Promise<void>;
   translateMessage: (message: string, values?: Record<string, string | number>) => string;
   readPlugConfig: () => Promise<PlugPointConfig | null>;

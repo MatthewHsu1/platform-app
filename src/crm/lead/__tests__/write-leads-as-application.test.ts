@@ -5,7 +5,7 @@ import { readLeadRow } from 'src/crm/lead/lead-selection';
 import { makeRunLeadTrigger } from 'src/crm/lead/run-lead-trigger';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { type StageRow } from 'src/crm/lead/types/stage-row.type';
-import { makeWriteLeadsAsApplication } from 'src/crm/lead/write-leads-as-application';
+import { leadIdsLabel, makeWriteLeadsAsApplication } from 'src/crm/lead/write-leads-as-application';
 
 const NOW = '2026-10-09T12:00:00.000Z';
 const stage = (id: string, sequence: number, isWon = false): StageRow => ({
@@ -146,5 +146,29 @@ describe('writeLeadsAsApplication', () => {
       written: [],
       skipped: ['gone'],
     });
+  });
+
+  it('writes guarded leads that get the same values in one request and reports those another writer changed first', async () => {
+    const store = makeFakeLeadStore({
+      leads: [lead('l1', { stageId: 'new' }), lead('l2', { stageId: 'new', salespersonId: 'someone' }), lead('l3', { stageId: 'new' })],
+      stages: STAGES,
+      now: NOW,
+    });
+    const guard = { salespersonId: { is: 'NULL' } };
+
+    const result = await makeWriteLeadsAsApplication(store.writeApi)(
+      ['l1', 'l2', 'l3'].map((leadId) => ({ leadId, data: { salespersonId: 'me' }, guard })),
+    );
+
+    expect(result).toEqual({ written: ['l1', 'l3'], skipped: ['l2'] });
+    expect(store.guardedCalls).toEqual([['l1', 'l2', 'l3']]);
+    expect(store.rows.get('l2')?.salespersonId).toBe('someone');
+  });
+});
+
+describe('leadIdsLabel', () => {
+  it('names up to five leads and counts the rest', () => {
+    expect(leadIdsLabel(['a', 'b'])).toBe('a, b');
+    expect(leadIdsLabel(['a', 'b', 'c', 'd', 'e', 'f', 'g'])).toBe('a, b, c, d, e and 2 more');
   });
 });

@@ -2,7 +2,7 @@ import { loadLeadContext } from 'src/crm/lead/load-lead-context';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { type StatusMoves } from 'src/crm/lead/types/status-moves.type';
 import { CRM_LEAD_SCORING_FREQUENCIES } from 'src/crm/scoring/crm-lead-scoring-frequencies';
-import { readScoringRows } from 'src/crm/scoring/read-scoring-rows';
+import { readScoringRowsOf } from 'src/crm/scoring/read-scoring-rows';
 import { planFrequencyWrites } from 'src/crm/scoring/utils/plan-frequency-writes.util';
 import { planScoringDeltas } from 'src/crm/scoring/utils/plan-scoring-deltas.util';
 import { readCrmSettings } from 'src/crm/settings/read-crm-settings';
@@ -23,7 +23,7 @@ export const applyStatusMoves = async (moves: { lead: LeadRow; moves: StatusMove
   if (deltas.length === 0) {
     return;
   }
-  const writes = planFrequencyWrites(await readScoringRows(deltas.map((delta) => delta.variable)), deltas);
+  const writes = planFrequencyWrites(await readScoringRowsOf(deltas), deltas);
 
   for (const update of writes.updates) {
     await CRM_LEAD_SCORING_FREQUENCIES.update(update.id, { wonCount: update.wonCount, lostCount: update.lostCount });

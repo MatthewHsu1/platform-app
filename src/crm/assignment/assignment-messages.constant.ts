@@ -17,5 +17,6 @@ export const ASSIGNMENT_MESSAGES = {
   memberFilterStopped: 'Lead assignment stopped: the filters of {member} in team {team} cannot be used. {reason}',
   plugFailed: 'The assignment plug failed: {reason}',
   plugAssigned: '{count} leads were assigned by the assignment plug.',
+  noteFailed: 'The note on team {team} could not be written: {reason}',
   alreadyRunning: 'A lead assignment is already running. Try again in a moment.',
 } as const;

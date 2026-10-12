@@ -10,6 +10,8 @@ export type LeadTriggerApi = {
   readLeads: (ids: string[]) => Promise<LeadRow[]>;
   loadContext: (leads: LeadRow[]) => Promise<LeadContext>;
   updateLead: (id: string, data: Record<string, unknown>) => Promise<void>;
+  // The same values on many leads in one request (at most 100 a request).
+  updateLeads: (ids: string[], data: Record<string, unknown>) => Promise<void>;
   putBackLead: (id: string, data: Record<string, unknown>, reason: string) => Promise<void>;
   destroyLead: (id: string) => Promise<void>;
   pushPeople: (pushes: LeadPersonPush[]) => Promise<void>;

@@ -101,6 +101,7 @@ export const ASSIGNMENT_RUN_TEXTS = [
   msg('Lead assignment stopped: the filters of {member} in team {team} cannot be used. {reason}'),
   msg('The assignment plug failed: {reason}'),
   msg('{count} leads were assigned by the assignment plug.'),
+  msg('The note on team {team} could not be written: {reason}'),
   msg('A lead assignment is already running. Try again in a moment.'),
 ];
 

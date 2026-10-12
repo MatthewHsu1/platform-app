@@ -13,6 +13,9 @@ import { isApplicationWrite } from 'src/shared/triggers/actor';
 import { type RecordOperation } from 'src/shared/triggers/batch-events';
 import { updatedFieldsOf } from 'src/shared/triggers/event-values';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
+import { MUTATION_MAXIMUM_RECORDS } from 'src/shared/triggers/records';
+import { chunks } from 'src/shared/utils/chunks.util';
+import { groupBy } from 'src/shared/utils/group-by.util';
 
 type RawEvent = ObjectRecordEvent<Record<string, unknown>>;
 
@@ -47,6 +50,7 @@ export const makeRunLeadTrigger =
     const errors = errorCollector();
     const moves: { lead: LeadRow; moves: StatusMoves }[] = [];
     const pushes: LeadPersonPush[] = [];
+    const updates: { id: string; data: Record<string, unknown>; push: LeadPersonPush | null; move: { lead: LeadRow; moves: StatusMoves } | null }[] = [];
     const locales = new Map<string | undefined, Promise<string>>();
     const localeOf = (workspaceMemberId: string | undefined) => {
       const known = locales.get(workspaceMemberId) ?? api.memberLocale(workspaceMemberId);
@@ -85,16 +89,53 @@ export const makeRunLeadTrigger =
           await api.destroyLead(current.id);
           throw new Error(`The new lead was removed. ${reason}`);
         }
+        const push = plan.personPush === null ? null : { leadId: current.id, push: plan.personPush, locale };
+        const move =
+          plan.statusMoves.won !== 0 || plan.statusMoves.lost !== 0 ? { lead: { ...current, ...plan.data } as LeadRow, moves: plan.statusMoves } : null;
+
         if (Object.keys(plan.data).length > 0) {
-          await api.updateLead(current.id, plan.data);
+          updates.push({ id: current.id, data: plan.data, push, move });
+          return;
         }
-        if (plan.personPush !== null) {
-          pushes.push({ leadId: current.id, push: plan.personPush, locale });
+        if (push !== null) {
+          pushes.push(push);
         }
-        if (plan.statusMoves.won !== 0 || plan.statusMoves.lost !== 0) {
-          moves.push({ lead: { ...current, ...plan.data } as LeadRow, moves: plan.statusMoves });
+        if (move !== null) {
+          moves.push(move);
         }
       });
+    }
+
+    // Leads that get the same values are written a hundred to a request:
+    // Twenty then hands their own pass to the trigger as one batch, not one
+    // job a lead. A request that fails is made again lead by lead for its own
+    // hundred, so one bad lead does not keep the others back.
+    const keep = (update: (typeof updates)[number]) => {
+      if (update.push !== null) {
+        pushes.push(update.push);
+      }
+      if (update.move !== null) {
+        moves.push(update.move);
+      }
+    };
+
+    for (const group of groupBy(updates, (update) => JSON.stringify(update.data)).values()) {
+      for (const part of chunks(group, MUTATION_MAXIMUM_RECORDS)) {
+        try {
+          await api.updateLeads(
+            part.map((update) => update.id),
+            part[0].data,
+          );
+          part.forEach(keep);
+        } catch {
+          for (const update of part) {
+            await errors.run(update.id, async () => {
+              await api.updateLead(update.id, update.data);
+              keep(update);
+            });
+          }
+        }
+      }
     }
     if (pushes.length > 0) {
       await errors.run('contacts', () => api.pushPeople(pushes));

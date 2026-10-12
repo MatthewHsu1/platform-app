@@ -5,6 +5,8 @@ import { type LeadUpdatePlan } from 'src/crm/lead/actions/utils/types/lead-updat
 import { LEADS_NOT_FOUND } from 'src/crm/lead/lead-messages.constant';
 import { queryLeads } from 'src/crm/lead/query-leads';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
+import { writeLeadAsCaller } from 'src/crm/lead/write-leads-as-application';
+import { readCallerAccessOrNull } from 'src/roles/read-caller-access';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
 import { notAllowedResponse } from 'src/shared/not-allowed';
@@ -52,24 +54,55 @@ export const makeFindLead =
 
 export const findLead = makeFindLead((query, variables) => twentyGraphql('person', query, variables));
 
-export const applyLeadUpdate = async (leadId: string, plan: LeadUpdatePlan) => {
-  if (plan.kind === 'refuse') {
-    return jsonResponse(409, { error: plan.reason });
-  }
-
-  requireData(
-    await twentyGraphql<{ updateCrmLead: { id: string } | null }>(
-      'person',
-      `mutation UpdateLeadForAction($id: UUID!, $data: CrmLeadUpdateInput!) {
-        updateCrmLead(id: $id, data: $data) { id }
-      }`,
-      { id: leadId, data: plan.data },
-    ),
-    'Update the lead',
-  );
-
-  return jsonResponse(200, { leadId });
+type ApplyLeadUpdateApi = {
+  hasMemberBehind: () => Promise<boolean>;
+  updateAsUser: (leadId: string, data: Record<string, unknown>) => Promise<void>;
+  writeAsCaller: (
+    leadId: string,
+    data: Record<string, unknown>,
+    updateAsCaller: (leadId: string, payload: Record<string, unknown>) => Promise<void>,
+  ) => Promise<boolean>;
 };
+
+// Always written with the caller's token, so Twenty checks their update right
+// and row rule. A member's write lets the lead trigger run the save rules, as
+// for an edit on the page. A request with no member behind it (an API key)
+// looks like the app's own write to the trigger, which gives it the computes
+// only, so its write carries the save rules itself.
+export const makeApplyLeadUpdate =
+  (api: ApplyLeadUpdateApi) =>
+  async (leadId: string, plan: LeadUpdatePlan, { notFound }: { notFound: string }) => {
+    if (plan.kind === 'refuse') {
+      return jsonResponse(409, { error: plan.reason });
+    }
+    if (await api.hasMemberBehind()) {
+      await api.updateAsUser(leadId, plan.data);
+
+      return jsonResponse(200, { leadId });
+    }
+    const written = await api.writeAsCaller(leadId, plan.data, api.updateAsUser);
+
+    return written ? jsonResponse(200, { leadId }) : jsonResponse(404, { error: notFound });
+  };
+
+export const applyLeadUpdate = makeApplyLeadUpdate({
+  // An API key is told apart from an outage: only Twenty's "nobody signed in"
+  // answer counts as no member; any other failure of the read fails the route.
+  hasMemberBehind: async () => ((await readCallerAccessOrNull())?.workspaceMemberId ?? null) !== null,
+  updateAsUser: async (leadId, data) => {
+    requireData(
+      await twentyGraphql<{ updateCrmLead: { id: string } | null }>(
+        'person',
+        `mutation UpdateLeadForAction($id: UUID!, $data: CrmLeadUpdateInput!) {
+          updateCrmLead(id: $id, data: $data) { id }
+        }`,
+        { id: leadId, data },
+      ),
+      'Update the lead',
+    );
+  },
+  writeAsCaller: writeLeadAsCaller,
+});
 
 // A read or write the user's role does not allow answers 409 with a plain sentence; any other failure 500.
 export const makeLeadRouteErrors =

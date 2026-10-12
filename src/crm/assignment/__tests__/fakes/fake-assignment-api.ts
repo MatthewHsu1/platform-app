@@ -74,8 +74,10 @@ type FakeAssignmentApi = AssignmentApi & {
   teamWrites: { leadId: string; teamId: string }[];
   merges: string[][];
   notes: { teamId: string; body: string }[];
+  calls: { findDuplicates: number; writeTeams: number; writeAssignments: number };
   beforeWrite?: (leadId: string) => void;
   failAfterWrites?: number;
+  failNotes?: Error;
 };
 
 export const makeFakeAssignmentApi = ({
@@ -102,6 +104,7 @@ export const makeFakeAssignmentApi = ({
     teamWrites: [],
     merges: [],
     notes: [],
+    calls: { findDuplicates: 0, writeTeams: 0, writeAssignments: 0 },
     now: () => now,
     random: cycle(random),
     readTeams: async (teamIds) => teams.filter((team) => teamIds.includes(team.id)),
@@ -142,17 +145,27 @@ export const makeFakeAssignmentApi = ({
       }
       return counts;
     },
-    findDuplicateIds: async (lead) => (duplicates[lead.id] ?? []).filter((id) => store.get(id)?.wonStatus === 'PENDING'),
-    writeTeam: async (leadId, teamId) => {
-      fake.beforeWrite?.(leadId);
-      const lead = store.get(leadId);
+    findDuplicateIds: async (candidates) => {
+      fake.calls.findDuplicates += 1;
 
-      if (lead === undefined || lead.teamId !== null || lead.salespersonId !== null) {
-        return false;
+      return new Map(candidates.map((lead) => [lead.id, (duplicates[lead.id] ?? []).filter((id) => store.get(id)?.wonStatus === 'PENDING')]));
+    },
+    writeTeams: async (teamWrites) => {
+      fake.calls.writeTeams += 1;
+      const written: string[] = [];
+
+      for (const { leadId, teamId } of teamWrites) {
+        fake.beforeWrite?.(leadId);
+        const lead = store.get(leadId);
+
+        if (lead === undefined || lead.teamId !== null || lead.salespersonId !== null) {
+          continue;
+        }
+        fake.teamWrites.push({ leadId, teamId });
+        store.set(leadId, { ...lead, teamId });
+        written.push(leadId);
       }
-      fake.teamWrites.push({ leadId, teamId });
-      store.set(leadId, { ...lead, teamId });
-      return true;
+      return written;
     },
     mergeLeads: async (leadIds) => {
       fake.merges.push(leadIds);
@@ -163,21 +176,30 @@ export const makeFakeAssignmentApi = ({
       tailIds.forEach((id) => store.delete(id));
       return { headId: head.id, tailIds };
     },
-    writeAssignment: async (leadId, data) => {
-      fake.beforeWrite?.(leadId);
-      if (fake.failAfterWrites !== undefined && fake.writes.length >= fake.failAfterWrites) {
-        throw new Error('The run was stopped');
-      }
-      const lead = store.get(leadId);
+    writeAssignments: async (assignments) => {
+      fake.calls.writeAssignments += 1;
+      const written: string[] = [];
 
-      if (lead === undefined || lead.salespersonId !== null) {
-        return false;
+      for (const { leadId, data } of assignments) {
+        fake.beforeWrite?.(leadId);
+        if (fake.failAfterWrites !== undefined && fake.writes.length >= fake.failAfterWrites) {
+          throw new Error('The run was stopped');
+        }
+        const lead = store.get(leadId);
+
+        if (lead === undefined || lead.salespersonId !== null) {
+          continue;
+        }
+        fake.writes.push({ leadId, data });
+        store.set(leadId, { ...lead, ...(data as Partial<LeadRow>) });
+        written.push(leadId);
       }
-      fake.writes.push({ leadId, data });
-      store.set(leadId, { ...lead, ...(data as Partial<LeadRow>) });
-      return true;
+      return written;
     },
     addTeamNote: async (teamId, body) => {
+      if (fake.failNotes !== undefined) {
+        throw fake.failNotes;
+      }
       fake.notes.push({ teamId, body });
     },
     translateMessage: (message, values = {}) =>

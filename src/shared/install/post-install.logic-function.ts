@@ -42,7 +42,12 @@ const handler = async ({ previousVersion }: InstallPayload) => {
     ['filling the type of operation on transfers', fillPickingTypeCodes],
     ['filling the full names of operation types', () => recomputePickingTypeNames({})],
     ['drawing the stage columns of the lead boards', syncStageBoardGroups],
-    ['finishing the CRM', () => finishCrmInstall(previousVersion)],
+    [
+      'finishing the CRM',
+      async () => {
+        warnings.push(...(await finishCrmInstall(previousVersion, startedAt + TRIM_STOP_AFTER_MS)));
+      },
+    ],
     [
       'rebuilding the mixed roles and the row rules',
       async () => {

@@ -2,11 +2,8 @@ import { type LeadContext } from 'src/crm/lead/types/lead-context.type';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { type PartnerCompanyRow } from 'src/crm/lead/types/partner-company-row.type';
 import { type PartnerPersonRow } from 'src/crm/lead/types/partner-person-row.type';
-import { CRM_LEAD_SCORING_FREQUENCIES } from 'src/crm/scoring/crm-lead-scoring-frequencies';
-import { SCORING_ROW_SELECTION } from 'src/crm/scoring/scoring-variables.constant';
-import { type ScoringRow } from 'src/crm/scoring/types/scoring-row.type';
+import { readLeadScoring } from 'src/crm/scoring/twenty-scoring-read';
 import { scoreLeads } from 'src/crm/scoring/utils/score-leads.util';
-import { scoringVariablesOf } from 'src/crm/scoring/utils/scoring-variables-of.util';
 import { readCrmSettings } from 'src/crm/settings/read-crm-settings';
 import { sortStages } from 'src/crm/stage/utils/sort-stages.util';
 import { TEAM_CONTEXT_FINDS, toTeamContext } from 'src/sales-team/load-team-context';
@@ -33,49 +30,49 @@ const companyRecords = records('company', 'companies');
 // plans and teams are few; contacts and customers only those of these leads.
 // A contact's own company, when the lead has another or none, is read after:
 // the company name comes from there when the lead has no customer company.
-// The scoring counts are read only for leads to score.
+// The scoring counts are read only for leads to score, and only those of the
+// values the leads have, so the cost does not grow with the scoring table.
 export const loadLeadContext = async (leads: LeadRow[]): Promise<LeadContext> => {
   const plsFields = leads.length === 0 ? [] : (await readCrmSettings()).plsFields;
-  const {
-    stages: stageNodes,
-    plans,
-    people,
-    companies,
-    scoringRows,
-    ...teamLists
-  } = await findMany<
+  const [
     {
-      stages: StageNode[];
-      plans: { id: string; numberOfMonths: number | null }[];
-      people: PartnerPersonRow[];
-      companies: PartnerCompanyRow[];
-      scoringRows: ScoringRow[];
-    } & TeamContextLists
-  >({
-    ...TEAM_CONTEXT_FINDS,
-    scoringRows: {
-      of: CRM_LEAD_SCORING_FREQUENCIES,
-      filter: { variable: { in: leads.length === 0 ? [] : scoringVariablesOf(plsFields) } },
-      selection: SCORING_ROW_SELECTION,
+      stages: stageNodes,
+      plans,
+      people,
+      companies,
+      ...teamLists
     },
-    stages: {
-      of: records('crmStage', 'crmStages'),
-      filter: {},
-      selection: 'id name sequence isWon fold rottingThresholdDays createdAt',
-    },
-    plans: { of: records('crmRecurringPlan', 'crmRecurringPlans'), filter: {}, selection: 'id numberOfMonths' },
-    people: {
-      of: records('person', 'people'),
-      filter: { id: { in: presentIds(leads.map((lead) => lead.personId)) } },
-      selection:
-        'id name { firstName lastName } emails { primaryEmail additionalEmails } phones { primaryPhoneNumber primaryPhoneCountryCode primaryPhoneCallingCode additionalPhones } jobTitle companyId postalAddress { addressStreet1 addressStreet2 addressCity addressPostcode addressState addressCountry }',
-    },
-    companies: {
-      of: companyRecords,
-      filter: { id: { in: presentIds(leads.map((lead) => lead.companyId)) } },
-      selection: COMPANY_SELECTION,
-    },
-  });
+    scoring,
+  ] = await Promise.all([
+    findMany<
+      {
+        stages: StageNode[];
+        plans: { id: string; numberOfMonths: number | null }[];
+        people: PartnerPersonRow[];
+        companies: PartnerCompanyRow[];
+      } & TeamContextLists
+    >({
+      ...TEAM_CONTEXT_FINDS,
+      stages: {
+        of: records('crmStage', 'crmStages'),
+        filter: {},
+        selection: 'id name sequence isWon fold rottingThresholdDays createdAt',
+      },
+      plans: { of: records('crmRecurringPlan', 'crmRecurringPlans'), filter: {}, selection: 'id numberOfMonths' },
+      people: {
+        of: records('person', 'people'),
+        filter: { id: { in: presentIds(leads.map((lead) => lead.personId)) } },
+        selection:
+          'id name { firstName lastName } emails { primaryEmail additionalEmails } phones { primaryPhoneNumber primaryPhoneCountryCode primaryPhoneCallingCode additionalPhones } jobTitle companyId postalAddress { addressStreet1 addressStreet2 addressCity addressPostcode addressState addressCountry }',
+      },
+      companies: {
+        of: companyRecords,
+        filter: { id: { in: presentIds(leads.map((lead) => lead.companyId)) } },
+        selection: COMPANY_SELECTION,
+      },
+    }),
+    readLeadScoring(leads, plsFields),
+  ]);
   const knownCompanyIds = new Set(companies.map((company) => company.id));
   const contactCompanies = await companyRecords.find<PartnerCompanyRow>(
     { id: { in: presentIds(people.map((person) => person.companyId)).filter((id) => !knownCompanyIds.has(id)) } },
@@ -106,7 +103,7 @@ export const loadLeadContext = async (leads: LeadRow[]): Promise<LeadContext> =>
     ...(leads.length === 0
       ? {}
       : {
-          score: (lead: LeadRow) => scoreLeads([lead], scoringRows, stages, plsFields).get(lead.id) ?? null,
+          score: (lead: LeadRow) => scoreLeads([lead], scoring.rows, stages, plsFields, scoring.totals).get(lead.id) ?? null,
           scoringFields: plsFields,
         }),
   };

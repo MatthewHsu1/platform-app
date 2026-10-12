@@ -1,6 +1,15 @@
 import { LEAD_TYPE, WON_STATUS } from 'src/crm/crm-options.constant';
 import { normaliseEmail, splitEmails } from 'src/crm/lead/utils/email.util';
 
+// The addresses a lead's email field holds, as the duplicate search compares them.
+export const duplicateEmailsOf = (email: string | null) => [
+  ...new Set(
+    splitEmails(email)
+      .map((pair) => normaliseEmail(pair.email))
+      .filter((address): address is string => address !== null),
+  ),
+];
+
 // Leads that look like the same deal: one of the email addresses, or the same
 // customer. A customer is the contact when there is one, else the company, so
 // a company matches only leads that have no contact.
@@ -9,19 +18,15 @@ export const leadDuplicatesFilter = ({
   personId,
   companyId,
   includeLost,
+  emails = duplicateEmailsOf(email),
 }: {
   email: string | null;
+  // Addresses of several leads at once, in place of `email`.
+  emails?: string[];
   personId: string | null;
   companyId: string | null;
   includeLost: boolean;
 }): Record<string, unknown> | null => {
-  const emails = [
-    ...new Set(
-      splitEmails(email)
-        .map((pair) => normaliseEmail(pair.email))
-        .filter((address): address is string => address !== null),
-    ),
-  ];
   const matches: Record<string, unknown>[] = [];
 
   if (emails.length > 0) {

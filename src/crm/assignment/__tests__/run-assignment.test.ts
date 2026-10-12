@@ -334,6 +334,38 @@ describe('assignLeads', () => {
   });
 });
 
+describe('assignLeads in batches', () => {
+  it('writes the teams and the salespeople of many leads in one request each, and reads their duplicates in one search', async () => {
+    const api = makeFakeAssignmentApi({
+      teams: [makeTeam('A', { sequence: 1, assignmentMax: 300 }), makeTeam('B', { sequence: 2, assignmentMax: 300 })],
+      memberships: [makeMember('ma', 'A', 'ua', 300), makeMember('mb', 'B', 'ub', 300)],
+      leads: Array.from({ length: 12 }, (_, index) => makeLead(`l${index + 1}`, { createdAt: created(index) })),
+      random: [0.1, 0.7],
+    });
+
+    const result = await makeAssignLeads(api)({ teamIds: ['A', 'B'], forceQuota: true, creationDeltaDays: 0, door: 'SETTINGS_BUTTON', requestedBy: 'Ann' });
+
+    expect(result.teams.A.assigned.length + result.teams.B.assigned.length).toBe(12);
+    expect([...api.leads.values()].every((lead) => lead.salespersonId !== null)).toBe(true);
+    expect(api.calls).toEqual({ findDuplicates: 1, writeTeams: 1, writeAssignments: 2 });
+  });
+
+  it('finishes the run and reports a team note that could not be written', async () => {
+    const api = makeFakeAssignmentApi({
+      teams: [makeTeam('T', { name: 'Sales', assignmentMax: 30 })],
+      memberships: [makeMember('m', 'T', 'u', 30)],
+      leads: [makeLead('l1')],
+    });
+
+    api.failNotes = new Error('Link note: Query read timeout');
+    const result = await makeAssignLeads(api)({ teamIds: ['T'], forceQuota: true, creationDeltaDays: 0, door: 'TEAM_BUTTON', requestedBy: 'Ann' });
+
+    expect(result.errors).toEqual([]);
+    expect(api.leads.get('l1')).toMatchObject({ teamId: 'T', salespersonId: 'u' });
+    expect(result.messages).toContain('The note on team Sales could not be written: Link note: Query read timeout');
+  });
+});
+
 describe('assignLeads with the assignment plug', () => {
   const setup = (leftOut: 'DEFAULT' | 'UNTOUCHED', onError: 'DEFAULT' | 'SKIP' = 'DEFAULT') => {
     const api = makeFakeAssignmentApi({
