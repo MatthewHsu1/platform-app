@@ -1,6 +1,8 @@
 import { type PlsFieldKey } from 'src/crm/scoring/types/pls-field-key.type';
 
 export type CrmSettings = {
+  useLeads: boolean;
+  useRecurringRevenues: boolean;
   membershipMulti: boolean;
   autoAssignment: boolean;
   autoAssignmentAction: 'MANUAL' | 'AUTO';

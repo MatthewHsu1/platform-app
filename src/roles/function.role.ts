@@ -143,7 +143,7 @@ export default defineApplicationRole({
   universalIdentifier: FUNCTION_ROLE_UNIVERSAL_IDENTIFIER,
   label: `${APP_DISPLAY_NAME} function role`,
   description:
-    'Runs the install hook, the triggers, the daily job, the buttons and the Roles page.',
+    'Runs the install hook, the triggers, the daily job, the buttons, lead assignment, lead scoring, the plug calls, the Roles page and the CRM settings page.',
   canReadAllObjectRecords: false,
   canUpdateAllObjectRecords: false,
   canSoftDeleteAllObjectRecords: false,

@@ -3,10 +3,10 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 import { makeLoadRolesPage } from 'src/roles/page/load-roles-page';
 import { readRolesPage } from 'src/roles/page/read-roles-page';
 import { rolesRouteHandler } from 'src/roles/page/roles-route';
-import { readCallerAccess } from 'src/roles/read-caller-access';
+import { readCallerAccessOrNull } from 'src/roles/read-caller-access';
 import { ROLES_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS, ROLES_ROUTE_PATHS } from 'src/roles/roles-universal-identifiers.constant';
 
-const loadRolesPage = makeLoadRolesPage({ readAccess: readCallerAccess, readPage: readRolesPage });
+const loadRolesPage = makeLoadRolesPage({ readAccess: readCallerAccessOrNull, readPage: readRolesPage });
 const handler = rolesRouteHandler(async () => ({ ...(await loadRolesPage()) }));
 
 export default defineLogicFunction({

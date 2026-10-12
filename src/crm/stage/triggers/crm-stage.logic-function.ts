@@ -3,6 +3,7 @@ import { type DatabaseEventBatchPayload, defineLogicFunction, type ObjectRecordE
 import { WON_STATUS } from 'src/crm/crm-options.constant';
 import { CRM_STAGE_TRIGGER_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER } from 'src/crm/crm-universal-identifiers.constant';
 import { leadExistsWhere } from 'src/crm/lead/lead-exists-where';
+import { recomputeRotting } from 'src/crm/lead/recompute-rotting';
 import { writeLeadsAsApplication } from 'src/crm/lead/write-leads-as-application';
 import { cascadeStageDelete } from 'src/crm/stage/cascade-stage-delete';
 import { makeRunStageTrigger } from 'src/crm/stage/run-stage-trigger';
@@ -39,6 +40,7 @@ const runStageTrigger = makeRunStageTrigger({
   writeLeads: (writes, options) => writeLeadsAsApplication(writes, options),
   syncBoardGroups: syncStageBoardGroups,
   cascadeStageDelete,
+  recomputeRotting: (stageIds) => recomputeRotting(stageIds),
   memberLocale: readMemberLocale,
   translate: (locale, message) => translate(locale, message),
 });
@@ -55,7 +57,7 @@ export default defineLogicFunction({
   universalIdentifier: CRM_STAGE_TRIGGER_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   name: 'platform-crm-stage',
   description:
-    'Puts back a deleted stage that still holds leads, keeps one board column per stage in stage order, and sets the leads of a stage marked won to 100 %.',
+    'Puts back a deleted stage that still holds leads, keeps one board column per stage in stage order, sets the leads of a stage marked won to 100 %, and refreshes rotting when the days to rot change.',
   timeoutSeconds: 300,
   handler,
   databaseEventTriggerSettings: { eventName: 'crmStage.*', batchMode: true },

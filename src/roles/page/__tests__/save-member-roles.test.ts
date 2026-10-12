@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { BLOCK_KEYS } from 'src/roles/blocks/block-keys.constant';
-import { NoPersonBehindRequestError } from 'src/roles/no-person-behind-request.error';
 import { makeLoadRolesPage } from 'src/roles/page/load-roles-page';
 import { makeSaveMemberRoles } from 'src/roles/page/save-member-roles';
 import { RolesUserError } from 'src/roles/page/roles-route';
@@ -23,7 +22,7 @@ const row = (workspaceMemberId: string, overrides: Partial<RolesPageRow> = {}): 
 });
 const RESULT: RoleSyncResult = { created: [], updated: [], assignedRoleId: 'r', deleted: [], failed: [], rowAccessWritten: true, warnings: ['careful'] };
 
-const setup = (readAccess: () => Promise<CallerAccess>) => {
+const setup = (readAccess: () => Promise<CallerAccess | null>) => {
   const readPage = vi.fn(async () => ({ rows: [row('m-admin', { isAdmin: true }), row('m-boss', { isAdmin: true }), row('m-rep')], modules: [], defaultRoleLabel: 'Member' }));
   const sync = vi.fn(async () => RESULT);
   const save = makeSaveMemberRoles({ readAccess, readPage, sync, readLocale: async () => 'en' });
@@ -49,11 +48,9 @@ describe('saving one person from the Roles page', () => {
   });
 
   it('refuses a request with no person behind it (API key) with 403 before reading or writing anything', async () => {
-    const { save, readPage, sync } = setup(async () => {
-      throw new NoPersonBehindRequestError();
-    });
+    const { save, readPage, sync } = setup(async () => null);
 
-    await expect(save({ workspaceMemberId: 'm-rep', levels: {} })).rejects.toBeInstanceOf(NoPersonBehindRequestError);
+    await expect(save({ workspaceMemberId: 'm-rep', levels: {} })).rejects.toMatchObject({ status: 403, message: 'Only an admin can change roles.' });
     expect(readPage).not.toHaveBeenCalled();
     expect(sync).not.toHaveBeenCalled();
   });

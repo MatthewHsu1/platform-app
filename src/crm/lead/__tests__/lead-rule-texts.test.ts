@@ -7,7 +7,6 @@ import {
   LEAD_RULE_TEXTS,
   MARK_WON_TEXTS,
   SALES_TEAM_RULE_TEXTS,
-  SCORING_TEXTS,
   UTM_RULE_TEXTS,
 } from 'src/crm/lead/actions/mark-won.front-component';
 import { SELECT_ONE_LEAD, SELECT_SOME_LEADS } from 'src/crm/lead/actions/lead-action-route';
@@ -35,7 +34,10 @@ import {
 import { DEFAULT_OPPORTUNITY_NAME_TEMPLATE } from 'src/crm/lead/utils/plan-lead-computes.util';
 import { WON_STAGE_REFUSAL_MESSAGE } from 'src/crm/lead/utils/won-stage-refusal.util';
 import { LOST_REASON_IN_USE_MESSAGE } from 'src/crm/lost-reason/run-lost-reason-trigger';
-import { SCORING_MESSAGES } from 'src/crm/scoring/scoring-messages.constant';
+import { SCORING_FACTORS_TEXTS } from 'src/crm/scoring/front-components/scoring-tooltip.front-component';
+import { SCORING_FACTORS_MESSAGES, SCORING_MESSAGES } from 'src/crm/scoring/scoring-messages.constant';
+import { CRM_SETTINGS_MESSAGES } from 'src/crm/settings/crm-settings-messages.constant';
+import { CRM_SETTINGS_TEXTS, SCORING_TEXTS } from 'src/crm/settings/front-components/crm-settings.front-component';
 import { STAGE_IN_USE_MESSAGE } from 'src/crm/stage/run-stage-trigger';
 import { TEAM_MESSAGES } from 'src/sales-team/team/team-messages';
 import { NOT_ALLOWED_MESSAGE } from 'src/shared/not-allowed';
@@ -84,6 +86,20 @@ describe('lead rule texts', () => {
     const texts = Object.values(SCORING_MESSAGES);
 
     expect(SCORING_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
+    expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
+  });
+
+  it('lists every answer of the CRM settings routes, and the catalog holds each', () => {
+    const texts = Object.values(CRM_SETTINGS_MESSAGES);
+
+    expect(CRM_SETTINGS_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
+    expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
+  });
+
+  it('lists every answer of the scoring explanation, and the catalog holds each', () => {
+    const texts = Object.values(SCORING_FACTORS_MESSAGES);
+
+    expect(SCORING_FACTORS_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
     expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
   });
 

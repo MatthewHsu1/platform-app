@@ -104,6 +104,7 @@ export const CRM_LEAD_TRIGGER_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
   '81056677-8e81-413b-8783-a90047696b17';
 export const CRM_LOST_REASON_TRIGGER_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
   '1a2a8ce2-a7d3-4069-987f-75f23190b886';
+export const CRM_ROTTING_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER = '1e89bc74-6977-4e90-b011-7a1bca6cb9c3';
 
 // Rows the install step makes once; code finds them by key after staff rename them.
 export const CRM_STAGE_SEED_KEYS = {

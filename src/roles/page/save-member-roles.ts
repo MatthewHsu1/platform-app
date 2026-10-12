@@ -15,10 +15,10 @@ import { translate } from 'src/shared/i18n/translate';
 
 // The sync writes with the app's token, so nothing is read or written until the clicking user is
 // known to be an Admin or to hold the Roles permission; a request with nobody signed in behind it
-// (an API key) is refused when the caller is read.
+// (an API key) is refused the same way.
 export const makeSaveMemberRoles =
   (deps: {
-    readAccess: () => Promise<CallerAccess>;
+    readAccess: () => Promise<CallerAccess | null>;
     readPage: (access: CallerAccess) => Promise<RolesPageWithDefaultRole>;
     sync: (request: RoleSyncRequest) => Promise<RoleSyncResult>;
     readLocale: () => Promise<string>;
@@ -26,7 +26,7 @@ export const makeSaveMemberRoles =
   async (body: Record<string, unknown>): Promise<{ message: string; warnings: string[] }> => {
     const access = await deps.readAccess();
 
-    if (!mayManageRoles(access)) {
+    if (access === null || !mayManageRoles(access)) {
       throw new RolesUserError(403, ROLES_MESSAGES.notAdmin);
     }
     const page = await deps.readPage(access);

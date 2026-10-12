@@ -1,7 +1,5 @@
 import { type RoutePayload } from 'twenty-sdk/define';
 
-import { NoPersonBehindRequestError } from 'src/roles/no-person-behind-request.error';
-import { ROLES_MESSAGES } from 'src/roles/roles-messages.constant';
 import { RoleSyncBusyError } from 'src/roles/sync/sync-mixed-roles';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
@@ -32,9 +30,6 @@ export const makeRolesRouteHandler =
 
       if (error instanceof RolesUserError) {
         return jsonResponse(error.status, { error: translate(locale, error.message, error.values) });
-      }
-      if (error instanceof NoPersonBehindRequestError) {
-        return jsonResponse(403, { error: translate(locale, ROLES_MESSAGES.notAdmin) });
       }
       if (error instanceof RoleSyncBusyError) {
         return jsonResponse(409, { error: translate(locale, error.message) });

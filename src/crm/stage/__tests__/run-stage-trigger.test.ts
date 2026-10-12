@@ -11,6 +11,7 @@ const makeApi = ({ used = [], leads = {} }: { used?: string[]; leads?: Record<st
     cascaded: [] as string[][],
     writes: [] as { writes: AppLeadWrite[]; rescore?: boolean }[],
     leadQueries: [] as { stageIds: string[] }[],
+    rotting: [] as string[][],
   };
   const api: StageTriggerApi = {
     stageIdsUsedByLeads: async (ids) => new Set(ids.filter((id) => used.includes(id))),
@@ -29,6 +30,9 @@ const makeApi = ({ used = [], leads = {} }: { used?: string[]; leads?: Record<st
     },
     cascadeStageDelete: async (ids) => {
       calls.cascaded.push(ids);
+    },
+    recomputeRotting: async (ids) => {
+      calls.rotting.push(ids);
     },
     memberLocale: async () => 'en',
     translate: (_locale, message) => message,
@@ -109,5 +113,19 @@ describe('stage trigger', () => {
     await makeRunStageTrigger(api)({ operation: 'updated', events: [event('s1', { color: 'red' }, { color: 'blue' }, ['color'])] });
 
     expect(calls.syncs).toBe(0);
+  });
+
+  it("refreshes the rotting of a stage's leads when its days to rot change", async () => {
+    const { api, calls } = makeApi();
+
+    await makeRunStageTrigger(api)({
+      operation: 'updated',
+      events: [
+        event('s1', { rottingThresholdDays: 0 }, { rottingThresholdDays: 5 }, ['rottingThresholdDays']),
+        event('s2', { name: 'A' }, { name: 'B' }, ['name']),
+      ],
+    });
+
+    expect(calls.rotting).toEqual([['s1']]);
   });
 });

@@ -3,12 +3,12 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 import { readRolesPage } from 'src/roles/page/read-roles-page';
 import { rolesRouteHandler } from 'src/roles/page/roles-route';
 import { makeSaveMemberRoles } from 'src/roles/page/save-member-roles';
-import { readCallerAccess } from 'src/roles/read-caller-access';
+import { readCallerAccessOrNull } from 'src/roles/read-caller-access';
 import { ROLES_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS, ROLES_ROUTE_PATHS } from 'src/roles/roles-universal-identifiers.constant';
 import { syncMixedRoles } from 'src/roles/sync/sync-mixed-roles';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 
-const saveMemberRoles = makeSaveMemberRoles({ readAccess: readCallerAccess, readPage: readRolesPage, sync: syncMixedRoles, readLocale: readUserLocale });
+const saveMemberRoles = makeSaveMemberRoles({ readAccess: readCallerAccessOrNull, readPage: readRolesPage, sync: syncMixedRoles, readLocale: readUserLocale });
 const handler = rolesRouteHandler(async (body) => ({ ...(await saveMemberRoles(body)) }));
 
 export default defineLogicFunction({

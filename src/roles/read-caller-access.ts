@@ -55,3 +55,12 @@ export const readCallerAccess = async (): Promise<CallerAccess> => {
 
   return { workspaceMemberId, isWorkspaceAdmin: false, blockKeys: role === undefined ? [] : (table.roles[role.id] ?? []), canManageRoles };
 };
+
+// The same, with null for a request that has nobody signed in behind it (an API key).
+export const readCallerAccessOrNull = async (): Promise<CallerAccess | null> =>
+  readCallerAccess().catch((error: unknown) => {
+    if (error instanceof NoPersonBehindRequestError) {
+      return null;
+    }
+    throw error;
+  });

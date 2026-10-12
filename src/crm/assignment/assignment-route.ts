@@ -2,8 +2,7 @@ import { assignLeads } from 'src/crm/assignment/assign-leads';
 import { ASSIGNMENT_ROUTE_MESSAGES } from 'src/crm/assignment/assignment-route-messages.constant';
 import { type AssignmentDoor } from 'src/crm/assignment/types/assignment-door.type';
 import { holdsSalesAdministrator } from 'src/crm/settings/utils/holds-sales-administrator.util';
-import { NoPersonBehindRequestError } from 'src/roles/no-person-behind-request.error';
-import { readCallerAccess } from 'src/roles/read-caller-access';
+import { readCallerAccessOrNull } from 'src/roles/read-caller-access';
 import { readCurrentMember } from 'src/shared/current-member';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
@@ -25,12 +24,7 @@ export const runManualAssignment = async ({
   const locale = await readUserLocale().catch(() => 'en');
 
   try {
-    const access = await readCallerAccess().catch((error: unknown) => {
-      if (error instanceof NoPersonBehindRequestError) {
-        return null;
-      }
-      throw error;
-    });
+    const access = await readCallerAccessOrNull();
 
     if (access === null || access.workspaceMemberId === null || !holdsSalesAdministrator(access)) {
       return jsonResponse(403, { error: translate(locale, ASSIGNMENT_ROUTE_MESSAGES.onlySalesAdministrators) });

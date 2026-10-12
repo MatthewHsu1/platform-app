@@ -74,6 +74,11 @@ export const makeRunStageTrigger =
         }
       });
     }
+    const thresholdChanged = events.filter((event) => changed(event, 'rottingThresholdDays')).map((event) => event.recordId);
+
+    if (thresholdChanged.length > 0) {
+      await errors.run('rotting leads', () => api.recomputeRotting(thresholdChanged));
+    }
     if (events.some((event) => BOARD_FIELDS.some((field) => changed(event, field)))) {
       await errors.run('board columns', () => api.syncBoardGroups());
     }

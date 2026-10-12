@@ -6,6 +6,10 @@ import { plugKeyVariableName } from 'src/shared/plug/utils/parse-plug-points.uti
 const ROUTE_PATH = /^\/(?!\/)[A-Za-z0-9._~\-/]*$/;
 const JSON_HEADERS = { 'content-type': 'application/json' };
 
+// A path of a route of another app in this workspace: no scheme, no host, no
+// query and no step up.
+export const isPlugRoutePath = (path: string) => ROUTE_PATH.test(path) && !path.split('/').includes('..');
+
 // Platform's app token goes only to a route of an app in the same workspace.
 // An outside address gets its own key, never that token.
 export const buildPlugRequest = ({
@@ -18,7 +22,7 @@ export const buildPlugRequest = ({
   env: Record<string, string | undefined>;
 }): PlugRequest => {
   if (target.kind === 'route') {
-    if (!ROUTE_PATH.test(target.path) || target.path.split('/').includes('..')) {
+    if (!isPlugRoutePath(target.path)) {
       return { kind: 'error', failure: { message: PLUG_FAILURE_MESSAGES.badRoute, values: {} } };
     }
     const base = (env.TWENTY_FUNCTIONS_URL || `${env.TWENTY_API_URL ?? ''}/s`).replace(/\/+$/, '');

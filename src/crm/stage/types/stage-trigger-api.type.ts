@@ -7,6 +7,7 @@ export type StageTriggerApi = {
   writeLeads: (writes: AppLeadWrite[], options?: { rescore?: boolean }) => Promise<unknown>;
   syncBoardGroups: () => Promise<void>;
   cascadeStageDelete: (stageIds: string[]) => Promise<void>;
+  recomputeRotting: (stageIds: string[]) => Promise<unknown>;
   memberLocale: (workspaceMemberId: string | undefined) => Promise<string>;
   translate: (locale: string | null, message: string) => string;
 };

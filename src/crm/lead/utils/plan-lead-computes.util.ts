@@ -10,6 +10,7 @@ import { phoneState } from 'src/crm/lead/utils/phone.util';
 import { planPartnerSync } from 'src/crm/lead/utils/plan-partner-sync.util';
 import { planTeamDefault } from 'src/crm/lead/utils/plan-team-default.util';
 import { sameProbability } from 'src/crm/lead/utils/probability.util';
+import { rottingValues } from 'src/crm/lead/utils/rotting.util';
 import { cleanWebsite } from 'src/crm/lead/utils/website.util';
 import { planWonStatus } from 'src/crm/lead/utils/won-status.util';
 import { scoringPairs } from 'src/crm/scoring/utils/scoring-pairs.util';
@@ -168,6 +169,18 @@ export const planLeadComputes = (input: LeadComputesInput): Partial<LeadRow> => 
   // Days to assign ignore the creation time's milliseconds; days to close do not.
   set('dayOpen', lead.dateOpen === null ? null : wholeDaysBetween(withoutMilliseconds(lead.createdAt), lead.dateOpen));
   set('dayClose', wholeDaysBetween(lead.createdAt, lead.dateClosed));
+
+  // Rotting depends on the clock, so it is refreshed on every save; the daily
+  // job and a stage's threshold change refresh it between saves.
+  // An empty value reads as not rotting.
+  const rotting = rottingValues(lead, stageOf(lead.stageId), now);
+
+  if (rotting.isRotting !== (lead.isRotting ?? false)) {
+    set('isRotting', rotting.isRotting);
+  }
+  if (rotting.rottingDays !== (lead.rottingDays ?? 0)) {
+    set('rottingDays', rotting.rottingDays);
+  }
 
   return values;
 };

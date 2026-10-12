@@ -47,13 +47,6 @@ export const UTM_RULE_TEXTS = [
   msg('The save was undone and its new records removed: an archived record already has the name "{name}".'),
 ];
 
-// The answers of the Update probabilities route (src/crm/scoring/scoring-messages.constant.ts),
-// listed for the extractor the same way: the CRM settings page has no front component yet.
-export const SCORING_TEXTS = [
-  msg('Only a workspace administrator can update the probabilities.'),
-  msg('Choose the day from which leads are counted.'),
-];
-
 // The answers of the Mark won route, listed for the extractor the same way.
 export const MARK_WON_TEXTS = [
   msg('leadId is required.'),

@@ -3,6 +3,8 @@ import { parseDateSetting, parsePlsFields } from 'src/crm/settings/utils/parse-s
 import { readApplicationVariable } from 'src/shared/application-variables/read-application-variable';
 
 const KEYS = [
+  'CRM_USE_LEADS',
+  'CRM_USE_RECURRING_REVENUES',
   'SALES_TEAM_MEMBERSHIP_MULTI',
   'CRM_LEAD_AUTO_ASSIGNMENT',
   'CRM_AUTO_ASSIGNMENT_ACTION',
@@ -41,6 +43,8 @@ export const readCrmSettings = async (): Promise<CrmSettings> => {
   const values: Values = Object.fromEntries(await Promise.all(KEYS.map(async (key) => [key, await readApplicationVariable(key)])));
 
   return {
+    useLeads: asBoolean(values.CRM_USE_LEADS, false),
+    useRecurringRevenues: asBoolean(values.CRM_USE_RECURRING_REVENUES, false),
     membershipMulti: asBoolean(values.SALES_TEAM_MEMBERSHIP_MULTI, false),
     autoAssignment: asBoolean(values.CRM_LEAD_AUTO_ASSIGNMENT, false),
     autoAssignmentAction: asChoice(values.CRM_AUTO_ASSIGNMENT_ACTION, ['MANUAL', 'AUTO'] as const, 'MANUAL'),

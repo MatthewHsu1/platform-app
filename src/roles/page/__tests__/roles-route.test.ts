@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { NoPersonBehindRequestError } from 'src/roles/no-person-behind-request.error';
 import { makeRolesRouteHandler, RolesUserError } from 'src/roles/page/roles-route';
 import { RoleSyncBusyError } from 'src/roles/sync/sync-mixed-roles';
 import { GraphqlForbiddenError } from 'src/shared/twenty-graphql';
@@ -22,13 +21,6 @@ describe('rolesRouteHandler', () => {
 
   it("answers with a refusal's status and text", async () => {
     expect(await answer(async () => { throw new RolesUserError(403, 'Only an admin can change roles.'); })).toEqual({
-      status: 403,
-      body: { error: 'Only an admin can change roles.' },
-    });
-  });
-
-  it('answers 403, not 500, when nobody is signed in behind the request', async () => {
-    expect(await answer(async () => { throw new NoPersonBehindRequestError(); })).toEqual({
       status: 403,
       body: { error: 'Only an admin can change roles.' },
     });
