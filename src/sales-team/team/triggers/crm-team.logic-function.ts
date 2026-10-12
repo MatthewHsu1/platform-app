@@ -46,6 +46,16 @@ const runTeamTrigger = makeRunTeamTrigger({
       await writeLeadsAsApplication(inTeams.map(({ id }) => ({ leadId: id, data: { teamId: null } })));
     }
   },
+  // Trashed rows too: a trashed stage link still blocks the team's removal.
+  destroyStageLinksOf: async (teamIds) => {
+    await stageTeams.destroyMany((await stageTeams.findIncludingDeleted<{ id: string }>({ teamId: { in: teamIds } }, 'id')).map(({ id }) => id));
+  },
+  destroyMembersOf: async (teamIds) => {
+    await members.destroyMany((await members.findIncludingDeleted<{ id: string }>({ crmTeamId: { in: teamIds } }, 'id')).map(({ id }) => id));
+  },
+  destroyTeams: async (teamIds) => {
+    await teams.destroyMany(teamIds);
+  },
   checkAssignmentFilters: (changes) => checkAssignmentFilters({ objectSingular: 'crmTeam', changes }),
   memberLocale: readMemberLocale,
   translate: (locale, message) => translate(locale, message),
@@ -62,7 +72,8 @@ const handler = async (payload: DatabaseEventBatchPayload<ObjectRecordEvent<Reco
 export default defineLogicFunction({
   universalIdentifier: SALES_TEAM_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS.crmTeam,
   name: 'platform-crm-team',
-  description: 'Gives a new team a colour, keeps default and stage-limited teams, and clears deleted teams from members and leads.',
+  description:
+    'Gives a new team a colour, keeps default and stage-limited teams, clears deleted teams from members and leads, and refuses an assignment filter that cannot run.',
   timeoutSeconds: 300,
   handler,
   databaseEventTriggerSettings: { eventName: 'crmTeam.*', batchMode: true },

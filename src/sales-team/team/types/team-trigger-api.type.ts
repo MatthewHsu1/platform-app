@@ -1,4 +1,5 @@
 import { type AssignmentFilterChange } from 'src/sales-team/types/assignment-filter-change.type';
+import { type FilterCheckOutcome } from 'src/sales-team/types/filter-check-outcome.type';
 
 export type TeamTriggerApi = {
   pickColor: () => string;
@@ -9,7 +10,10 @@ export type TeamTriggerApi = {
   foldTeamScoring: (teamIds: string[]) => Promise<void>;
   deleteMembersOf: (teamIds: string[]) => Promise<void>;
   clearTeamOnLeads: (teamIds: string[]) => Promise<void>;
-  checkAssignmentFilters: (changes: AssignmentFilterChange[]) => Promise<void>;
+  destroyStageLinksOf: (teamIds: string[]) => Promise<void>;
+  destroyMembersOf: (teamIds: string[]) => Promise<void>;
+  destroyTeams: (teamIds: string[]) => Promise<void>;
+  checkAssignmentFilters: (changes: AssignmentFilterChange[]) => Promise<FilterCheckOutcome>;
   memberLocale: (workspaceMemberId: string | undefined) => Promise<string>;
   translate: (locale: string | null, message: string) => string;
 };

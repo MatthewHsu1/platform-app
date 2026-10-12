@@ -1,7 +1,7 @@
 import { definePageLayoutTab } from 'twenty-sdk/define';
 
 import { PICKING_FIELDS as F } from 'src/stock/page-layouts/field-ids';
-import { frontComponentWidget, recordPageTab, tableWidget } from 'src/stock/page-layouts/widgets';
+import { frontComponentWidget, recordPageTab, tableWidget } from 'src/shared/page-layout/widgets';
 import {
   STOCK_RECORD_PAGE_TAB_UNIVERSAL_IDENTIFIERS,
   STOCK_TABLE_WIDGET_VIEW_UNIVERSAL_IDENTIFIERS as VIEWS,

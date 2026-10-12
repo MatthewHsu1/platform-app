@@ -28,6 +28,8 @@ export const SALES_TEAM_RULE_TEXTS = [
   msg('This is a default sales team. It cannot be deleted; it can stay archived.'),
   msg('Some pipeline stages are limited to this sales team. Take the team off those stages first.'),
   msg('{name} is already an active member of this team. The new or changed membership was undone.'),
+  msg('The assignment filter could not be used, so the previous filter is back. {reason}'),
+  msg('A new sales team or team member was removed because its assignment filter could not be used. {reason}'),
 ];
 
 // The note a lead gets when its contact cannot take its email

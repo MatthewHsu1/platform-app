@@ -1,7 +1,7 @@
 import { definePageLayoutTab } from 'twenty-sdk/define';
 
 import { WAREHOUSE_FIELDS as F } from 'src/stock/page-layouts/field-ids';
-import { recordPageTab, tableWidget } from 'src/stock/page-layouts/widgets';
+import { recordPageTab, tableWidget } from 'src/shared/page-layout/widgets';
 import {
   STOCK_RECORD_PAGE_TAB_UNIVERSAL_IDENTIFIERS,
   STOCK_TABLE_WIDGET_VIEW_UNIVERSAL_IDENTIFIERS as VIEWS,

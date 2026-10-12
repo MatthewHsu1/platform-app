@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { type MemberCandidate } from 'src/sales-team/member/types/member-candidate.type';
 import { makeRunMemberTrigger } from 'src/sales-team/member/run-member-trigger';
 import { TEAM_MESSAGES } from 'src/sales-team/team/team-messages';
+import { type AssignmentFilterChange } from 'src/sales-team/types/assignment-filter-change.type';
 
 const STAFF = { source: 'MANUAL' };
 const APP = { source: 'APPLICATION' };
@@ -15,7 +16,7 @@ const row = (id: string, teamId: string, active: boolean, createdAt: string, use
   createdAt,
 });
 
-const makeApi = (rows: MemberCandidate[], membershipMulti = false) => {
+const makeApi = (rows: MemberCandidate[], membershipMulti = false, refusedByFilter: string[] = []) => {
   const writes: string[] = [];
   const capacity: string[][] = [];
 
@@ -48,7 +49,10 @@ const makeApi = (rows: MemberCandidate[], membershipMulti = false) => {
     recomputeCapacity: async (teamIds: string[]) => {
       capacity.push([...teamIds].sort());
     },
-    checkAssignmentFilters: async () => undefined,
+    checkAssignmentFilters: async (changes: AssignmentFilterChange[]) => {
+      writes.push(`check ${changes.map((change) => `${change.operation} ${change.recordId} ${change.field}`).join(',')}`);
+      return { refused: refusedByFilter.map((recordId) => ({ recordId, reason: `refused ${recordId}` })), problems: [] };
+    },
     memberLocale: async () => 'en',
     translate: (_locale: string | null, message: string, values: Record<string, string> = {}) =>
       message.replace('{name}', values.name ?? ''),
@@ -60,6 +64,25 @@ const makeApi = (rows: MemberCandidate[], membershipMulti = false) => {
 const duplicateNote = (teamId: string) => `note ${teamId} ${TEAM_MESSAGES.duplicateMember.replace('{name}', 'Ann Lee')}`;
 
 describe('team member trigger', () => {
+  it('removes a new membership whose filter cannot run, notes its team and does nothing more for it', async () => {
+    const rows = [row('old', 'T1', true, '2026-01-01T00:00:00.000Z'), row('m2', 'T2', true, '2026-01-02T00:00:00.000Z')];
+    const { api, writes } = makeApi(rows, false, ['m2']);
+
+    await expect(
+      makeRunMemberTrigger(api)({
+        operation: 'created',
+        events: [
+          {
+            recordId: 'm2',
+            properties: { after: { crmTeamId: 'T2', salesUserId: 'U', active: true, name: null, assignmentDomain: '{"rules":[1]}', updatedBy: STAFF } },
+          },
+        ],
+      }),
+    ).rejects.toThrow('refused m2');
+
+    expect(writes).toEqual(['check created m2 assignmentDomain', 'destroy m2', 'note T2 refused m2']);
+  });
+
   it('removes a second active membership of the same salesperson in the same team, with a note on the team', async () => {
     const rows = [row('m1', 'T', true, '2026-01-01T00:00:00.000Z'), row('m2', 'T', true, '2026-01-02T00:00:00.000Z')];
     const { api, writes, capacity } = makeApi(rows);

@@ -2,6 +2,9 @@ import { type ActionProps, type Controls, type FullField, type ValueEditorProps,
 import { Button, Input } from 'twenty-ui/primitives/input';
 import { themeCssVariables } from 'twenty-ui/theme';
 
+import { RecordPickerValueEditor } from 'src/shared/filter-editor/record-picker-value-editor';
+import { type FilterEditorContext } from 'src/shared/filter-editor/types/filter-editor-context.type';
+import { type FilterField } from 'src/shared/filter-editor/types/filter-field.type';
 import { ChoiceSelect } from 'src/shared/front-components/choice-select';
 import { type ChoiceOption } from 'src/shared/front-components/types/choice-option.type';
 
@@ -62,9 +65,56 @@ const MultiChoice = ({ value, options, disabled, title, onChange }: MultiChoiceP
 
 type FilterValueEditorProps = ValueEditorProps;
 
-const FilterValueEditor = ({ operator, type, inputType, value, values, disabled, title, handleOnChange }: FilterValueEditorProps) => {
+const isListOperator = (operator: string) => operator === 'in' || operator === 'notIn' || operator === 'containsAny';
+
+type BetweenProps = { value: unknown; inputType: string; disabled?: boolean; title?: string; onChange: (value: string) => void };
+
+// Two bounds, saved as "low,high".
+const Between = ({ value, inputType, disabled, title, onChange }: BetweenProps) => {
+  const theme = themeCssVariables;
+  const [low = '', high = ''] = Array.isArray(value) ? value.map(String) : String(value ?? '').split(',');
+
+  return (
+    <span title={title} style={{ display: 'flex', alignItems: 'center', gap: theme.spacing[1] }}>
+      <Input value={low} type={inputType} disabled={disabled} onValueChange={(next) => onChange(`${next},${high}`)} />
+      <Input value={high} type={inputType} disabled={disabled} onValueChange={(next) => onChange(`${low},${next}`)} />
+    </span>
+  );
+};
+
+const FilterValueEditor = ({
+  operator,
+  type,
+  inputType,
+  value,
+  values,
+  disabled,
+  title,
+  fieldData,
+  context,
+  handleOnChange,
+}: FilterValueEditorProps) => {
   if (operator === 'null' || operator === 'notNull') {
     return null;
+  }
+  const editorContext = context as FilterEditorContext | undefined;
+  const recordPicker = (fieldData as FullField & Pick<FilterField, 'recordPicker'>).recordPicker;
+
+  if (recordPicker !== undefined && editorContext?.searchRecords !== undefined) {
+    return (
+      <RecordPickerValueEditor
+        value={value}
+        multiple={isListOperator(operator)}
+        picker={recordPicker}
+        search={editorContext.searchRecords}
+        texts={editorContext.texts}
+        disabled={disabled}
+        onChange={(next) => handleOnChange(next)}
+      />
+    );
+  }
+  if (operator === 'between') {
+    return <Between value={value} inputType={inputType ?? 'text'} disabled={disabled} title={title} onChange={(next) => handleOnChange(next)} />;
   }
   if (type === 'multiselect') {
     return <MultiChoice value={value} options={choicesOf(values)} disabled={disabled} title={title} onChange={(next) => handleOnChange(next)} />;
@@ -75,7 +125,7 @@ const FilterValueEditor = ({ operator, type, inputType, value, values, disabled,
     );
   }
   // A list is typed comma separated, which a number or date box does not take.
-  const isList = operator === 'in' || operator === 'notIn';
+  const isList = isListOperator(operator);
 
   return (
     <Input

@@ -1,6 +1,7 @@
 import { type CrmSettings } from 'src/crm/settings/types/crm-settings.type';
 import { type MemberCandidate } from 'src/sales-team/member/types/member-candidate.type';
 import { type AssignmentFilterChange } from 'src/sales-team/types/assignment-filter-change.type';
+import { type FilterCheckOutcome } from 'src/sales-team/types/filter-check-outcome.type';
 
 export type MemberTriggerApi = {
   membershipsOfUsers: (userIds: string[]) => Promise<MemberCandidate[]>;
@@ -13,7 +14,7 @@ export type MemberTriggerApi = {
   renameMember: (memberId: string, name: string | null) => Promise<void>;
   readSettings: () => Promise<CrmSettings>;
   recomputeCapacity: (teamIds: string[]) => Promise<void>;
-  checkAssignmentFilters: (changes: AssignmentFilterChange[]) => Promise<void>;
+  checkAssignmentFilters: (changes: AssignmentFilterChange[]) => Promise<FilterCheckOutcome>;
   memberLocale: (workspaceMemberId: string | undefined) => Promise<string>;
   translate: (locale: string | null, message: string, values?: Record<string, string>) => string;
 };

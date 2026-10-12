@@ -63,3 +63,13 @@ export const SALES_TEAM_SEED_KEYS = {
 
 // A default team that cannot be deleted; it can stay archived.
 export const PROTECTED_TEAM_SEED_KEYS: readonly string[] = [SALES_TEAM_SEED_KEYS.website, SALES_TEAM_SEED_KEYS.pointOfSale];
+
+export const CRM_TEAM_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
+  tabAssignment: 'a264e4bd-14f3-4a9c-b405-729e3abefcab',
+  widgetAssignmentFilter: 'a19fd201-2614-4159-b680-28dacb4de1df',
+} as const;
+
+export const CRM_TEAM_MEMBER_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
+  tabAssignment: '2c2031e4-e908-4c3a-bd38-ee4ce4115bed',
+  widgetAssignmentFilters: '0381b86c-2c5b-4579-bc2f-37fcf9568e48',
+} as const;

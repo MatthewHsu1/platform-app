@@ -2,8 +2,17 @@ import { describe, expect, it } from 'vitest';
 
 import { makeRunTeamTrigger } from 'src/sales-team/team/run-team-trigger';
 import { TEAM_MESSAGES } from 'src/sales-team/team/team-messages';
+import { type AssignmentFilterChange } from 'src/sales-team/types/assignment-filter-change.type';
 
-const makeApi = ({ deleted = [], linked = [] }: { deleted?: { id: string; seedKey: string | null }[]; linked?: string[] }) => {
+const makeApi = ({
+  deleted = [],
+  linked = [],
+  refusedByFilter = [],
+}: {
+  deleted?: { id: string; seedKey: string | null }[];
+  linked?: string[];
+  refusedByFilter?: string[];
+}) => {
   const calls: string[] = [];
   const restored: { id: string; reason: string }[] = [];
   const colored: string[] = [];
@@ -27,7 +36,19 @@ const makeApi = ({ deleted = [], linked = [] }: { deleted?: { id: string; seedKe
     clearTeamOnLeads: async (teamIds: string[]) => {
       calls.push(`leads ${teamIds.join(',')}`);
     },
-    checkAssignmentFilters: async () => undefined,
+    destroyStageLinksOf: async (teamIds: string[]) => {
+      calls.push(`destroy links ${teamIds.join(',')}`);
+    },
+    destroyMembersOf: async (teamIds: string[]) => {
+      calls.push(`destroy members ${teamIds.join(',')}`);
+    },
+    destroyTeams: async (teamIds: string[]) => {
+      calls.push(`destroy ${teamIds.join(',')}`);
+    },
+    checkAssignmentFilters: async (changes: AssignmentFilterChange[]) => {
+      calls.push(`check ${changes.map((change) => `${change.operation} ${change.recordId}`).join(',')}`);
+      return { refused: refusedByFilter.map((recordId) => ({ recordId, reason: `refused ${recordId}` })), problems: [] };
+    },
     memberLocale: async () => 'en',
     translate: (_locale: string | null, message: string) => message,
   };
@@ -83,6 +104,23 @@ describe('team trigger', () => {
       ],
     });
 
+    expect(colored).toEqual(['plain']);
+  });
+
+  it('removes a new team whose filter cannot run in the order of a team delete, and gives it no colour', async () => {
+    const { api, calls, colored } = makeApi({ refusedByFilter: ['bad'] });
+
+    await expect(
+      makeRunTeamTrigger(api)({
+        operation: 'created',
+        events: [
+          { recordId: 'bad', properties: { after: { color: null, assignmentDomain: '{"rules":[1]}' } } },
+          { recordId: 'plain', properties: { after: { color: null } } },
+        ],
+      }),
+    ).rejects.toThrow('refused bad');
+
+    expect(calls).toEqual(['check created bad', 'fold bad', 'leads bad', 'destroy links bad', 'destroy members bad', 'destroy bad']);
     expect(colored).toEqual(['plain']);
   });
 });

@@ -2,7 +2,7 @@ import { definePageLayoutTab } from 'twenty-sdk/define';
 
 import { STOCK_PICKING_BATCH_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock-picking-batch/stock-picking-batch-universal-identifiers.constant';
 import { BATCH_FIELDS, PICKING_FIELDS } from 'src/stock/page-layouts/field-ids';
-import { nestedTableWidget, recordPageTab } from 'src/stock/page-layouts/widgets';
+import { nestedTableWidget, recordPageTab } from 'src/shared/page-layout/widgets';
 import {
   STOCK_RECORD_PAGE_TAB_UNIVERSAL_IDENTIFIERS,
   STOCK_TABLE_WIDGET_VIEW_UNIVERSAL_IDENTIFIERS as VIEWS,

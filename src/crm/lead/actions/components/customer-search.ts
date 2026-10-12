@@ -1,4 +1,4 @@
-import { escapeLike } from 'src/crm/lead/actions/utils/plan-similar-lead-queries.util';
+import { escapeLike } from 'src/shared/utils/escape-like.util';
 import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { type PickedRecord } from 'src/shared/front-components/types/picked-record.type';
 

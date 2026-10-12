@@ -1,6 +1,6 @@
 import { updateLeadAsUser } from 'src/crm/lead/actions/lead-action-route';
 import { type ConvertApi } from 'src/crm/lead/actions/types/convert-api.type';
-import { escapeLike } from 'src/crm/lead/actions/utils/plan-similar-lead-queries.util';
+import { escapeLike } from 'src/shared/utils/escape-like.util';
 import { CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/crm/crm-universal-identifiers.constant';
 import { loadLeadContext } from 'src/crm/lead/load-lead-context';
 import { type AddressValue } from 'src/crm/lead/types/address-value.type';

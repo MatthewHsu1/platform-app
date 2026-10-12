@@ -30,9 +30,58 @@ const sideOf = (event: MemberEvent, field: string) => event.properties.after?.[f
 // salesperson; the team capacity follows its active members.
 export const makeRunMemberTrigger =
   (api: MemberTriggerApi) =>
-  async ({ operation, events }: { operation: RecordOperation; events: MemberEvent[] }) => {
+  async ({ operation, events: savedEvents }: { operation: RecordOperation; events: MemberEvent[] }) => {
     const errors = errorCollector();
     const touchedTeamIds = new Set<string>();
+    // A new member whose filter cannot run is removed first, so it neither
+    // archives other memberships nor gets a name.
+    let removed = new Set<string>();
+
+    if (operation === 'created' || operation === 'updated') {
+      const changes: AssignmentFilterChange[] = savedEvents.flatMap((event) =>
+        FILTER_FIELDS.filter((field) =>
+          operation === 'created' ? textOf(event.properties.after?.[field]) !== null : fieldsOf(event).includes(field),
+        ).map((field) => ({
+          recordId: event.recordId,
+          operation,
+          field,
+          before: textOf(event.properties.before?.[field]),
+          after: textOf(event.properties.after?.[field]),
+          staffChange: !isApplicationWrite(event.properties.after),
+          workspaceMemberId: event.workspaceMemberId,
+        })),
+      );
+
+      let refused: { recordId: string; reason: string }[] = [];
+
+      if (changes.length > 0) {
+        await errors.run('filters', async () => {
+          const outcome = await api.checkAssignmentFilters(changes);
+
+          refused = outcome.refused;
+          if (outcome.problems.length > 0) {
+            throw new Error(outcome.problems.join(' '));
+          }
+        });
+      }
+      removed = new Set(refused.map((item) => item.recordId));
+
+      if (refused.length > 0) {
+        // The member row is gone, so its team holds the note, as for a duplicate membership.
+        await errors.run('refused members', async () => {
+          await api.destroyMembers([...removed]);
+          for (const item of refused) {
+            const teamId = textOf(savedEvents.find((event) => event.recordId === item.recordId)?.properties.after?.crmTeamId);
+
+            if (teamId !== null) {
+              await api.noteOnTeam(teamId, item.reason);
+            }
+          }
+          throw new Error(refused.map((item) => item.reason).join(' '));
+        });
+      }
+    }
+    const events = savedEvents.filter((event) => !removed.has(event.recordId));
 
     for (const event of events.filter((candidate) => operation !== 'updated' || fieldsOf(candidate).some((field) => CAPACITY_FIELDS.includes(field)))) {
       for (const teamId of [textOf(event.properties.before?.crmTeamId), textOf(event.properties.after?.crmTeamId)]) {
@@ -147,23 +196,6 @@ export const makeRunMemberTrigger =
           }
         }
       });
-    }
-
-    if (operation === 'updated') {
-      const changes: AssignmentFilterChange[] = events.flatMap((event) =>
-        FILTER_FIELDS.filter((field) => fieldsOf(event).includes(field)).map((field) => ({
-          recordId: event.recordId,
-          field,
-          before: textOf(event.properties.before?.[field]),
-          after: textOf(event.properties.after?.[field]),
-          staffChange: !isApplicationWrite(event.properties.after),
-          workspaceMemberId: event.workspaceMemberId,
-        })),
-      );
-
-      if (changes.length > 0) {
-        await errors.run('filters', () => api.checkAssignmentFilters(changes));
-      }
     }
 
     if (touchedTeamIds.size > 0) {

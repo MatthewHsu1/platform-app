@@ -8,7 +8,7 @@ import {
   PRODUCT_TEMPLATE_OBJECT_UNIVERSAL_IDENTIFIER,
   PRODUCT_TEMPLATE_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS as LAYOUT_IDS,
 } from 'src/product/product-universal-identifiers.constant';
-import { recordPageTab, tableWidget } from 'src/stock/page-layouts/widgets';
+import { recordPageTab, tableWidget } from 'src/shared/page-layout/widgets';
 import { STOCK_TABLE_WIDGET_VIEW_UNIVERSAL_IDENTIFIERS as VIEWS } from 'src/stock/stock-pages-universal-identifiers.constant';
 
 export default definePageLayoutTab(

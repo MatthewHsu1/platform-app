@@ -4,14 +4,12 @@ import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { emailDomainCriterion } from 'src/crm/lead/utils/email-domain-criterion.util';
 import { normaliseEmail } from 'src/crm/lead/utils/email.util';
 import { phoneState } from 'src/crm/lead/utils/phone.util';
+import { escapeLike } from 'src/shared/utils/escape-like.util';
 
 const RELEVANT_LIMIT = 21;
 
 // Read one more lead than a relevant criterion may find, to tell whether it found too many.
 export const SIMILAR_LEADS_PAGE = RELEVANT_LIMIT;
-
-// In a like pattern `%` and `_` are wildcards and `\` escapes them.
-export const escapeLike = (text: string) => text.replace(/[\\%_]/g, (character) => `\\${character}`);
 
 // A criterion that finds this many leads says nothing about this one; it is dropped.
 export const keepIfRelevant = <TRow>(rows: TRow[]) => (rows.length < RELEVANT_LIMIT ? rows : []);
