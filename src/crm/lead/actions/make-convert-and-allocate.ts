@@ -2,7 +2,7 @@ import { WON_STATUS } from 'src/crm/crm-options.constant';
 import { CONVERT_MESSAGES } from 'src/crm/lead/actions/convert-messages.constant';
 import { type ConvertApi } from 'src/crm/lead/actions/types/convert-api.type';
 import { type ConvertOptions } from 'src/crm/lead/actions/types/convert-options.type';
-import { planAllocation, planConversion } from 'src/crm/lead/actions/utils/plan-conversion.util';
+import { planAllocation, planConversion, planConvertSave } from 'src/crm/lead/actions/utils/plan-conversion.util';
 import { planCreateCustomer, planCustomerCompany } from 'src/crm/lead/actions/utils/plan-create-customer.util';
 import { planCustomerTarget } from 'src/crm/lead/actions/utils/plan-customer-target.util';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
@@ -187,15 +187,10 @@ export const makeConvertAndAllocate = (api: ConvertApi) => async (leads: LeadRow
             ...(customer.companyId !== lead.companyId && { companyId: customer.companyId }),
           }
         : planConversion({ lead, customer, stages, now });
-    const allocated = allocation.get(lead.id);
+    const save = planConvertSave({ conversion: data, allocated: allocation.get(lead.id), stages });
 
-    // Conversion first, then the salesperson in a write of its own, so the
-    // team and stage rules see the new salesperson and team as a later change.
-    if (Object.keys(data).length > 0) {
-      await api.updateLead(lead.id, data);
-    }
-    if (allocated !== undefined) {
-      await api.updateLead(lead.id, allocated);
+    if (Object.keys(save).length > 0) {
+      await api.updateLead(lead.id, save);
     }
   }
 };

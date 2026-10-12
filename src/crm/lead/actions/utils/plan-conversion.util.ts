@@ -71,3 +71,29 @@ export const planAllocation = ({
 
   return allocated;
 };
+
+// The conversion and the assignment go in one save. In two saves, the lead
+// rules of the first one can run late and give the lead the old salesperson's
+// team after the chosen team is written. The stage the conversion gives a
+// lead without one stays only when it is open to the chosen team; otherwise
+// the stage rule gives the first open stage of the team the lead ends in.
+export const planConvertSave = ({
+  conversion,
+  allocated,
+  stages,
+}: {
+  conversion: Record<string, unknown>;
+  allocated: Allocation | undefined;
+  stages: StageRow[];
+}): Record<string, unknown> => {
+  if (allocated === undefined) {
+    return conversion;
+  }
+
+  const { stageId, ...withoutStage } = conversion;
+  const stage = stages.find((row) => row.id === stageId);
+  const openToTeam =
+    stage === undefined || stage.teamIds.length === 0 || (allocated.teamId !== undefined && stage.teamIds.includes(allocated.teamId));
+
+  return { ...(openToTeam ? conversion : withoutStage), ...allocated };
+};

@@ -32,7 +32,7 @@ const northside = leadRow({
 });
 
 describe('convertAndAllocate', () => {
-  it('creates the company and the contact, notes the lead text on both, converts, then assigns', async () => {
+  it('creates the company and the contact, notes the lead text on both, then converts and assigns in one save', async () => {
     const state = emptyConvertState([northside]);
 
     await makeConvertAndAllocate(makeFakeConvertApi(state))([northside], options({ salespersonIds: ['user-1'], teamId: 'team-1', force: true }));
@@ -49,9 +49,16 @@ describe('convertAndAllocate', () => {
     expect(state.leadWrites).toEqual([
       {
         leadId: 'lead-1',
-        data: { leadType: 'OPPORTUNITY', dateConversion: NOW, personId: person.id, companyId: company.id, stageId: 'team1-1' },
+        data: {
+          leadType: 'OPPORTUNITY',
+          dateConversion: NOW,
+          personId: person.id,
+          companyId: company.id,
+          stageId: 'team1-1',
+          salespersonId: 'user-1',
+          teamId: 'team-1',
+        },
       },
-      { leadId: 'lead-1', data: { salespersonId: 'user-1', teamId: 'team-1' } },
     ]);
   });
 
@@ -166,7 +173,6 @@ describe('convertAndAllocate', () => {
         dateConversion: NOW,
         personId: person.id,
         companyId: company.id,
-        stageId: 'team1-1',
         salespersonId: 'user-1',
       });
     },

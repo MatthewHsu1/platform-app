@@ -10,6 +10,8 @@ import { type PartnerCompanyRow } from 'src/crm/lead/types/partner-company-row.t
 import { type PartnerPersonRow } from 'src/crm/lead/types/partner-person-row.type';
 import { type StageRow } from 'src/crm/lead/types/stage-row.type';
 import { type StatusMoves } from 'src/crm/lead/types/status-moves.type';
+import { type MembershipRow } from 'src/sales-team/team/types/membership-row.type';
+import { type TeamRow } from 'src/sales-team/team/types/team-row.type';
 
 type Write = { id: string; before: LeadRow; after: LeadRow; fields: string[] };
 
@@ -40,12 +42,16 @@ export const makeFakeLeadStore = ({
   now,
   people = [],
   companies = [],
+  teams = [],
+  memberships = [],
 }: {
   leads: LeadRow[];
   stages: StageRow[];
   now: string;
   people?: PartnerPersonRow[];
   companies?: PartnerCompanyRow[];
+  teams?: TeamRow[];
+  memberships?: MembershipRow[];
 }) => {
   const rows = new Map(leads.map((row) => [row.id, row]));
   const writes: Write[] = [];
@@ -59,8 +65,8 @@ export const makeFakeLeadStore = ({
   const context: LeadContext = {
     stages,
     recurringPlanMonths: new Map(),
-    teams: [],
-    memberships: [],
+    teams,
+    memberships,
     people: contacts,
     companies: new Map(companies.map((company) => [company.id, company])),
   };
