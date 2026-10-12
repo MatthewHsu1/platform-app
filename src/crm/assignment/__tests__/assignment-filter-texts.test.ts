@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-import { FILTER_ERROR_TEXTS } from 'src/crm/assignment/front/team-assignment-filter.front-component';
+import { ASSIGNMENT_MESSAGES } from 'src/crm/assignment/assignment-messages.constant';
+import { ASSIGNMENT_RUN_TEXTS, FILTER_ERROR_TEXTS } from 'src/crm/assignment/front/team-assignment-filter.front-component';
 import { FILTER_ERROR_MESSAGES } from 'src/shared/filter-editor/filter-error-messages.constant';
 
 // The catalog filter errors are translated with: a text missing here reaches the user untranslated.
@@ -12,6 +13,13 @@ describe('assignment filter texts', () => {
     const messages = Object.values(FILTER_ERROR_MESSAGES);
 
     expect(FILTER_ERROR_TEXTS.map((descriptor) => descriptor.message)).toEqual(messages);
+    expect(messages.filter((text) => !(text in CATALOG))).toEqual([]);
+  });
+
+  it('lists every text of the assignment run for the extractor, and the catalog holds each', () => {
+    const messages = Object.values(ASSIGNMENT_MESSAGES);
+
+    expect(ASSIGNMENT_RUN_TEXTS.map((descriptor) => descriptor.message)).toEqual(messages);
     expect(messages.filter((text) => !(text in CATALOG))).toEqual([]);
   });
 });

@@ -80,6 +80,20 @@ export class GraphqlForbiddenError extends Error {
   }
 }
 
+// Twenty refused the call's input: a filter or value it does not accept, such as
+// a field it does not know or an option a SELECT no longer has.
+export class GraphqlInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GraphqlInputError';
+  }
+}
+
+const BAD_USER_INPUT_CODE = 'BAD_USER_INPUT';
+
+const isInputRefused = (response: GraphqlResponse<unknown>) =>
+  (response.errors ?? []).some((error) => error.extensions?.code === BAD_USER_INPUT_CODE);
+
 // Twenty answers other errors with the same FORBIDDEN code (a unique key clash, too many rows);
 // the sub-code names the cause.
 const PERMISSION_DENIED_SUB_CODE = 'PERMISSION_DENIED';
@@ -95,7 +109,10 @@ export const requireData = <TData>(
   if (response.data === undefined || response.data === null || response.errors !== undefined) {
     const message = `${what}: ${describeGraphqlErrors(response.errors)}`;
 
-    throw isPersonRefused(response) ? new GraphqlForbiddenError(message) : new Error(message);
+    if (isPersonRefused(response)) {
+      throw new GraphqlForbiddenError(message);
+    }
+    throw isInputRefused(response) ? new GraphqlInputError(message) : new Error(message);
   }
 
   return response.data;

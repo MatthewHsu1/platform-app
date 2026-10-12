@@ -4,11 +4,12 @@ import { msg, Trans, useRecordId, useTranslate } from 'twenty-sdk/front-componen
 import { themeCssVariables } from 'twenty-ui/theme';
 
 import { TEAM_ASSIGNMENT_FILTER_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER } from 'src/crm/assignment/assignment-universal-identifiers.constant';
-import { checkFilter, filterText, parseStoredFilter } from 'src/crm/assignment/front/check-filter';
+import { checkFilter } from 'src/crm/assignment/front/check-filter';
 import { searchRecords } from 'src/crm/assignment/front/search-records';
 import { useLeadFilterFields } from 'src/crm/assignment/front/use-lead-filter-fields';
 import { type LeadFilterLabels } from 'src/crm/assignment/types/lead-filter-labels.type';
 import { FilterEditor } from 'src/shared/filter-editor/filter-editor';
+import { filterText, parseStoredFilter } from 'src/shared/filter-editor/stored-filter';
 import { translateFilterError } from 'src/shared/filter-editor/translate-filter-error';
 import { type FilterEditorTexts } from 'src/shared/filter-editor/types/filter-editor-texts.type';
 import { queryAsUser } from 'src/shared/front-components/query-as-user';
@@ -78,6 +79,28 @@ export const FILTER_ERROR_TEXTS = [
   msg('"{field}" needs two numbers.'),
   msg('"{field}" needs a date.'),
   msg('"{field}" needs two dates.'),
+];
+
+// What a lead assignment run reports and notes on its teams
+// (src/crm/assignment/assignment-messages.constant.ts), listed for the
+// extractor the same way.
+export const ASSIGNMENT_RUN_TEXTS = [
+  msg('Lead assignment'),
+  msg('Lead assignment requested by {name}.'),
+  msg('{count} duplicate leads were merged.'),
+  msg('No lead was allocated to {team}: it has no capacity. Give its salespeople some capacity.'),
+  msg('No lead was allocated to {team} or its salespeople: no unassigned lead matches its filter.'),
+  msg('No lead was allocated to any team or salesperson. Check the sales teams, their salespeople and the unassigned leads.'),
+  msg('No new lead was allocated to {team}: no unassigned lead matches its filter.'),
+  msg('No new lead was allocated to the teams: no lead matches their filters.'),
+  msg('{count} leads were allocated to {team}.'),
+  msg('{count} leads were allocated among {teams} teams.'),
+  msg('No lead was assigned to a salesperson: no unassigned lead matches their filters.'),
+  msg('{count} leads were assigned among {members} salespeople.'),
+  msg('Lead assignment stopped: the filter of team {team} cannot be used. {reason}'),
+  msg('Lead assignment stopped: the filters of {member} in team {team} cannot be used. {reason}'),
+  msg('The assignment plug failed: {reason}'),
+  msg('A lead assignment is already running. Try again in a moment.'),
 ];
 
 // Checks the filter as the clicking user, with a filter error in their language.

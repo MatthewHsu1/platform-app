@@ -4,11 +4,11 @@ import { Trans, useRecordId, useTranslate } from 'twenty-sdk/front-component';
 import { themeCssVariables } from 'twenty-ui/theme';
 
 import { MEMBER_ASSIGNMENT_FILTERS_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER } from 'src/crm/assignment/assignment-universal-identifiers.constant';
-import { filterText, parseStoredFilter } from 'src/crm/assignment/front/check-filter';
 import { searchRecords } from 'src/crm/assignment/front/search-records';
 import { LEAD_FILTER_LABELS, useAssignmentFilterTexts, useCheckFilter } from 'src/crm/assignment/front/team-assignment-filter.front-component';
 import { useLeadFilterFields } from 'src/crm/assignment/front/use-lead-filter-fields';
 import { FilterEditor } from 'src/shared/filter-editor/filter-editor';
+import { filterText, parseStoredFilter } from 'src/shared/filter-editor/stored-filter';
 import { queryAsUser } from 'src/shared/front-components/query-as-user';
 
 type MemberFilters = { assignmentDomain: string | null; assignmentDomainPreferred: string | null };
