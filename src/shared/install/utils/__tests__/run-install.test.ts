@@ -92,6 +92,7 @@ const makeFakeApi = ({
     createdSeedRows: [] as { object: string; values: Record<string, unknown> }[],
     createdValidationRules: [] as CreatedValidationRule[],
     createdViewSorts: [] as CreatedViewSort[],
+    listCalls: [] as { name: string; input: unknown }[],
   };
 
   const objects = (): InstallObject[] => [
@@ -156,6 +157,20 @@ const makeFakeApi = ({
     ],
     createViewSort: async (input) => {
       state.createdViewSorts.push(input);
+    },
+    createListView: async (input) => {
+      state.listCalls.push({ name: 'createListView', input });
+      state.viewNames.push(input.name);
+
+      return 'view-1';
+    },
+    createViewFilterGroup: async (input) => {
+      state.listCalls.push({ name: 'createViewFilterGroup', input });
+
+      return `group-${state.listCalls.filter((call) => call.name === 'createViewFilterGroup').length}`;
+    },
+    createViewFilter: async (input) => {
+      state.listCalls.push({ name: 'createViewFilter', input });
     },
   };
 
@@ -286,6 +301,72 @@ describe('runInstall', () => {
         previousVersion: undefined,
       }),
     ).rejects.toThrow('missing');
+  });
+});
+
+describe('list views', () => {
+
+  it('makes a list view whose filters are one group of alternatives, one of them a group of conditions', async () => {
+    const { api, state } = makeFakeApi({
+      leadFields: [
+        { id: 'field-state', name: 'state' },
+        { id: 'field-deadline', name: 'deadline' },
+        { id: 'field-name', name: 'name' },
+      ],
+    });
+
+    await runInstall({
+      api,
+      specs: [
+        {
+          ...EMPTY_SPEC,
+          lists: [
+            {
+              objectUniversalIdentifier: LEAD,
+              name: 'Expired',
+              icon: 'IconAlarm',
+              columns: ['name', 'state'],
+              filters: [],
+              anyOf: [
+                { fieldName: 'state', operand: 'IS', value: ['EXPIRED'] },
+                {
+                  allOf: [
+                    { fieldName: 'state', operand: 'IS', value: ['IN_PROGRESS'] },
+                    { fieldName: 'deadline', operand: 'IS_IN_PAST', value: [] },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      previousVersion: undefined,
+    });
+
+    expect(state.listCalls).toEqual([
+      { name: 'createListView', input: { objectMetadataId: 'o-lead', name: 'Expired', icon: 'IconAlarm', fieldMetadataIds: ['field-name', 'field-state'] } },
+      { name: 'createViewFilterGroup', input: { viewId: 'view-1', logicalOperator: 'OR' } },
+      { name: 'createViewFilter', input: { viewId: 'view-1', fieldMetadataId: 'field-state', operand: 'IS', value: '["EXPIRED"]', viewFilterGroupId: 'group-1' } },
+      { name: 'createViewFilterGroup', input: { viewId: 'view-1', logicalOperator: 'AND', parentViewFilterGroupId: 'group-1' } },
+      { name: 'createViewFilter', input: { viewId: 'view-1', fieldMetadataId: 'field-state', operand: 'IS', value: '["IN_PROGRESS"]', viewFilterGroupId: 'group-2' } },
+      { name: 'createViewFilter', input: { viewId: 'view-1', fieldMetadataId: 'field-deadline', operand: 'IS_IN_PAST', value: '', viewFilterGroupId: 'group-2' } },
+    ]);
+  });
+
+  it('leaves a list alone once its view exists, and reports a list the server refuses', async () => {
+    const { api, state } = makeFakeApi({ viewNames: ['Mine'], leadFields: [{ id: 'field-name', name: 'name' }] });
+    const spec = (name: string) => ({
+      ...EMPTY_SPEC,
+      lists: [{ objectUniversalIdentifier: LEAD, name, icon: 'IconUser', columns: ['name'], filters: [] }],
+    });
+
+    await runInstall({ api, specs: [spec('Mine')], previousVersion: undefined });
+    expect(state.listCalls).toEqual([]);
+
+    const refusing = { ...api, createListView: async () => Promise.reject(new Error('no permission')) };
+    const result = await runInstall({ api: refusing, specs: [spec('Other')], previousVersion: undefined });
+
+    expect(result.skippedBoards).toEqual([{ name: 'Other', reason: 'no permission' }]);
   });
 });
 

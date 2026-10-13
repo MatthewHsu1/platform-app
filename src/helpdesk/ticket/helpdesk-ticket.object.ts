@@ -30,7 +30,7 @@ import {
   textField,
 } from 'src/shared/fields';
 
-// The channel list is a staff list the install hook makes. Number, company, unattended and the
+// `ticketType` (src/helpdesk-type/) stands in for the type field, whose name Twenty reserves. The channel list is a staff list the install hook makes. Number, company, unattended and the
 // three dates are written by the case trigger: the number from the numbering series, the company
 // from the contact, unattended from the stage.
 export default defineObject({

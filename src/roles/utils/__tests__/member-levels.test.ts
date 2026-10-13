@@ -16,7 +16,7 @@ describe('levelsToBlockKeys', () => {
   });
 
   it('gives Employee alone for None everywhere, and reads an unknown module or level as None', () => {
-    expect(levelsToBlockKeys({ inventory: 'none', sales: 'boss', helpdesk: 'all' }, ROLE_MODULES)).toEqual([BLOCK_KEYS.employee]);
+    expect(levelsToBlockKeys({ inventory: 'none', sales: 'boss', ticketing: 'all' }, ROLE_MODULES)).toEqual([BLOCK_KEYS.employee]);
   });
 });
 
@@ -26,6 +26,7 @@ describe('blockKeysToLevels', () => {
       inventory: 'user',
       products: 'none',
       sales: 'all',
+      workCases: 'none',
     });
   });
 });

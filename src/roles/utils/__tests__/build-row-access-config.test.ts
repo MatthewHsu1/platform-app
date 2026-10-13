@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS, CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/crm/crm-universal-identifiers.constant';
+import { HELPDESK_TICKET_FIELD_UNIVERSAL_IDENTIFIERS, HELPDESK_TICKET_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/helpdesk/helpdesk-universal-identifiers.constant';
 import { ROLE_MODULES } from 'src/roles/role-modules';
 import { buildRowAccessConfig } from 'src/roles/utils/build-row-access-config.util';
 
@@ -19,7 +20,7 @@ describe('buildRowAccessConfig', () => {
       }),
     ).toEqual({
       version: 2,
-      objects: [{ objectUniversalIdentifier: LEAD, ownerFieldUniversalIdentifier: CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS.salesperson }],
+      objects: [{ objectUniversalIdentifier: LEAD, ownerFieldUniversalIdentifier: CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS.salesperson }, { objectUniversalIdentifier: HELPDESK_TICKET_OBJECT_UNIVERSAL_IDENTIFIER, ownerFieldUniversalIdentifier: HELPDESK_TICKET_FIELD_UNIVERSAL_IDENTIFIERS.assignedUser }].sort((left, right) => left.objectUniversalIdentifier.localeCompare(right.objectUniversalIdentifier)),
       roles: [
         { roleId: 'a-role-own', rules: [{ objectUniversalIdentifier: LEAD, scope: 'mineOrUnowned' }] },
         { roleId: 'b-role-all', rules: [{ objectUniversalIdentifier: LEAD, scope: 'all' }] },
@@ -29,9 +30,9 @@ describe('buildRowAccessConfig', () => {
   });
 
   it('names the ruled objects even with no mixed role, so a person on Twenty’s default role sees only their own leads', () => {
-    expect(buildRowAccessConfig({ mixedRoles: [], modules: ROLE_MODULES }).objects).toEqual([
-      { objectUniversalIdentifier: LEAD, ownerFieldUniversalIdentifier: CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS.salesperson },
-    ]);
+    expect(buildRowAccessConfig({ mixedRoles: [], modules: ROLE_MODULES }).objects).toEqual(
+      [{ objectUniversalIdentifier: LEAD, ownerFieldUniversalIdentifier: CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS.salesperson }, { objectUniversalIdentifier: HELPDESK_TICKET_OBJECT_UNIVERSAL_IDENTIFIER, ownerFieldUniversalIdentifier: HELPDESK_TICKET_FIELD_UNIVERSAL_IDENTIFIERS.assignedUser }].sort((left, right) => left.objectUniversalIdentifier.localeCompare(right.objectUniversalIdentifier)),
+    );
   });
 
   it('leaves out a rule on an object no module declares an owner field for', () => {

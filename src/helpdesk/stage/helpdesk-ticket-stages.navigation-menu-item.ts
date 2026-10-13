@@ -8,7 +8,7 @@ import {
 export default defineNavigationMenuItem({
   universalIdentifier: HELPDESK_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.stages,
   name: 'Stages',
-  position: 2,
+  position: 3,
   type: NavigationMenuItemType.OBJECT,
   targetObjectUniversalIdentifier: HELPDESK_TICKET_STAGE_OBJECT_UNIVERSAL_IDENTIFIER,
   folderUniversalIdentifier: HELPDESK_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.folder,

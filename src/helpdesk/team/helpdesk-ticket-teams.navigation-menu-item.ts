@@ -8,7 +8,7 @@ import {
 export default defineNavigationMenuItem({
   universalIdentifier: HELPDESK_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.teams,
   name: 'Teams',
-  position: 1,
+  position: 2,
   type: NavigationMenuItemType.OBJECT,
   targetObjectUniversalIdentifier: HELPDESK_TICKET_TEAM_OBJECT_UNIVERSAL_IDENTIFIER,
   folderUniversalIdentifier: HELPDESK_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.folder,

@@ -1,3 +1,4 @@
+import { HELPDESK_TICKET_FIELD_UNIVERSAL_IDENTIFIERS, HELPDESK_TICKET_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/helpdesk/helpdesk-universal-identifiers.constant';
 import { describe, expect, it } from 'vitest';
 
 import { CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS, CRM_LEAD_OBJECT_UNIVERSAL_IDENTIFIER as LEAD, CRM_STAGE_OBJECT_UNIVERSAL_IDENTIFIER as STAGE } from 'src/crm/crm-universal-identifiers.constant';
@@ -50,7 +51,7 @@ describe('runRoleSync', () => {
     ]);
     expect(JSON.parse(fake.state.rowAccess ?? 'null')).toEqual({
       version: 2,
-      objects: [{ objectUniversalIdentifier: LEAD, ownerFieldUniversalIdentifier: CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS.salesperson }],
+      objects: [{ objectUniversalIdentifier: LEAD, ownerFieldUniversalIdentifier: CRM_LEAD_FIELD_UNIVERSAL_IDENTIFIERS.salesperson }, { objectUniversalIdentifier: HELPDESK_TICKET_OBJECT_UNIVERSAL_IDENTIFIER, ownerFieldUniversalIdentifier: HELPDESK_TICKET_FIELD_UNIVERSAL_IDENTIFIERS.assignedUser }].sort((left, right) => left.objectUniversalIdentifier.localeCompare(right.objectUniversalIdentifier)),
       roles: [{ roleId: OWN_ID, rules: [{ objectUniversalIdentifier: LEAD, scope: 'mineOrUnowned' }] }],
     });
     expect(fake.state.mixTable).toEqual({ version: 1, roles: { [OWN_ID]: OWN_KEYS } });

@@ -8,7 +8,7 @@ import {
 export default defineNavigationMenuItem({
   universalIdentifier: HELPDESK_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.categories,
   name: 'Categories',
-  position: 3,
+  position: 4,
   type: NavigationMenuItemType.OBJECT,
   targetObjectUniversalIdentifier: HELPDESK_TICKET_CATEGORY_OBJECT_UNIVERSAL_IDENTIFIER,
   folderUniversalIdentifier: HELPDESK_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.folder,

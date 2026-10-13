@@ -8,6 +8,7 @@ import { HELPDESK_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS } from 'src/helpdesk/help
 import { readHelpdeskSettings } from 'src/helpdesk/read-helpdesk-settings';
 import { recomputeTeamCounts } from 'src/helpdesk/recompute-team-counts';
 import 'src/helpdesk/stage/stage-delete-entries';
+import { syncCaseBoardGroups } from 'src/helpdesk/stage/sync-case-board-groups';
 import { planStageDelete } from 'src/helpdesk/stage/utils/plan-stage-delete.util';
 import 'src/helpdesk-sla/sla-delete-entries';
 import { readEvents } from 'src/shared/triggers/batch-events';
@@ -17,7 +18,7 @@ import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
 import { groupBy } from 'src/shared/utils/group-by.util';
 import { eventAfter, eventChangedFields, localizedReason } from 'src/stock/stock-event-helpers';
 
-type StageRecord = { id: string; unattended: boolean | null; closed: boolean | null };
+type StageRecord = { id: string; unattended: boolean | null; closed: boolean | null; sequence: number | null; fold: boolean | null };
 
 const stages = records('helpdeskTicketStage', 'helpdeskTicketStages');
 const cases = records('helpdeskTicket', 'helpdeskTickets');
@@ -26,7 +27,14 @@ const handler = async (payload: DatabaseEventBatchPayload<ObjectRecordEvent<Stag
   const { operation, events } = readEvents<StageRecord>(payload);
   const errors = errorCollector();
 
+  // The board keeps one column per stage, in stage order, and hides the folded ones.
+  if (operation === 'created' || operation === 'restored') {
+    await errors.run('board columns', syncCaseBoardGroups);
+  }
   if (operation === 'updated') {
+    if (events.some((event) => eventChangedFields(event, ['sequence', 'fold']).length > 0)) {
+      await errors.run('board columns', syncCaseBoardGroups);
+    }
     const unattendedChanged = events.filter((event) => eventChangedFields(event, ['unattended']).length > 0);
     const closedChanged = events.filter((event) => eventChangedFields(event, ['closed']).length > 0);
 
@@ -83,6 +91,7 @@ const handler = async (payload: DatabaseEventBatchPayload<ObjectRecordEvent<Stag
       );
     }
     if (plan.allowed.length > 0) {
+      await errors.run('board columns', syncCaseBoardGroups);
       await errors.run('delete rules', () => applyDeleteRules(stages, STAGE_DELETE_RULES, plan.allowed));
       // The stage a duplicate moves to is part of the settings; a deleted stage empties it.
       await errors.run('duplicate stage setting', async () => {

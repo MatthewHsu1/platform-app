@@ -6,7 +6,7 @@ Staff access is building blocks, one level per module, set on Platform's Roles p
 
 | Module | Holds |
 | --- | --- |
-| `src/roles/` | Staff access: building blocks (Employee, Inventory User and Administrator, Products: Create, Sales: Own Documents, All Documents and Administrator), the Roles page, and the sync that makes one Twenty role per mix of blocks and writes the row rules. Also the role the logic functions run with |
+| `src/roles/` | Staff access: building blocks (Employee, Inventory User and Administrator, Products: Create, Sales: Own Documents, All Documents and Administrator; Work cases: Own Documents, All Documents and Administrator), the Roles page, and the sync that makes one Twenty role per mix of blocks and writes the row rules. Also the role the logic functions run with |
 
 ## Server settings
 
@@ -29,6 +29,7 @@ closed.
 | Inventory | None, User, Administrator |
 | Products | None, Create |
 | Sales | None, Own Documents, All Documents, Administrator |
+| Work cases | None, Own Documents, All Documents, Administrator |
 
 ## Detail files
 

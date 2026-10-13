@@ -154,6 +154,51 @@ export const twentyInstallApi: InstallApi = {
     }
   },
 
+  createListView: async ({ objectMetadataId, name, icon, fieldMetadataIds }) => {
+    const data = requireData(
+      await twentyMetadata<{ createView: { id: string } }>(
+        'application',
+        `mutation CreateList($input: CreateViewInput!) { createView(input: $input) { id } }`,
+        { input: { name, icon, objectMetadataId, type: 'TABLE' } },
+      ),
+      `Create view ${name}`,
+    );
+
+    for (const [position, fieldMetadataId] of fieldMetadataIds.entries()) {
+      requireData(
+        await twentyMetadata(
+          'application',
+          `mutation ShowColumn($input: CreateViewFieldInput!) { createViewField(input: $input) { id } }`,
+          { input: { viewId: data.createView.id, fieldMetadataId, position, isVisible: true } },
+        ),
+        `Show a column on ${name}`,
+      );
+    }
+
+    return data.createView.id;
+  },
+
+  createViewFilterGroup: async (input) =>
+    requireData(
+      await twentyMetadata<{ createViewFilterGroup: { id: string } }>(
+        'application',
+        `mutation FilterGroup($input: CreateViewFilterGroupInput!) { createViewFilterGroup(input: $input) { id } }`,
+        { input },
+      ),
+      'Group view filters',
+    ).createViewFilterGroup.id,
+
+  createViewFilter: async (input) => {
+    requireData(
+      await twentyMetadata(
+        'application',
+        `mutation FilterView($input: CreateViewFilterInput!) { createViewFilter(input: $input) { id } }`,
+        { input },
+      ),
+      'Filter view',
+    );
+  },
+
   listViews: async (objectMetadataId) =>
     requireData(
       await twentyMetadata<{ getViews: { id: string; name: string; key: string | null }[] }>(

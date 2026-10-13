@@ -7,7 +7,10 @@ import { finishCrmInstall } from 'src/crm/finish-crm-install';
 import { CRM_SCREENS_INSTALL } from 'src/crm/crm-screens-install';
 import { CRM_STAGE_INSTALL } from 'src/crm/stage/crm-stage-install';
 import { syncStageBoardGroups } from 'src/crm/stage/stage-board-groups';
+import { ensureCasesBoardNavigationItem } from 'src/helpdesk/ensure-cases-board-navigation-item';
 import { HELPDESK_INSTALL } from 'src/helpdesk/helpdesk-install';
+import { HELPDESK_SCREENS_INSTALL } from 'src/helpdesk/helpdesk-screens-install';
+import { syncCaseBoardGroups } from 'src/helpdesk/stage/sync-case-board-groups';
 import { HELPDESK_SLA_INSTALL } from 'src/helpdesk-sla/helpdesk-sla-install';
 import { RESOURCE_INSTALL } from 'src/resource/resource-install';
 import { PRODUCT_INSTALL } from 'src/product/product-install';
@@ -34,7 +37,7 @@ const handler = async ({ previousVersion }: InstallPayload) => {
   const startedAt = Date.now();
   const { skippedBoards, validationRulesSkipped, skippedViewSorts } = await runInstall({
     api: twentyInstallApi,
-    specs: [UTM_INSTALL, UTM_STAGE_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, SALES_TEAM_INSTALL, CRM_SCREENS_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL, RESOURCE_INSTALL, HELPDESK_INSTALL, HELPDESK_SLA_INSTALL],
+    specs: [UTM_INSTALL, UTM_STAGE_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, SALES_TEAM_INSTALL, CRM_SCREENS_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL, RESOURCE_INSTALL, HELPDESK_INSTALL, HELPDESK_SLA_INSTALL, HELPDESK_SCREENS_INSTALL],
     previousVersion,
   });
   await finishStockInstall(previousVersion);
@@ -55,6 +58,8 @@ const handler = async ({ previousVersion }: InstallPayload) => {
     ['filling the type of operation on transfers', fillPickingTypeCodes],
     ['filling the full names of operation types', () => recomputePickingTypeNames({})],
     ['drawing the stage columns of the lead boards', syncStageBoardGroups],
+    ['drawing the stage columns of the work case boards', syncCaseBoardGroups],
+    ['adding the cases board to the Work cases folder', ensureCasesBoardNavigationItem],
     [
       'finishing the CRM',
       async () => {

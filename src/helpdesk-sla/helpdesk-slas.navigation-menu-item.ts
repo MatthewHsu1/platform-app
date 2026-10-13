@@ -9,7 +9,7 @@ import {
 export default defineNavigationMenuItem({
   universalIdentifier: HELPDESK_SLA_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.slas,
   name: 'SLA policies',
-  position: 6,
+  position: 7,
   type: NavigationMenuItemType.OBJECT,
   targetObjectUniversalIdentifier: HELPDESK_SLA_OBJECT_UNIVERSAL_IDENTIFIER,
   folderUniversalIdentifier: HELPDESK_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.folder,

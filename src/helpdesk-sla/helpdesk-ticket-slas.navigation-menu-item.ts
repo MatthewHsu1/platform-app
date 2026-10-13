@@ -9,7 +9,7 @@ import {
 export default defineNavigationMenuItem({
   universalIdentifier: HELPDESK_SLA_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.ticketSlas,
   name: 'Case SLAs',
-  position: 7,
+  position: 8,
   type: NavigationMenuItemType.OBJECT,
   targetObjectUniversalIdentifier: HELPDESK_TICKET_SLA_OBJECT_UNIVERSAL_IDENTIFIER,
   folderUniversalIdentifier: HELPDESK_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.folder,
