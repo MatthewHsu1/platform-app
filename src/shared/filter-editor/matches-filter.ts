@@ -77,6 +77,9 @@ const matchesRule = (rule: FilterRule, record: Record<string, unknown>) => {
       return !isEmpty(actual) && listOf(rule.value).some((item) => compare(actual, item) === 0);
     case 'notIn':
       return isEmpty(actual) || !listOf(rule.value).some((item) => compare(actual, item) === 0);
+    // A list field (tag ids) holds at least one of the listed values.
+    case 'containsAny':
+      return Array.isArray(actual) && listOf(rule.value).some((item) => actual.some((entry) => String(entry) === item));
     default:
       throw new Error(`Unknown filter operator ${rule.operator}`);
   }

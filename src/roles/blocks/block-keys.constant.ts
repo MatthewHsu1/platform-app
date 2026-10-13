@@ -7,4 +7,7 @@ export const BLOCK_KEYS = {
   salesOwn: 'sales.own',
   salesAll: 'sales.all',
   salesAdministrator: 'sales.administrator',
+  workCasesOwn: 'workCases.own',
+  workCasesAll: 'workCases.all',
+  workCasesAdministrator: 'workCases.administrator',
 } as const;

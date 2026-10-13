@@ -92,6 +92,7 @@ const makeFakeApi = ({
     createdSeedRows: [] as { object: string; values: Record<string, unknown> }[],
     createdValidationRules: [] as CreatedValidationRule[],
     createdViewSorts: [] as CreatedViewSort[],
+    listCalls: [] as { name: string; input: unknown }[],
   };
 
   const objects = (): InstallObject[] => [
@@ -156,6 +157,26 @@ const makeFakeApi = ({
     ],
     createViewSort: async (input) => {
       state.createdViewSorts.push(input);
+    },
+    createListView: async (input) => {
+      state.listCalls.push({ name: 'createListView', input });
+      state.viewNames.push(input.name);
+
+      return 'view-1';
+    },
+    showViewField: async (input) => {
+      state.listCalls.push({ name: 'showViewField', input });
+    },
+    deleteView: async (viewId) => {
+      state.listCalls.push({ name: 'deleteView', input: viewId });
+    },
+    createViewFilterGroup: async (input) => {
+      state.listCalls.push({ name: 'createViewFilterGroup', input });
+
+      return `group-${state.listCalls.filter((call) => call.name === 'createViewFilterGroup').length}`;
+    },
+    createViewFilter: async (input) => {
+      state.listCalls.push({ name: 'createViewFilter', input });
     },
   };
 
@@ -289,6 +310,90 @@ describe('runInstall', () => {
   });
 });
 
+describe('list views', () => {
+
+  it('makes a list view whose filters are one group of alternatives, one of them a group of conditions', async () => {
+    const { api, state } = makeFakeApi({
+      leadFields: [
+        { id: 'field-state', name: 'state' },
+        { id: 'field-deadline', name: 'deadline' },
+        { id: 'field-name', name: 'name' },
+      ],
+    });
+
+    await runInstall({
+      api,
+      specs: [
+        {
+          ...EMPTY_SPEC,
+          lists: [
+            {
+              objectUniversalIdentifier: LEAD,
+              name: 'Expired',
+              icon: 'IconAlarm',
+              columns: ['name', 'state'],
+              filters: [],
+              anyOf: [
+                { fieldName: 'state', operand: 'IS', value: ['EXPIRED'] },
+                {
+                  allOf: [
+                    { fieldName: 'state', operand: 'IS', value: ['IN_PROGRESS'] },
+                    { fieldName: 'deadline', operand: 'IS_IN_PAST', value: [] },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      previousVersion: undefined,
+    });
+
+    expect(state.listCalls).toEqual([
+      { name: 'createListView', input: { objectMetadataId: 'o-lead', name: 'Expired', icon: 'IconAlarm' } },
+      { name: 'showViewField', input: { viewId: 'view-1', fieldMetadataId: 'field-name', position: 0 } },
+      { name: 'showViewField', input: { viewId: 'view-1', fieldMetadataId: 'field-state', position: 1 } },
+      { name: 'createViewFilterGroup', input: { viewId: 'view-1', logicalOperator: 'OR' } },
+      { name: 'createViewFilter', input: { viewId: 'view-1', fieldMetadataId: 'field-state', operand: 'IS', value: '["EXPIRED"]', viewFilterGroupId: 'group-1' } },
+      { name: 'createViewFilterGroup', input: { viewId: 'view-1', logicalOperator: 'AND', parentViewFilterGroupId: 'group-1' } },
+      { name: 'createViewFilter', input: { viewId: 'view-1', fieldMetadataId: 'field-state', operand: 'IS', value: '["IN_PROGRESS"]', viewFilterGroupId: 'group-2' } },
+      { name: 'createViewFilter', input: { viewId: 'view-1', fieldMetadataId: 'field-deadline', operand: 'IS_IN_PAST', value: '', viewFilterGroupId: 'group-2' } },
+    ]);
+  });
+
+  it('leaves a list alone once its view exists, and reports a list the server refuses', async () => {
+    const { api, state } = makeFakeApi({ viewNames: ['Mine'], leadFields: [{ id: 'field-name', name: 'name' }] });
+    const spec = (name: string) => ({
+      ...EMPTY_SPEC,
+      lists: [{ objectUniversalIdentifier: LEAD, name, icon: 'IconUser', columns: ['name'], filters: [] }],
+    });
+
+    await runInstall({ api, specs: [spec('Mine')], previousVersion: undefined });
+    expect(state.listCalls).toEqual([]);
+
+    const refusing = { ...api, createListView: async () => Promise.reject(new Error('no permission')) };
+    const result = await runInstall({ api: refusing, specs: [spec('Other')], previousVersion: undefined });
+
+    expect(result.skippedBoards).toEqual([{ name: 'Other', reason: 'no permission' }]);
+  });
+
+  it('removes a list that stopped half made, so the next install makes it again', async () => {
+    const { api, state } = makeFakeApi({ leadFields: [{ id: 'field-name', name: 'name' }] });
+    const failing = { ...api, showViewField: async () => Promise.reject(new Error('Label identifier view field has to be in the lowest position')) };
+    const result = await runInstall({
+      api: failing,
+      specs: [{ ...EMPTY_SPEC, lists: [{ objectUniversalIdentifier: LEAD, name: 'Half', icon: 'IconUser', columns: ['name'], filters: [] }] }],
+      previousVersion: undefined,
+    });
+
+    expect(result.skippedBoards).toHaveLength(1);
+    expect(state.listCalls).toEqual([
+      { name: 'createListView', input: { objectMetadataId: 'o-lead', name: 'Half', icon: 'IconUser' } },
+      { name: 'deleteView', input: 'view-1' },
+    ]);
+  });
+});
+
 describe('seed rows', () => {
   const units: SeedRowsSpec = {
     objectUniversalIdentifier: UOM_OBJECT,
@@ -325,6 +430,29 @@ describe('seed rows', () => {
     const api = fakeApi();
     await runInstall({ api, specs: [spec], previousVersion: '2.2.0' });
     expect(api.createdSeedRows).toEqual([]);
+  });
+
+  it('links a seed row to a parent made earlier in another object', async () => {
+    const api = fakeApi();
+    const pack: SeedRowsSpec = {
+      objectUniversalIdentifier: REASON,
+      rows: [
+        {
+          seedKey: 'reason.small',
+          values: { name: 'Small' },
+          parentSeedKey: 'uom.product_uom_unit',
+          parentFieldName: 'uom',
+          parentObjectUniversalIdentifier: UOM_OBJECT,
+        },
+      ],
+    };
+
+    await runInstall({ api, specs: [{ ...spec, seedRows: [units, pack] }], previousVersion: undefined });
+
+    expect(api.createdSeedRows[api.createdSeedRows.length - 1]).toEqual({
+      object: 'crmLostReason',
+      values: { name: 'Small', seedKey: 'reason.small', uomId: 'id-uom.product_uom_unit' },
+    });
   });
 
   it('skips a seed key that already exists, even after a rename', async () => {

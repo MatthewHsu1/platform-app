@@ -1,5 +1,6 @@
 import {
   type InstallObject,
+  type ListViewSpec,
   type ModuleInstallSpec,
   type SelectOption,
 } from 'src/shared/install/install-spec.type';
@@ -25,9 +26,20 @@ export type InstallApi = {
     icon: string;
     groupByFieldMetadataId: string;
     hideWhere?: { fieldMetadataId: string; values: string[] };
-    filters?: { fieldMetadataId: string; operand: 'IS' | 'IS_NOT'; value: string }[];
+    filters?: { fieldMetadataId: string; operand: ViewFilterSpec['operand']; value: string }[];
     aggregate?: { operation: 'SUM'; fieldMetadataId: string };
     cardFieldMetadataIds?: string[];
+  }) => Promise<void>;
+  createListView: (input: { objectMetadataId: string; name: string; icon: string }) => Promise<string>;
+  showViewField: (input: { viewId: string; fieldMetadataId: string; position: number }) => Promise<void>;
+  deleteView: (viewId: string) => Promise<void>;
+  createViewFilterGroup: (input: { viewId: string; logicalOperator: 'AND' | 'OR'; parentViewFilterGroupId?: string }) => Promise<string>;
+  createViewFilter: (input: {
+    viewId: string;
+    fieldMetadataId: string;
+    operand: ViewFilterSpec['operand'];
+    value: string;
+    viewFilterGroupId?: string;
   }) => Promise<void>;
   listViews: (objectMetadataId: string) => Promise<{ id: string; name: string; key: string | null }[]>;
   listViewSorts: (viewId: string) => Promise<{ id: string }[]>;
@@ -46,13 +58,17 @@ export type InstallApi = {
   }) => Promise<void>;
 };
 
-// The filter value as the view API stores it.
-export const viewFilterValue = (value: ViewFilterSpec['value']): string =>
-  value === 'CURRENT_MEMBER'
-    ? JSON.stringify({ isCurrentWorkspaceMemberSelected: true, selectedRecordIds: [] })
-    : typeof value === 'boolean'
-      ? String(value)
-      : JSON.stringify(value);
+// The filter value as the view API stores it. A condition that takes no value stores an empty text.
+export const viewFilterValue = (value: ViewFilterSpec['value'], operand: ViewFilterSpec['operand'] = 'IS'): string => {
+  if (operand === 'IS_EMPTY' || operand === 'IS_IN_PAST') {
+    return '';
+  }
+  if (value === 'CURRENT_MEMBER') {
+    return JSON.stringify({ isCurrentWorkspaceMemberSelected: true, selectedRecordIds: [] });
+  }
+
+  return typeof value === 'boolean' ? String(value) : JSON.stringify(value);
+};
 
 const versionParts = (version: string) =>
   version.split('.').map((part) => Number.parseInt(part, 10) || 0);
@@ -97,6 +113,50 @@ const findFieldId = (object: InstallObject, name: string) => {
   }
 
   return field.id;
+};
+
+// A table view with its columns and filters. `anyOf` becomes one group of alternatives; a member that is itself a
+// list of conditions becomes a group inside it. The label field is the first column: Twenty keeps it in the lowest
+// position.
+const makeListView = async (api: InstallApi, object: InstallObject, list: ListViewSpec) => {
+  const viewId = await api.createListView({ objectMetadataId: object.id, name: list.name, icon: list.icon });
+
+  // A list that stops half made would be found by name on the next install and left as it is: it is removed
+  // instead, so the next install makes it again.
+  try {
+    for (const [position, fieldName] of list.columns.entries()) {
+      await api.showViewField({ viewId, fieldMetadataId: findFieldId(object, fieldName), position });
+    }
+    const filterOf = (filter: ViewFilterSpec) => ({
+      viewId,
+      fieldMetadataId: findFieldId(object, filter.fieldName),
+      operand: filter.operand,
+      value: viewFilterValue(filter.value, filter.operand),
+    });
+
+    for (const filter of list.filters) {
+      await api.createViewFilter(filterOf(filter));
+    }
+    if (list.anyOf === undefined || list.anyOf.length === 0) {
+      return;
+    }
+    const alternatives = await api.createViewFilterGroup({ viewId, logicalOperator: 'OR' });
+
+    for (const member of list.anyOf) {
+      if ('allOf' in member) {
+        const group = await api.createViewFilterGroup({ viewId, logicalOperator: 'AND', parentViewFilterGroupId: alternatives });
+
+        for (const filter of member.allOf) {
+          await api.createViewFilter({ ...filterOf(filter), viewFilterGroupId: group });
+        }
+      } else {
+        await api.createViewFilter({ ...filterOf(member), viewFilterGroupId: alternatives });
+      }
+    }
+  } catch (error) {
+    await api.deleteView(viewId).catch(() => undefined);
+    throw error;
+  }
 };
 
 // Safe to run on every install and upgrade: it only adds what is missing and
@@ -154,9 +214,24 @@ export const runInstall = async ({
       }
     }
 
+    // Seed keys by object, read once and kept up to date as rows are made, so a row can name a parent
+    // made earlier in this run, in its own object or in another one.
+    const seedKeysByObject = new Map<string, Map<string, string>>();
+    const seedKeysOf = async (universalIdentifier: string) => {
+      const known = seedKeysByObject.get(universalIdentifier);
+
+      if (known !== undefined) {
+        return known;
+      }
+      const read = await api.listSeedKeys(findObject(objects, universalIdentifier));
+
+      seedKeysByObject.set(universalIdentifier, read);
+      return read;
+    };
+
     for (const { objectUniversalIdentifier, rows } of spec.seedRows) {
       const object = findObject(objects, objectUniversalIdentifier);
-      const idBySeedKey = await api.listSeedKeys(object);
+      const idBySeedKey = await seedKeysOf(objectUniversalIdentifier);
 
       for (const row of rows) {
         if (idBySeedKey.has(row.seedKey)) {
@@ -166,7 +241,7 @@ export const runInstall = async ({
         const values: Record<string, unknown> = { ...row.values, seedKey: row.seedKey };
 
         if (row.parentSeedKey !== undefined && row.parentFieldName !== undefined) {
-          const parentId = idBySeedKey.get(row.parentSeedKey);
+          const parentId = (await seedKeysOf(row.parentObjectUniversalIdentifier ?? objectUniversalIdentifier)).get(row.parentSeedKey);
 
           if (parentId === undefined) {
             throw new Error(`Install: seed row ${row.seedKey} needs ${row.parentSeedKey} first`);
@@ -239,7 +314,7 @@ export const runInstall = async ({
         filters: board.filters?.map((filter) => ({
           fieldMetadataId: findFieldId(object, filter.fieldName),
           operand: filter.operand,
-          value: viewFilterValue(filter.value),
+          value: viewFilterValue(filter.value, filter.operand),
         })),
         aggregate,
         cardFieldMetadataIds: board.cardFields?.map((fieldName) => findFieldId(object, fieldName)),
@@ -249,6 +324,20 @@ export const runInstall = async ({
         name: board.name,
         reason: error instanceof Error ? error.message : String(error),
       });
+    }
+  }
+
+  // A list the hook makes is skipped when its view exists already, so a list staff changed is left alone.
+  for (const list of specs.flatMap((spec) => spec.lists ?? [])) {
+    const object = findObject(objects, list.objectUniversalIdentifier);
+
+    if ((await api.listViewNames(object.id)).includes(list.name)) {
+      continue;
+    }
+    try {
+      await makeListView(api, object, list);
+    } catch (error) {
+      skippedBoards.push({ name: list.name, reason: error instanceof Error ? error.message : String(error) });
     }
   }
 

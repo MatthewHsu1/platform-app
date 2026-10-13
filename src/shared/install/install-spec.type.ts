@@ -38,6 +38,18 @@ export type BoardSpec = {
   cardFields?: string[];
 };
 
+// A table view the hook makes. `filters` all hold; `anyOf` is one group of alternatives, a member of which may
+// itself be a group of conditions that all hold. `columns` are the fields shown, in order, the label field first;
+// the list shows at most 10, so every other field stays a hidden column.
+export type ListViewSpec = {
+  objectUniversalIdentifier: string;
+  name: string;
+  icon: string;
+  columns: string[];
+  filters: ViewFilterSpec[];
+  anyOf?: (ViewFilterSpec | { allOf: ViewFilterSpec[] })[];
+};
+
 // 'All' is the object's main list, the view Twenty keys INDEX.
 export type ViewSortSpec = {
   objectUniversalIdentifier: string;
@@ -50,6 +62,8 @@ export type SeedRow = {
   values: Record<string, unknown>;
   parentSeedKey?: string;
   parentFieldName?: string;
+  // The object the parent row belongs to, when it is not the row's own object. Its rows come earlier in the spec.
+  parentObjectUniversalIdentifier?: string;
 };
 
 export type SeedRowsSpec = { objectUniversalIdentifier: string; rows: SeedRow[] };
@@ -74,6 +88,7 @@ export type ModuleInstallSpec = {
   defaultRows: DefaultRowsSpec[];
   seedRows: SeedRowsSpec[];
   boards: BoardSpec[];
+  lists?: ListViewSpec[];
   validationRules: ValidationRuleSpec[];
   viewSorts?: ViewSortSpec[];
   seedKeyBackfills?: SeedKeyBackfillSpec[];

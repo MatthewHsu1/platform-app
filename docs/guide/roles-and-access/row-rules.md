@@ -6,7 +6,7 @@ Part of [Roles and row access](../roles-and-access.md).
 the owner) or `mineOrUnowned` (they are the owner, or nobody is). A mix joins its blocks' rules on
 each object and the widest wins; a block with no rule there does not widen it. Today: Lead
 (owner field Salesperson) — Sales: Own Documents sees their own and unowned leads, All Documents
-and Administrator see all. A person may create or change a row only so that it stays inside their
+and Administrator see all; Work case (owner field Assigned to) — Work cases: Own Documents sees the cases assigned to them and the cases nobody holds, the wider levels see all. A person may create or change a row only so that it stays inside their
 rule: a rep cannot give a lead to someone else. Admin and Platform's own role see every row. Any
 other role (Twenty's Member, a role made by hand, an API key's role) sees only its own rows on a
 ruled object. Twenty's own Company, Opportunity and Task have no rule.

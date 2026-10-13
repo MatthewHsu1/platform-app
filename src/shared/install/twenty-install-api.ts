@@ -154,6 +154,80 @@ export const twentyInstallApi: InstallApi = {
     }
   },
 
+  createListView: async ({ objectMetadataId, name, icon }) => {
+    const viewId = requireData(
+      await twentyMetadata<{ createView: { id: string } }>(
+        'application',
+        `mutation CreateList($input: CreateViewInput!) { createView(input: $input) { id } }`,
+        { input: { name, icon, objectMetadataId, type: 'TABLE' } },
+      ),
+      `Create view ${name}`,
+    ).createView.id;
+
+    // Twenty puts one column of its own choosing into a new table view. It is removed, so the columns the list
+    // asks for are the only ones and the label field can take the lowest position.
+    const made = requireData(
+      await twentyMetadata<{ getViewFields: { id: string }[] }>(
+        'application',
+        `query MadeColumns($viewId: String!) { getViewFields(viewId: $viewId) { id } }`,
+        { viewId },
+      ),
+      `Read the columns of view ${name}`,
+    ).getViewFields;
+
+    for (const { id } of made) {
+      requireData(
+        await twentyMetadata(
+          'application',
+          `mutation DropColumn($input: DestroyViewFieldInput!) { destroyViewField(input: $input) { id } }`,
+          { input: { id } },
+        ),
+        `Remove a column of view ${name}`,
+      );
+    }
+
+    return viewId;
+  },
+
+  showViewField: async ({ viewId, fieldMetadataId, position }) => {
+    requireData(
+      await twentyMetadata(
+        'application',
+        `mutation ShowColumn($input: CreateViewFieldInput!) { createViewField(input: $input) { id } }`,
+        { input: { viewId, fieldMetadataId, position, isVisible: true } },
+      ),
+      'Show a column',
+    );
+  },
+
+  deleteView: async (viewId) => {
+    requireData(
+      await twentyMetadata('application', `mutation DropView($id: String!) { deleteView(id: $id) }`, { id: viewId }),
+      'Remove a view',
+    );
+  },
+
+  createViewFilterGroup: async (input) =>
+    requireData(
+      await twentyMetadata<{ createViewFilterGroup: { id: string } }>(
+        'application',
+        `mutation FilterGroup($input: CreateViewFilterGroupInput!) { createViewFilterGroup(input: $input) { id } }`,
+        { input },
+      ),
+      'Group view filters',
+    ).createViewFilterGroup.id,
+
+  createViewFilter: async (input) => {
+    requireData(
+      await twentyMetadata(
+        'application',
+        `mutation FilterView($input: CreateViewFilterInput!) { createViewFilter(input: $input) { id } }`,
+        { input },
+      ),
+      'Filter view',
+    );
+  },
+
   listViews: async (objectMetadataId) =>
     requireData(
       await twentyMetadata<{ getViews: { id: string; name: string; key: string | null }[] }>(

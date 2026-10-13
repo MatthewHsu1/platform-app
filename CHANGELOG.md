@@ -2,6 +2,24 @@
 
 All notable changes to this application are documented in this file.
 
+## 2.5.0 (unreleased)
+
+- Work cases: numbered customer cases (`HT00001`) with a team, assignee, stage, priority, category, tags,
+  type, product, contact and customer company. Teams with members, stages (with closed and unattended
+  flags and team limits), categories in a tree, tags, types. After each save the number, assignee,
+  team, stage, dates, company copy and the team's open counts are kept right; a stage that cases still
+  use and an SLA policy that rows still use come back with a note when deleted.
+- Service levels: SLA policies (days and hours, target stage, teams, categories, tags, a filter and
+  stages that pause the clock) give each matching case a row with a deadline counted in working hours;
+  the case shows its earliest deadline, and the SLA expired lists show late cases without a job.
+- Working hours: weekly working times (one or two weeks, with a break), time off and a time zone;
+  the standard 40-hour week is made on install.
+- Buttons: Assign to me, Mark as duplicate, Duplicate, Create opportunity, Refresh SLA. Related cases
+  link both ways; a case links to its opportunities.
+- A Work cases settings page (assign to creator, duplicate tracking, duplicate stage) and the building
+  blocks Work cases: Own Documents, All Documents and Administrator on the Roles page. Own Documents
+  sees the cases assigned to the person and the cases nobody holds.
+
 ## 2.4.1 (unreleased)
 
 - Printouts: only the transfer keeps a Printouts field now. It holds the signed delivery slip. The

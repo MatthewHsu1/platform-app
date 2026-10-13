@@ -70,4 +70,12 @@ describe('matchesFilter', () => {
     expect(matchesFilter(dateRule('<', '2026-10-11'), move)).toBe(true);
     expect(matchesFilter(dateRule('=', '2026-10-10'), move)).toBe(false);
   });
+
+  it('finds a list that holds any of the listed values', () => {
+    const query = { combinator: 'and', rules: [{ field: 'tagIds', operator: 'containsAny', value: ['a', 'b'] }] };
+
+    expect(matchesFilter(query, { tagIds: ['b', 'c'] })).toBe(true);
+    expect(matchesFilter(query, { tagIds: ['c'] })).toBe(false);
+    expect(matchesFilter(query, { tagIds: [] })).toBe(false);
+  });
 });
