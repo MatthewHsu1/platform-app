@@ -1,0 +1,30 @@
+name: Build proof
+
+# Temporary: proves the release build fits on the runner. Removed before merge.
+on:
+  pull_request:
+    paths: ['.github/workflows/build-proof.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+      - run: yarn install --immutable
+      - name: Runner memory
+        run: free -m && nproc
+      - name: Build the app package
+        env:
+          NODE_OPTIONS: --max-old-space-size=12288
+        run: /usr/bin/time -v yarn twenty dev:build --tarball
+      - name: Check the package exists
+        run: ls -l .twenty/output/*.tgz
