@@ -25,7 +25,8 @@ const Panel = ({ title, note, aside, children, style }: { title: string; note?: 
 
   return (
     <Section.Root style={style}>
-      <Section.Header title={title} description={note} adornment={aside} />
+      {/* The note goes in a span: twenty-ui puts a plain-text description in a hover tooltip, and a tooltip's hover listener fails inside the front component sandbox. */}
+      <Section.Header title={title} description={note === undefined ? undefined : <span>{note}</span>} adornment={aside} />
       <Card.Root rounded>
         <div style={{ padding: theme.spacing[3], display: 'flex', flexDirection: 'column', gap: theme.spacing[2], minWidth: 0 }}>{children}</div>
       </Card.Root>
@@ -288,8 +289,12 @@ export const ForecastSummaryView = ({
       <Section.Root>
         <Section.Header
           title={t(text.reservationsTitle)}
-          description={t(text.reservationsNote)}
-          adornment={<Tag color="gray">{t(text.reservationCount, { count: rows.length })}</Tag>}
+          description={<span>{t(text.reservationsNote)}</span>}
+          adornment={
+            <Tag color="gray" preventShrink>
+              {t(text.reservationCount, { count: rows.length })}
+            </Tag>
+          }
         />
         <Card.Root rounded>
           {rows.length === 0 ? (
