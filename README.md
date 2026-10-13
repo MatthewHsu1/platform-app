@@ -47,7 +47,7 @@ yarn twenty app:publish --private -r <remote>
 yarn twenty app:install -r <remote>
 ```
 
-Upgrading from the Spirit app (1.x): see [Install and upgrade](docs/guide/install-and-upgrade.md#upgrade-from-the-spirit-app-1x).
+Upgrading from the 1.x app: see [Install and upgrade](docs/guide/install-and-upgrade.md#upgrade-from-the-1x-app).
 
 ## Documentation
 

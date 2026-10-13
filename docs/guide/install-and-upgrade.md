@@ -1,6 +1,6 @@
 # Install and upgrade
 
-How the app installs and upgrades, what staff may change, and the upgrade from the Spirit app (1.x). Build, test and publish steps are in [Build and publish](build-and-publish.md).
+How the app installs and upgrades, what staff may change, and the upgrade from the 1.x app. Build, test and publish steps are in [Build and publish](build-and-publish.md).
 
 ## Modules
 
@@ -33,9 +33,9 @@ stage of its team (a stage marked "Is won stage") and sets the probability to 10
 - **Uninstalling the app deletes its objects with every staff field, staff list and board on
   them.** A reinstall brings back only the defaults.
 
-## Upgrade from the Spirit app (1.x)
+## Upgrade from the 1.x app
 
-Needs our Twenty image v2.45.6-spirit.1 or later: older images read the rules from the retired
+Needs our Twenty image v2.45.6 or later with the row-access change: older images read the rules from the retired
 row-access app. The upgrade deletes the old Lead and Lead Source tables. Production held no real
 lead data (2026-10-06).
 
