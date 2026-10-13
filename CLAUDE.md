@@ -1,7 +1,15 @@
 # Platform app
 
-Twenty app (twenty-sdk 2.45.0, same as the server). Read `README.md` first. Design:
-`docs/superpowers/specs/2026-10-06-twenty-platform-crm-design.md`.
+Twenty app (twenty-sdk 2.45.0, same as the server). Design:
+`docs/superpowers/specs/2026-10-06-twenty-platform-crm-design.md`. Guides, each opens with an
+overview and links to its detail files:
+
+- Before changing leads, stages, assignment, scoring or the CRM settings: `docs/guide/crm.md`.
+- Before changing stock, transfers, counts, printing or reports: `docs/guide/inventory.md`.
+- Before changing products, variants, attributes, pricelists or units: `docs/guide/products.md`.
+- Before changing staff access, building blocks or row rules: `docs/guide/roles-and-access.md`.
+- Before changing the install hook, a staff list or an upgrade: `docs/guide/install-and-upgrade.md`.
+- Before building, testing or publishing: `docs/guide/build-and-publish.md`.
 
 - One folder per module under `src/` (`src/crm/`, `src/utm/`, `src/uom/`,
   `src/product/`, `src/stock/`, `src/stock-picking-batch/`, `src/product-expiry/`, `src/base/`, `src/sales-team/`).
