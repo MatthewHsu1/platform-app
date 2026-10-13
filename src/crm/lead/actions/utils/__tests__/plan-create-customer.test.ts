@@ -59,6 +59,24 @@ describe('planCreateCustomer', () => {
     });
   });
 
+  it("uses the company that holds the lead's website when none has its company name, at that company's address", () => {
+    const companyAddress = { ...base.contactAddress!, addressStreet1: '5 Harbor Rd', addressCity: 'Boston', addressState: 'MA' };
+
+    expect(
+      planCreateCustomer({
+        lead: base,
+        chosenCompanyId: null,
+        companyIdByName: null,
+        companyIdByWebsite: 'company-web',
+        existingCompanyAddress: companyAddress,
+        salespersonId: null,
+      }),
+    ).toEqual({
+      company: { id: 'company-web' },
+      person: { create: { ...PERSON, postalAddress: companyAddress } },
+    });
+  });
+
   it("gives a contact inside the company chosen in the dialog that company's address, none when it has none", () => {
     const companyAddress = { ...base.contactAddress!, addressStreet1: '5 Harbor Rd' };
     const plan = (address: typeof companyAddress | null) =>

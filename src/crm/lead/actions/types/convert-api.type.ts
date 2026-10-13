@@ -15,6 +15,8 @@ export type ConvertApi = {
   readPerson: (personId: string) => Promise<PartnerPersonRow | null>;
   findPersonByEmail: (email: string) => Promise<PartnerPersonRow | null>;
   findCompanyIdByExactName: (name: string) => Promise<string | null>;
+  // The company, outside the trash, whose website is this domain as Twenty stores it.
+  findCompanyIdByWebsite: (domain: string) => Promise<string | null>;
   readCompanyAddress: (companyId: string) => Promise<AddressValue | null>;
   recordExists: (objectSingular: 'person' | 'company', id: string) => Promise<boolean>;
   // 'taken' when another record holds a value that must be unique: a person's

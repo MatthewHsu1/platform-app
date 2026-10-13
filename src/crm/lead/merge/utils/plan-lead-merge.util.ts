@@ -136,12 +136,27 @@ const mergedPriority = (sorted: LeadRow[]) =>
 
 const mergedTags = (sorted: LeadRow[]) => [...new Set(sorted.flatMap((lead) => lead.tags ?? []))];
 
+// Whether `whole` holds `part` as whole paragraphs (paragraphs are split by a
+// blank line, as the merge joins them).
+const holdsParagraphs = (whole: string, part: string) => `\n\n${whole}\n\n`.includes(`\n\n${part}\n\n`);
+
+// The texts joined in merge order. A text another merged lead's text already
+// holds is not added again: a merge stopped after the kept lead got the joined
+// text but before the others went to the trash, run again, finds that text on
+// the kept lead and keeps it as it is. Two leads with the same text keep one
+// copy.
 const mergedDescription = (sorted: LeadRow[]) => {
   const texts = sorted
     .map((lead) => lead.description?.markdown ?? '')
     .filter((text) => text.trim().length > 0);
+  const kept = texts.filter(
+    (text, index) =>
+      !texts.some(
+        (other, otherIndex) => (other.length > text.length || (other === text && otherIndex < index)) && holdsParagraphs(other, text),
+      ),
+  );
 
-  return { markdown: texts.length === 0 ? null : texts.join('\n\n') };
+  return { markdown: kept.length === 0 ? null : kept.join('\n\n') };
 };
 
 export const planLeadMerge = ({

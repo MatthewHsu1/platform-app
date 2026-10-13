@@ -5,8 +5,14 @@ import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { type TeamRow } from 'src/sales-team/team/types/team-row.type';
 import { parseStoredFilter } from 'src/shared/filter-editor/stored-filter';
 
-// A stored filter as the plugin reads it: parsed, or null when empty or unreadable.
-const parsedFilter = (text: string | null): unknown => parseStoredFilter(text).value;
+// A stored filter as the plugin reads it: parsed, null when empty, and the
+// stored text as it is when it does not parse, so the plugin can still read it
+// its own way or report it.
+const parsedFilter = (text: string | null): unknown => {
+  const { value, unreadable } = parseStoredFilter(text);
+
+  return unreadable ? text : value;
+};
 
 // Everything a plugin needs to decide, and nothing more: the run, its teams,
 // their active members with the quotas Platform computed, and the leads

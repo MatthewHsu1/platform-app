@@ -86,6 +86,20 @@ export const twentyConvertApi: ConvertApi = {
 
     return found.companies.edges[0]?.node.id ?? null;
   },
+  findCompanyIdByWebsite: async (domain) => {
+    const found = requireData(
+      await twentyGraphql<{ companies: { edges: { node: { id: string } }[] } }>(
+        'person',
+        `query CompanyByWebsite($domain: String!) {
+          companies(filter: { domainName: { primaryLinkUrl: { eq: $domain } } }, orderBy: [{ createdAt: AscNullsLast }], first: 1) { edges { node { id } } }
+        }`,
+        { domain },
+      ),
+      'Find a company by website',
+    );
+
+    return found.companies.edges[0]?.node.id ?? null;
+  },
   readCompanyAddress: async (companyId) => {
     const found = requireData(
       await twentyGraphql<{ company: { address: AddressValue | null } | null }>(

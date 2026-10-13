@@ -129,6 +129,29 @@ describe('campaign trigger', () => {
     expect(calls).toEqual(['put back c1 {"name":"Spring"}: The name "Winter" is already used. The change was undone.']);
   });
 
+  it('numbers the first name typed into a campaign the UI saved without one, as on a create', async () => {
+    const { api, calls } = makeFake({ utmCampaign: [{ id: 'old', name: 'Promo' }, { id: 'old2', name: 'Promo [2]' }, { id: 'c1', name: 'Promo' }, { id: 'c2', name: 'Summer' }] });
+    const before = { name: '', responsibleId: 'm1', stageId: 's' };
+
+    await makeRunCampaignTrigger(api)({
+      operation: 'updated',
+      events: [updated('c1', before, { name: 'Promo' }, ['name']), updated('c2', { ...before, name: null }, { name: 'Summer' }, ['name'])],
+    });
+
+    expect(calls).toEqual(['update c1 {"name":"Promo [3]"}']);
+  });
+
+  it('empties again the first name of a campaign when an archived campaign holds it', async () => {
+    const { api, calls } = makeFake({ utmCampaign: [{ id: 'old', name: 'Winter', active: false }, { id: 'c1', name: 'Winter' }] });
+
+    await makeRunCampaignTrigger(api)({
+      operation: 'updated',
+      events: [updated('c1', { name: '', responsibleId: 'm1', stageId: 's' }, { name: 'Winter' }, ['name'])],
+    });
+
+    expect(calls).toEqual(['put back c1 {"name":null}: The name "Winter" is already used. The change was undone.']);
+  });
+
   it('writes nothing when its own name write comes back', async () => {
     const { api, calls } = makeFake({ utmCampaign: [{ id: 'c1', name: 'Promo [2]' }, { id: 'old', name: 'Promo' }] });
 
@@ -191,6 +214,27 @@ describe('source and medium triggers', () => {
     await makeRunUtmNameTrigger(MEDIUM_NAME_RULES, api)({ operation: 'deleted', events: [deleted('email'), deleted('phone')] });
 
     expect(calls).toEqual([`restore email: ${UTM_MESSAGES.protectedMedium}`, 'clear mediumId phone']);
+  });
+
+  it('numbers the first name typed into a source the UI saved without one, archived sources counted', async () => {
+    const { api, calls } = makeFake({ utmSource: [{ id: 'old', name: 'UTM new', active: false }, { id: 's1', name: 'UTM new' }] });
+
+    await makeRunUtmNameTrigger(SOURCE_NAME_RULES, api)({ operation: 'updated', events: [updated('s1', { name: '' }, { name: 'UTM new' }, ['name'])] });
+
+    expect(calls).toEqual(['update s1 {"name":"UTM new [2]"}']);
+  });
+
+  it('numbers the first name of a medium against the active ones and empties it again when an archived one holds it', async () => {
+    const { api, calls } = makeFake({
+      utmMedium: [{ id: 'web', name: 'Website' }, { id: 'old', name: 'Email', active: false }, { id: 'm1', name: 'Website' }, { id: 'm2', name: 'Email' }],
+    });
+
+    await makeRunUtmNameTrigger(MEDIUM_NAME_RULES, api)({
+      operation: 'updated',
+      events: [updated('m1', { name: null }, { name: 'Website' }, ['name']), updated('m2', { name: '' }, { name: 'Email' }, ['name'])],
+    });
+
+    expect(calls).toEqual(['update m1 {"name":"Website [2]"}', 'put back m2 {"name":null}: The name "Email" is already used. The change was undone.']);
   });
 
   it('puts back a staff rename of a medium to a taken name, archived ones included', async () => {

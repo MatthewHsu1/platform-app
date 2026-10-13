@@ -3,11 +3,13 @@ import { SAMPLE_STAGES } from 'src/crm/lead/merge/utils/__tests__/fixtures/lead-
 import { type AddressValue } from 'src/crm/lead/types/address-value.type';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
 import { type PartnerPersonRow } from 'src/crm/lead/types/partner-person-row.type';
+import { normalizeDomain } from 'src/shared/utils/normalize-domain.util';
 
 type FakeConvertState = {
   leads: Map<string, LeadRow>;
   people: PartnerPersonRow[];
-  companies: { id: string; name: string; website: string | null; address?: AddressValue | null }[];
+  // `hidden`: in the trash, or one the user's role hides; its website still counts as taken.
+  companies: { id: string; name: string; website: string | null; address?: AddressValue | null; hidden?: boolean }[];
   notes: { id: string; objectSingular: string; recordId: string; title: string; body: string }[];
   leadWrites: { leadId: string; data: Record<string, unknown> }[];
   // What the clicking user may create and change; everything when left out.
@@ -39,7 +41,9 @@ export const makeFakeConvertApi = (state: FakeConvertState, failAt: { step: Step
     readStagesAndTeams: async () => ({ stages: SAMPLE_STAGES, teams: [], memberships: [] }),
     readPerson: async (personId) => state.people.find((person) => person.id === personId) ?? null,
     findPersonByEmail: async (email) => state.people.find((person) => person.emails?.primaryEmail === email) ?? null,
-    findCompanyIdByExactName: async (name) => state.companies.find((company) => company.name === name)?.id ?? null,
+    findCompanyIdByExactName: async (name) => state.companies.find((company) => company.hidden !== true && company.name === name)?.id ?? null,
+    findCompanyIdByWebsite: async (domain) =>
+      state.companies.find((company) => company.hidden !== true && company.website !== null && normalizeDomain(company.website) === domain)?.id ?? null,
     readCompanyAddress: async (companyId) => state.companies.find((company) => company.id === companyId)?.address ?? null,
     recordExists: async (objectSingular, id) =>
       objectSingular === 'person' ? state.people.some((person) => person.id === id) : state.companies.some((company) => company.id === id),
@@ -47,7 +51,7 @@ export const makeFakeConvertApi = (state: FakeConvertState, failAt: { step: Step
       step('createCompany');
       const website = input.domainName?.primaryLinkUrl ?? null;
 
-      if (website !== null && state.companies.some((company) => company.website === website)) {
+      if (website !== null && state.companies.some((company) => company.website !== null && normalizeDomain(company.website) === normalizeDomain(website))) {
         return 'taken';
       }
       state.companies.push({ id, name: input.name, website, address: input.address ?? null });

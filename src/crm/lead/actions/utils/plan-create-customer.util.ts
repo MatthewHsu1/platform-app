@@ -46,16 +46,19 @@ const personFromLead = (lead: LeadRow, name: string, address: AddressValue | nul
 };
 
 // The company a new customer goes under: the one chosen in the dialog, else
-// one with exactly the lead's company name (a new one of that name when none
-// has it), else the lead's own customer company.
+// one with exactly the lead's company name, else the one that holds the lead's
+// website (Twenty keeps a website on one company only), else a new one of
+// that name; with no company name, the lead's own customer company.
 export const planCustomerCompany = ({
   lead,
   chosenCompanyId,
   companyIdByName,
+  companyIdByWebsite = null,
 }: {
   lead: LeadRow;
   chosenCompanyId: string | null;
   companyIdByName: string | null;
+  companyIdByWebsite?: string | null;
 }): { id: string } | { name: string } | null => {
   const partnerName = text(lead.partnerName);
 
@@ -63,14 +66,16 @@ export const planCustomerCompany = ({
     return { id: chosenCompanyId };
   }
   if (partnerName !== null) {
-    return companyIdByName !== null ? { id: companyIdByName } : { name: partnerName };
+    const existingId = companyIdByName ?? companyIdByWebsite;
+
+    return existingId !== null ? { id: existingId } : { name: partnerName };
   }
 
   return lead.companyId !== null ? { id: lead.companyId } : null;
 };
 
 // The customer made from a lead: a company from the company name (one with
-// exactly that name is reused), a contact from the contact name inside it;
+// exactly that name, or else the one holding the lead's website, is reused), a contact from the contact name inside it;
 // with no contact name the company alone; with neither, a contact named after
 // the lead. A contact inside a company that already exists takes that
 // company's address; otherwise the lead's.
@@ -78,12 +83,14 @@ export const planCreateCustomer = ({
   lead,
   chosenCompanyId,
   companyIdByName,
+  companyIdByWebsite = null,
   existingCompanyAddress,
   salespersonId,
 }: {
   lead: LeadRow;
   chosenCompanyId: string | null;
   companyIdByName: string | null;
+  companyIdByWebsite?: string | null;
   existingCompanyAddress: AddressValue | null;
   salespersonId: string | null;
 }): CustomerPlan => {
@@ -101,7 +108,7 @@ export const planCreateCustomer = ({
     },
   });
 
-  const target = planCustomerCompany({ lead, chosenCompanyId, companyIdByName });
+  const target = planCustomerCompany({ lead, chosenCompanyId, companyIdByName, companyIdByWebsite });
   const company: CustomerPlan['company'] = target !== null && 'name' in target ? newCompany(target.name) : target;
 
   const personAddress = company !== null && 'id' in company ? filledAddress(existingCompanyAddress) : address;

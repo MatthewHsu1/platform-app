@@ -20,6 +20,7 @@ import { twentyInstallApi } from 'src/shared/install/twenty-install-api';
 import { syncMixedRolesOnSchedule } from 'src/roles/sync/sync-on-schedule';
 import { runInstall } from 'src/shared/install/utils/run-install.util';
 import { UOM_INSTALL } from 'src/uom/uom-install';
+import { fillCampaignStages } from 'src/utm/fill-campaign-stages';
 import { UTM_INSTALL, UTM_STAGE_INSTALL } from 'src/utm/utm-install';
 
 // The hook may run 300 s and hiding one list column takes about a second, so the column trim
@@ -35,6 +36,15 @@ const handler = async ({ previousVersion }: InstallPayload) => {
   });
   await finishStockInstall(previousVersion);
   const warnings: string[] = [];
+
+  // Runs on the upgrade to campaign stages only, so a later install cannot make up for it.
+  try {
+    await fillCampaignStages(previousVersion);
+  } catch (error) {
+    warnings.push(
+      `Install: putting the older campaigns in the first campaign stage failed (${error instanceof Error ? error.message : String(error)}). Set their stage by hand.`,
+    );
+  }
 
   // Upkeep that runs on every install and upgrade; each step is safe to repeat, and one that fails
   // is retried by the next install instead of stopping this one.
@@ -101,7 +111,7 @@ export default definePostInstallLogicFunction({
   universalIdentifier: POST_INSTALL_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER,
   name: 'platform-post-install',
   description:
-    'Makes the staff lists, default rows, boards, validation rules and list sorts each module needs, sets the default type of new leads, fills fields that older rows lack, and trims the columns of the "All" lists once. Adds only what is missing. Rebuilds the mixed roles from the building blocks and writes the row rules.',
+    'Makes the staff lists, default rows, boards, validation rules and list sorts each module needs, sets the default type of new leads, fills fields that older rows lack (the stage of older campaigns once), and trims the columns of the "All" lists once. Adds only what is missing. Rebuilds the mixed roles from the building blocks and writes the row rules.',
   timeoutSeconds: 300,
   handler,
   shouldRunOnVersionUpgrade: true,

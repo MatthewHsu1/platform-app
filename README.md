@@ -54,7 +54,9 @@ below, it only adds what is missing and never changes what exists:
    "All" lists.
 
 Upgrading from 2.3.x or older, a pre-install step deletes the old Stage staff list and the old
-Pipeline board before the new Stage relation is made (the relation reuses the name `stage`).
+Pipeline board before the new Stage relation is made (the relation reuses the name `stage`). After
+it, the install puts the campaigns that have no stage in the first campaign stage; their
+responsible stays empty for staff to fill.
 
 The app role has the Data Model, Views and Layouts permission flags for this (Layouts adds the Pipeline sidebar item), and Applications and Roles for the roles sync. The server lets it read every row.
 Twenty refuses a SELECT or MULTI_SELECT with no options, so Tags starts with one option, Other.
@@ -301,9 +303,11 @@ with their notes, tasks and files moved), Similar leads (same email domain, comp
 
 - Convert saves once. A stop after a merge leaves the kept lead unconverted; Apply again on it
   answers "Select at least two leads to merge", and reopening the dialog works.
-- A taken website is compared on the normalised domain (scheme, `www.`, case and a trailing slash
-  are ignored): the customer is made without it and a note says so. A taken email: the contact is
-  made without the email and a note says so.
+- A company with the lead's company name is reused; else the company that already has the lead's
+  website (compared on the domain Twenty stores: scheme, `www.`, case and path are ignored), and
+  the lead and its new contact go under it. When that company is in the trash or hidden from the
+  user, the new company is made without the website and a note says so. A taken email: the
+  contact is made without the email and a note says so.
 - A trashed note stays on the merged-away lead; only live notes move.
 
 ### Screens

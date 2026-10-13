@@ -99,4 +99,21 @@ describe('buildAssignmentRequest', () => {
       ],
     });
   });
+
+  it('sends a stored filter that does not parse as its stored text, and an empty one as null', () => {
+    const request = buildAssignmentRequest({
+      input: { teamIds: ['team-1'], forceQuota: false, creationDeltaDays: 7, door: 'TEAM_BUTTON', requestedBy: null },
+      now: new Date('2026-10-08T12:00:00.000Z'),
+      delayHours: 0,
+      teams: [makeTeam('team-1', { assignmentDomain: "[('country_id', '=', 233)]" })],
+      members: [makeMember('member-1', 'team-1', 'wm-1', 30, { assignmentDomain: '{"combinator":"and"', assignmentDomainPreferred: '  ' })],
+      quotas: new Map(),
+      dayCounts: new Map(),
+      leads: [],
+    });
+
+    expect(request.teams[0].assignmentDomain).toBe("[('country_id', '=', 233)]");
+    expect(request.members[0].assignmentDomain).toBe('{"combinator":"and"');
+    expect(request.members[0].assignmentDomainPreferred).toBeNull();
+  });
 });
