@@ -24,7 +24,9 @@ jobs:
         run: free -m && nproc
       - name: Build the app package
         env:
-          NODE_OPTIONS: --max-old-space-size=12288
-        run: /usr/bin/time -v yarn twenty dev:build --tarball
+          NODE_OPTIONS: --max-old-space-size=10240
+        run: |
+          (while true; do echo "$(date +%T) $(free -m | awk '/Mem:/{print "used_mb="$3" avail_mb="$7}') node_rss_mb=$(ps -C node -o rss= | sort -n | tail -1 | awk '{print int($1/1024)}')"; sleep 10; done) &
+          /usr/bin/time -v yarn twenty dev:build --tarball
       - name: Check the package exists
         run: ls -l .twenty/output/*.tgz

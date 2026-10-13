@@ -69,7 +69,7 @@ jobs:
       # peaks at about 8 GB. 8192 failed on the runner. The runner has 16 GB.
       - name: Build the app package
         env:
-          NODE_OPTIONS: --max-old-space-size=12288
+          NODE_OPTIONS: --max-old-space-size=10240
         run: yarn twenty dev:build --tarball
 
       - name: Check the package exists
