@@ -1,0 +1,19 @@
+import { defineIndex } from 'twenty-sdk/define';
+
+import {
+  HELPDESK_TICKET_RELATED_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
+  HELPDESK_TICKET_RELATED_INDEX_FIRST_FIELD_UNIVERSAL_IDENTIFIER,
+  HELPDESK_TICKET_RELATED_INDEX_SECOND_FIELD_UNIVERSAL_IDENTIFIER,
+  HELPDESK_TICKET_RELATED_INDEX_UNIVERSAL_IDENTIFIER,
+  HELPDESK_TICKET_RELATED_OBJECT_UNIVERSAL_IDENTIFIER,
+} from 'src/helpdesk-ticket-related/helpdesk-ticket-related-universal-identifiers.constant';
+
+export default defineIndex({
+  universalIdentifier: HELPDESK_TICKET_RELATED_INDEX_UNIVERSAL_IDENTIFIER,
+  objectUniversalIdentifier: HELPDESK_TICKET_RELATED_OBJECT_UNIVERSAL_IDENTIFIER,
+  isUnique: true,
+  fields: [
+    { universalIdentifier: HELPDESK_TICKET_RELATED_INDEX_FIRST_FIELD_UNIVERSAL_IDENTIFIER, fieldUniversalIdentifier: FIELD_IDS.ticket },
+    { universalIdentifier: HELPDESK_TICKET_RELATED_INDEX_SECOND_FIELD_UNIVERSAL_IDENTIFIER, fieldUniversalIdentifier: FIELD_IDS.relatedTicket },
+  ],
+});

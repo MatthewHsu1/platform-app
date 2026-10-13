@@ -49,6 +49,9 @@ const OUTSIDE_INVENTORY = [
   'helpdeskTicketTeamCategory',
   'helpdeskTicketStageTeam',
   'helpdeskTicketTagRel',
+  'helpdeskTicketType',
+  'helpdeskTicketTypeTeam',
+  'helpdeskTicketRelated',
 ];
 
 const rowOf = (nameSingular: string) => {

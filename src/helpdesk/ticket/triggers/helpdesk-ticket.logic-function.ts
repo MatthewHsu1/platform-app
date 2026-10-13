@@ -9,6 +9,7 @@ import { applyCaseCreates, applyCaseUpdates } from 'src/helpdesk/ticket/apply-ca
 import 'src/helpdesk/ticket/case-delete-entries';
 import { TWENTY_CASE_API } from 'src/helpdesk/ticket/twenty-case-api';
 import { type CaseEvent } from 'src/helpdesk/ticket/types/case-event.type';
+import 'src/helpdesk-ticket-related/case-related-delete-entries';
 import { attachSlasToNewCases, recomputeSlasOnStageSave, restoreSlaRowsOfCases } from 'src/helpdesk-sla/case-sla-hooks';
 import { clearCaseFromLeads } from 'src/helpdesk-crm/clear-case-from-leads';
 import { readEvents } from 'src/shared/triggers/batch-events';

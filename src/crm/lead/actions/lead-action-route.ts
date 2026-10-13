@@ -1,23 +1,16 @@
-import { type RoutePayload } from 'twenty-sdk/define';
-
 import { LeadActionError } from 'src/crm/lead/actions/lead-action-error';
 import { type LeadUpdatePlan } from 'src/crm/lead/actions/utils/types/lead-update-plan.type';
 import { LEADS_NOT_FOUND } from 'src/crm/lead/lead-messages.constant';
 import { queryLeads } from 'src/crm/lead/query-leads';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
-import { readCallerAccessOrNull } from 'src/roles/read-caller-access';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
-import { translate } from 'src/shared/i18n/translate';
-import { NOT_ALLOWED_MESSAGE, notAllowedResponse } from 'src/shared/not-allowed';
-import { jsonResponse, readBody } from 'src/shared/route-response';
+import { jsonResponse } from 'src/shared/route-response';
+import { hasMemberBehind, makeRouteErrors, makeRouteHandler, NO_MEMBER_DETAIL } from 'src/shared/route-handlers';
 import { MUTATION_MAXIMUM_RECORDS } from 'src/shared/triggers/records';
-import { GraphqlForbiddenError, type GraphqlResponse, requireData, twentyGraphql } from 'src/shared/twenty-graphql';
-import { UserError } from 'src/shared/user-error';
+import { type GraphqlResponse, requireData, twentyGraphql } from 'src/shared/twenty-graphql';
 import { chunks } from 'src/shared/utils/chunks.util';
 
-type RouteResponse = ReturnType<typeof jsonResponse>;
-
-export const NO_MEMBER_DETAIL = 'This action needs a signed-in person: an API key cannot use it.';
+export { NO_MEMBER_DETAIL };
 export const SELECT_ONE_LEAD = 'Select one lead.';
 export const SELECT_SOME_LEADS = 'Select at least one lead.';
 
@@ -54,15 +47,6 @@ export const makeFindLead =
 
 export const findLead = makeFindLead((query, variables) => twentyGraphql('person', query, variables));
 
-// Twenty runs a route called with an API key on the app's own token: the
-// key's role never reaches the reads and writes the route makes, so its
-// rights cannot be checked. Every lead route refuses such a call before it
-// reads or writes anything; an API client changes the leads itself, where its
-// role applies and the lead trigger runs the save rules. Only Twenty's
-// "nobody signed in" answer counts as no member; any other failure of that
-// read fails the route.
-const hasMemberBehind = async () => ((await readCallerAccessOrNull())?.workspaceMemberId ?? null) !== null;
-
 export const applyLeadUpdate = async (leadId: string, plan: LeadUpdatePlan) => {
   if (plan.kind === 'refuse') {
     return jsonResponse(409, { error: plan.reason });
@@ -81,50 +65,13 @@ export const applyLeadUpdate = async (leadId: string, plan: LeadUpdatePlan) => {
   return jsonResponse(200, { leadId });
 };
 
-// A read or write the user's role does not allow answers 409 with a plain sentence; any other failure 500.
-export const makeLeadRouteErrors =
-  (readLocale: () => Promise<string>, memberBehind: () => Promise<boolean>) =>
-  (handler: (payload: RoutePayload) => Promise<RouteResponse>) =>
-  async (payload: RoutePayload) => {
-    try {
-      if (!(await memberBehind())) {
-        const locale = await readLocale().catch(() => 'en');
+export const makeLeadRouteErrors = makeRouteErrors;
 
-        return jsonResponse(409, { error: translate(locale, NOT_ALLOWED_MESSAGE), detail: translate(locale, NO_MEMBER_DETAIL) });
-      }
-      return await handler(payload);
-    } catch (error) {
-      if (error instanceof GraphqlForbiddenError) {
-        return notAllowedResponse(await readLocale().catch(() => 'en'), error);
-      }
+export const withLeadRouteErrors = makeRouteErrors(readUserLocale, hasMemberBehind);
 
-      return jsonResponse(500, { error: error instanceof Error ? error.message : String(error) });
-    }
-  };
-
-export const withLeadRouteErrors = makeLeadRouteErrors(readUserLocale, hasMemberBehind);
-
-// A route that answers its result with 200. A refusal answers with its status
-// and its text in the user's language; a role refusal and any other failure
-// as every lead route does.
-export const makeLeadRouteHandler =
-  (readLocale: () => Promise<string>, memberBehind: () => Promise<boolean>) =>
-  (run: (body: Record<string, unknown>) => Promise<Record<string, unknown>>) =>
-    makeLeadRouteErrors(readLocale, memberBehind)(async (payload) => {
-      try {
-        return jsonResponse(200, await run(readBody(payload)));
-      } catch (error) {
-        if (!(error instanceof UserError)) {
-          throw error;
-        }
-        const locale = await readLocale().catch(() => 'en');
-
-        return jsonResponse(error instanceof LeadActionError ? error.status : 409, {
-          ...error.details,
-          error: translate(locale, error.message, error.values),
-        });
-      }
-    });
+// A lead refusal answers with the status its error names.
+export const makeLeadRouteHandler = (readLocale: () => Promise<string>, memberBehind: () => Promise<boolean>) =>
+  makeRouteHandler(readLocale, memberBehind, (error) => (error instanceof LeadActionError ? error.status : 409));
 
 export const leadRouteHandler = makeLeadRouteHandler(readUserLocale, hasMemberBehind);
 

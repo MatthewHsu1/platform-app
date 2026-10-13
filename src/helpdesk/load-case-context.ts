@@ -8,14 +8,13 @@ import { textOrNull } from 'src/shared/utils/text-or-null.util';
 export const CASE_SELECTION = `id createdAt deletedAt number name description { markdown blocknote }
   assignedUserId stageId personId companyId partnerName partnerEmail { primaryEmail additionalEmails }
   teamId categoryId channel priority kanbanState duplicateId lastStageUpdate assignedDate closedDate
-  unattended active updatedBy { source workspaceMemberId }`;
+  unattended active ticketTypeId productId updatedBy { source workspaceMemberId }`;
 
 const text = (value: unknown) => (typeof value === 'string' ? textOrNull(value) : null);
 const flag = (value: unknown) => (typeof value === 'boolean' ? value : null);
 const objectOrNull = <TValue>(value: unknown) => (value !== null && typeof value === 'object' ? (value as TValue) : null);
 
-// A case as a read or a database event holds it, with empty text read as null so the two agree. A field
-// a later module adds is left out of the row until its selection reads it.
+// A case as a read or a database event holds it, with empty text read as null so the two agree.
 export const readCaseRow = (node: Record<string, unknown>): CaseRow => ({
   id: String(node.id),
   createdAt: String(node.createdAt),
@@ -40,6 +39,8 @@ export const readCaseRow = (node: Record<string, unknown>): CaseRow => ({
   closedDate: text(node.closedDate),
   unattended: flag(node.unattended),
   active: flag(node.active),
+  ticketTypeId: text(node.ticketTypeId),
+  productId: text(node.productId),
   updatedBy: objectOrNull(node.updatedBy),
 });
 

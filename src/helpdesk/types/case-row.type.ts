@@ -1,5 +1,5 @@
-// A case as triggers, planners and routes read it. The fields after `updatedBy` belong to later add-ons and
-// are left out of a read until their module adds them to the selection.
+// A case as triggers, planners and routes read it. The service level fields are read by the
+// service level module only.
 export type CaseRow = {
   id: string;
   createdAt: string;
@@ -24,7 +24,7 @@ export type CaseRow = {
   closedDate: string | null;
   unattended: boolean | null;
   active: boolean | null;
-  typeId?: string | null;
+  ticketTypeId?: string | null;
   productId?: string | null;
   slaDeadline?: string | null;
   slaStateExpired?: boolean | null;

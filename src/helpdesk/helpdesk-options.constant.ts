@@ -31,7 +31,7 @@ export const CASE_RELATION_JOIN_COLUMNS: Record<string, string> = {
   teamId: 'team',
   categoryId: 'category',
   duplicateId: 'duplicate',
-  typeId: 'type',
+  ticketTypeId: 'ticketType',
   productId: 'product',
 };
 

@@ -6,6 +6,7 @@ import { HELPDESK_MESSAGES } from 'src/helpdesk/helpdesk-messages.constant';
 import { HELPDESK_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS } from 'src/helpdesk/helpdesk-universal-identifiers.constant';
 import 'src/helpdesk/team/team-delete-entries';
 import { runTreePass } from 'src/helpdesk/tree/run-tree-pass';
+import 'src/helpdesk-type/team-type-delete-entries';
 import { applyTeamCalendarDefault } from 'src/helpdesk-sla/team-sla-hooks';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { records } from 'src/shared/triggers/records';
