@@ -43,6 +43,7 @@ export const FORECAST_UNIVERSAL_IDENTIFIERS = {
   logicFunction: 'a1cf260b-7167-4699-9116-99b5145b6735',
   reserveLogicFunction: '75a5bbdc-6189-4af9-8363-9fa3c2748633',
   widget: 'eceb498d-1478-4496-b3b3-9d1b395a8f52',
+  productWidget: '7a556654-5ec9-4b54-9d23-8d5162bf02cb',
   productTemplateCommand: '7428cb48-571f-4b62-b825-c4c0e72f1e91',
   productProductCommand: '6df91637-3b97-49d6-86cb-c96a51564e93',
   moveCommand: '59a54366-6533-4419-a075-195f625a5fb5',

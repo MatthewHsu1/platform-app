@@ -17,10 +17,10 @@ import { type StockQuantityDay } from 'src/stock/utils/types/stock-quantity-day.
 const GRAPH_WIDTH = 640;
 const GRAPH_HEIGHT = 160;
 
-const openRecord = (objectNameSingular: string, recordId: string) =>
+export const openRecord = (objectNameSingular: string, recordId: string) =>
   void navigate(AppPath.RecordShowPage, { objectNameSingular, objectRecordId: recordId });
 
-const makeFormat = (locale: string, digits: number) => (value: number) => {
+export const makeFormat = (locale: string, digits: number) => (value: number) => {
   try {
     return new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
   } catch {
@@ -28,10 +28,10 @@ const makeFormat = (locale: string, digits: number) => (value: number) => {
   }
 };
 
-const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
+export const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
 // The forecast per day as a stepped line: the level holds until the next day.
-const ForecastGraph = ({ graph, today, emptyText }: { graph: StockQuantityDay[]; today: string; emptyText: string }) => {
+export const ForecastGraph = ({ graph, today, emptyText }: { graph: StockQuantityDay[]; today: string; emptyText: string }) => {
   const theme = themeCssVariables;
   const styles = readPopUpStyles();
   const locale = useLocale();
