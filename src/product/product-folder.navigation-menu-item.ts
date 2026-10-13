@@ -9,6 +9,6 @@ export default defineNavigationMenuItem({
   universalIdentifier: PRODUCT_FOLDER_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER,
   name: 'Products',
   icon: 'IconPackage',
-  position: 101,
+  position: 102,
   type: NavigationMenuItemType.FOLDER,
 });
