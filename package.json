@@ -30,7 +30,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "twenty-client-sdk": "2.45.0",
-    "twenty-sdk": "2.45.0",
+    "twenty-sdk": "https://github.com/MatthewHsu1/twenty/releases/download/twenty-sdk-v2.45.0-fm.1/twenty-sdk-2.45.0-fm.1.tgz",
     "twenty-ui": "2.45.0",
     "typescript": "^5.9.3",
     "vite-tsconfig-paths": "^4.2.1",
