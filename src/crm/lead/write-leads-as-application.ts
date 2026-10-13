@@ -155,30 +155,4 @@ export const makeWriteLeadsAsApplication =
     return { written, skipped };
   };
 
-// A write made with the caller's own token, so Twenty checks their update
-// right and row rule, that still carries the save rules: for a caller the lead
-// trigger would treat as the app, such as an API key. A refusal of the write
-// comes back as Twenty's error and nothing is counted. Returns false for a
-// lead that is gone or whose write the rules refuse.
-export const makeWriteLeadAsCaller =
-  (api: AppLeadWriteApi) =>
-  async (leadId: string, data: Record<string, unknown>, updateAsCaller: (leadId: string, payload: Record<string, unknown>) => Promise<void>) => {
-    const { planned } = await planWrites(api, [{ leadId, data }], {});
-    const [write] = planned;
-
-    if (write === undefined) {
-      return false;
-    }
-    if (Object.keys(write.payload).length > 0) {
-      await updateAsCaller(leadId, write.payload);
-    }
-    const errors = errorCollector();
-
-    await finishWritten(api, [write], errors);
-    errors.throwIfAny();
-    return true;
-  };
-
 export const writeLeadsAsApplication = makeWriteLeadsAsApplication(TWENTY_APP_LEAD_WRITE_API);
-
-export const writeLeadAsCaller = makeWriteLeadAsCaller(TWENTY_APP_LEAD_WRITE_API);

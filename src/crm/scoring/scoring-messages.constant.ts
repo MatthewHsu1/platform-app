@@ -3,6 +3,7 @@
 export const SCORING_MESSAGES = {
   onlyWorkspaceAdministrators: 'Only a workspace administrator can update the probabilities.',
   startDateRequired: 'Choose the day from which leads are counted.',
+  alreadyRunning: 'Update probabilities is already running. Try again in a moment.',
 } as const;
 
 // What the scoring explanation answers: its refusal, the quality values and

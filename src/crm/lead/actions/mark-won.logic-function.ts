@@ -13,9 +13,8 @@ import { translate } from 'src/shared/i18n/translate';
 import { jsonResponse, readBody } from 'src/shared/route-response';
 
 // Reads the lead as the clicking user and writes with their token, so the
-// lead's save rules run in the trigger as for a board drag; a request with no
-// member behind it writes with its own token too, carrying the save rules. The stages are read
-// with the app token: every user may pick any stage.
+// lead's save rules run in the trigger as for a board drag. The stages are
+// read with the app token: every user may pick any stage.
 const handler = async (payload: RoutePayload) => {
   const locale = await readUserLocale();
   const leadId = readLeadId(readBody(payload));
@@ -32,9 +31,7 @@ const handler = async (payload: RoutePayload) => {
   const { stages } = await loadLeadContext([lead]);
   const plan = planMarkWon({ lead, stages });
 
-  return applyLeadUpdate(leadId, plan.kind === 'refuse' ? { ...plan, reason: translate(locale, plan.reason) } : plan, {
-    notFound: translate(locale, 'Lead not found.'),
-  });
+  return applyLeadUpdate(leadId, plan.kind === 'refuse' ? { ...plan, reason: translate(locale, plan.reason) } : plan);
 };
 
 export default defineLogicFunction({

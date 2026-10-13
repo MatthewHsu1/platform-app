@@ -5,11 +5,10 @@ import { type LeadUpdatePlan } from 'src/crm/lead/actions/utils/types/lead-updat
 import { LEADS_NOT_FOUND } from 'src/crm/lead/lead-messages.constant';
 import { queryLeads } from 'src/crm/lead/query-leads';
 import { type LeadRow } from 'src/crm/lead/types/lead-row.type';
-import { writeLeadAsCaller } from 'src/crm/lead/write-leads-as-application';
 import { readCallerAccessOrNull } from 'src/roles/read-caller-access';
 import { readUserLocale } from 'src/shared/i18n/read-user-locale';
 import { translate } from 'src/shared/i18n/translate';
-import { notAllowedResponse } from 'src/shared/not-allowed';
+import { NOT_ALLOWED_MESSAGE, notAllowedResponse } from 'src/shared/not-allowed';
 import { jsonResponse, readBody } from 'src/shared/route-response';
 import { MUTATION_MAXIMUM_RECORDS } from 'src/shared/triggers/records';
 import { GraphqlForbiddenError, type GraphqlResponse, requireData, twentyGraphql } from 'src/shared/twenty-graphql';
@@ -18,6 +17,7 @@ import { chunks } from 'src/shared/utils/chunks.util';
 
 type RouteResponse = ReturnType<typeof jsonResponse>;
 
+export const NO_MEMBER_DETAIL = 'This action needs a signed-in person: an API key cannot use it.';
 export const SELECT_ONE_LEAD = 'Select one lead.';
 export const SELECT_SOME_LEADS = 'Select at least one lead.';
 
@@ -54,62 +54,44 @@ export const makeFindLead =
 
 export const findLead = makeFindLead((query, variables) => twentyGraphql('person', query, variables));
 
-type ApplyLeadUpdateApi = {
-  hasMemberBehind: () => Promise<boolean>;
-  updateAsUser: (leadId: string, data: Record<string, unknown>) => Promise<void>;
-  writeAsCaller: (
-    leadId: string,
-    data: Record<string, unknown>,
-    updateAsCaller: (leadId: string, payload: Record<string, unknown>) => Promise<void>,
-  ) => Promise<boolean>;
+// Twenty runs a route called with an API key on the app's own token: the
+// key's role never reaches the reads and writes the route makes, so its
+// rights cannot be checked. Every lead route refuses such a call before it
+// reads or writes anything; an API client changes the leads itself, where its
+// role applies and the lead trigger runs the save rules. Only Twenty's
+// "nobody signed in" answer counts as no member; any other failure of that
+// read fails the route.
+const hasMemberBehind = async () => ((await readCallerAccessOrNull())?.workspaceMemberId ?? null) !== null;
+
+export const applyLeadUpdate = async (leadId: string, plan: LeadUpdatePlan) => {
+  if (plan.kind === 'refuse') {
+    return jsonResponse(409, { error: plan.reason });
+  }
+  requireData(
+    await twentyGraphql<{ updateCrmLead: { id: string } | null }>(
+      'person',
+      `mutation UpdateLeadForAction($id: UUID!, $data: CrmLeadUpdateInput!) {
+        updateCrmLead(id: $id, data: $data) { id }
+      }`,
+      { id: leadId, data: plan.data },
+    ),
+    'Update the lead',
+  );
+
+  return jsonResponse(200, { leadId });
 };
-
-// Always written with the caller's token, so Twenty checks their update right
-// and row rule. A member's write lets the lead trigger run the save rules, as
-// for an edit on the page. A request with no member behind it (an API key)
-// looks like the app's own write to the trigger, which gives it the computes
-// only, so its write carries the save rules itself.
-export const makeApplyLeadUpdate =
-  (api: ApplyLeadUpdateApi) =>
-  async (leadId: string, plan: LeadUpdatePlan, { notFound }: { notFound: string }) => {
-    if (plan.kind === 'refuse') {
-      return jsonResponse(409, { error: plan.reason });
-    }
-    if (await api.hasMemberBehind()) {
-      await api.updateAsUser(leadId, plan.data);
-
-      return jsonResponse(200, { leadId });
-    }
-    const written = await api.writeAsCaller(leadId, plan.data, api.updateAsUser);
-
-    return written ? jsonResponse(200, { leadId }) : jsonResponse(404, { error: notFound });
-  };
-
-export const applyLeadUpdate = makeApplyLeadUpdate({
-  // An API key is told apart from an outage: only Twenty's "nobody signed in"
-  // answer counts as no member; any other failure of the read fails the route.
-  hasMemberBehind: async () => ((await readCallerAccessOrNull())?.workspaceMemberId ?? null) !== null,
-  updateAsUser: async (leadId, data) => {
-    requireData(
-      await twentyGraphql<{ updateCrmLead: { id: string } | null }>(
-        'person',
-        `mutation UpdateLeadForAction($id: UUID!, $data: CrmLeadUpdateInput!) {
-          updateCrmLead(id: $id, data: $data) { id }
-        }`,
-        { id: leadId, data },
-      ),
-      'Update the lead',
-    );
-  },
-  writeAsCaller: writeLeadAsCaller,
-});
 
 // A read or write the user's role does not allow answers 409 with a plain sentence; any other failure 500.
 export const makeLeadRouteErrors =
-  (readLocale: () => Promise<string>) =>
+  (readLocale: () => Promise<string>, memberBehind: () => Promise<boolean>) =>
   (handler: (payload: RoutePayload) => Promise<RouteResponse>) =>
   async (payload: RoutePayload) => {
     try {
+      if (!(await memberBehind())) {
+        const locale = await readLocale().catch(() => 'en');
+
+        return jsonResponse(409, { error: translate(locale, NOT_ALLOWED_MESSAGE), detail: translate(locale, NO_MEMBER_DETAIL) });
+      }
       return await handler(payload);
     } catch (error) {
       if (error instanceof GraphqlForbiddenError) {
@@ -120,14 +102,15 @@ export const makeLeadRouteErrors =
     }
   };
 
-export const withLeadRouteErrors = makeLeadRouteErrors(readUserLocale);
+export const withLeadRouteErrors = makeLeadRouteErrors(readUserLocale, hasMemberBehind);
 
 // A route that answers its result with 200. A refusal answers with its status
 // and its text in the user's language; a role refusal and any other failure
 // as every lead route does.
 export const makeLeadRouteHandler =
-  (readLocale: () => Promise<string>) => (run: (body: Record<string, unknown>) => Promise<Record<string, unknown>>) =>
-    makeLeadRouteErrors(readLocale)(async (payload) => {
+  (readLocale: () => Promise<string>, memberBehind: () => Promise<boolean>) =>
+  (run: (body: Record<string, unknown>) => Promise<Record<string, unknown>>) =>
+    makeLeadRouteErrors(readLocale, memberBehind)(async (payload) => {
       try {
         return jsonResponse(200, await run(readBody(payload)));
       } catch (error) {
@@ -143,7 +126,7 @@ export const makeLeadRouteHandler =
       }
     });
 
-export const leadRouteHandler = makeLeadRouteHandler(readUserLocale);
+export const leadRouteHandler = makeLeadRouteHandler(readUserLocale, hasMemberBehind);
 
 // In the order given. A lead the user's row rule hides counts as not found,
 // and the whole action stops: acting on part of a selection would surprise.
