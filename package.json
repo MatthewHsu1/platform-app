@@ -1,6 +1,6 @@
 {
   "name": "platform",
-  "version": "2.4.0-dev.27",
+  "version": "2.4.0",
   "license": "MIT",
   "engines": {
     "node": "^24.5.0",
