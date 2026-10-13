@@ -1,0 +1,31 @@
+import { type MoveType } from 'src/stock/types/move-type.type';
+import { type PickingState } from 'src/stock/types/picking-state.type';
+import { type PickingTypeCode } from 'src/stock/types/picking-type-code.type';
+import { type Priority } from 'src/stock/types/priority.type';
+
+export type PickingRow = {
+  id: string;
+  name: string | null;
+  origin: string | null;
+  state: PickingState;
+  priority: Priority;
+  scheduledDate: string | null;
+  dateDeadline: string | null;
+  hasDeadlineIssue: boolean;
+  delayAlertDate: string | null;
+  dateDone: string | null;
+  locationId: string | null;
+  locationDestId: string | null;
+  pickingTypeId: string | null;
+  pickingTypeCode: PickingTypeCode | null;
+  companyId: string | null;
+  personId: string | null;
+  responsibleUserId: string | null;
+  ownerId: string | null;
+  printed: boolean;
+  isLocked: boolean;
+  moveType: MoveType;
+  backorderId: string | null;
+  returnPickingId: string | null;
+  createdAt: string;
+};

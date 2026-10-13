@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "skills": {
+    "develop-app": {
+      "source": "twentyhq/twenty",
+      "ref": "agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/develop-app/SKILL.md",
+      "computedHash": "441f6f1e0ab957183a8c4b7b621768992b15a5993fc3d6b944076cef41c1a661"
+    },
+    "manage-app": {
+      "source": "twentyhq/twenty",
+      "ref": "agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/manage-app/SKILL.md",
+      "computedHash": "2f05f1c6a79e7f435aca5ce84248cc41c4d201b3075509d4dcd01466999016da"
+    },
+    "publish-app": {
+      "source": "twentyhq/twenty",
+      "ref": "agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/publish-app/SKILL.md",
+      "computedHash": "bedc252ba9104bc55fcf062d60d2b42b283efbfe696ef0fb6742e70ffb249811"
+    }
+  }
+}

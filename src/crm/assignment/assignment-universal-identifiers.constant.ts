@@ -1,0 +1,18 @@
+export const ASSIGNMENT_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS = {
+  teamFilter: 'c98fa198-f039-4f93-91e6-2542ddc35d69',
+  memberFilters: '3beb439a-5fc6-40bb-99cd-020dc8bc9777',
+} as const;
+
+export const TEAM_ASSIGNMENT_FILTER_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER = ASSIGNMENT_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS.teamFilter;
+export const MEMBER_ASSIGNMENT_FILTERS_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER = ASSIGNMENT_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS.memberFilters;
+
+export const ASSIGNMENT_DOOR_UNIVERSAL_IDENTIFIERS = {
+  teamRoute: '305a41e4-b14d-487e-98f3-e97664b16817',
+  assignNowRoute: '683f74db-6329-4e50-91c1-30c2190a1caf',
+  tick: '8375e854-ecee-4980-8682-6b7c50b95faf',
+  teamCommand: '11b9554d-9593-4f18-ba73-12e434e6b2af',
+  teamFrontComponent: '840a913d-e697-4bbc-be14-e59c41381fa9',
+} as const;
+
+export const ASSIGN_TEAM_LEADS_ROUTE_PATH = '/crm/team/assign-leads';
+export const ASSIGN_NOW_ROUTE_PATH = '/crm/assignment/assign-now';

@@ -1,0 +1,22 @@
+export type QuantRow = {
+  id: string;
+  name: string | null;
+  productId: string;
+  locationId: string;
+  ownerId: string | null;
+  lotId: string | null;
+  packageId: string | null;
+  quantity: number;
+  reservedQuantity: number;
+  availableQuantity: number | null;
+  inDate: string | null;
+  quantKey: string | null;
+  version: number;
+  inventoryQuantity: number | null;
+  inventoryDiffQuantity: number | null;
+  inventoryDate: string | null;
+  inventoryQuantitySet: boolean;
+  isOutdated: boolean;
+  lastCountDate: string | null;
+  assignedUserId: string | null;
+};
