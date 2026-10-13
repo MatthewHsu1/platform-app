@@ -6,7 +6,6 @@ import {
   manyToOneField,
   numberField,
   oneToManyField,
-  printoutsField,
   textField,
 } from 'src/shared/fields';
 import {
@@ -59,7 +58,6 @@ export default defineObject({
       targetFieldUniversalIdentifier: RELATION_IDS.stockLocationStockLots,
     }),
     appWritten(numberField(FIELD_IDS.productQty, 'productQty', 'On Hand Quantity', 'IconBox')),
-    printoutsField(FIELD_IDS.printouts),
     oneToManyField({
       universalIdentifier: FIELD_IDS.quants,
       name: 'quants',

@@ -1,6 +1,6 @@
 import { defineObject, FieldType, OnDeleteAction, STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from 'twenty-sdk/define';
 
-import { appWritten, booleanField, manyToOneField, oneToManyField, printoutsField, selectField } from 'src/shared/fields';
+import { appWritten, booleanField, manyToOneField, oneToManyField, selectField } from 'src/shared/fields';
 import { BATCH_STATE } from 'src/stock-picking-batch/stock-picking-batch-options.constant';
 import {
   STOCK_PICKING_BATCH_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
@@ -82,6 +82,5 @@ export default defineObject({
       targetObjectUniversalIdentifier: STOCK_PICKING_OBJECT_UNIVERSAL_IDENTIFIER,
       targetFieldUniversalIdentifier: INVERSE_IDS.pickingBatch,
     }),
-    printoutsField(FIELD_IDS.printouts),
   ],
 });

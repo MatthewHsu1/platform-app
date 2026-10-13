@@ -14,7 +14,6 @@ import {
   manyToOneField,
   numberField,
   oneToManyField,
-  printoutsField,
   selectField,
   textField,
 } from 'src/shared/fields';
@@ -300,6 +299,5 @@ export default defineObject({
       targetObjectUniversalIdentifier: STOCK_MOVE_LINE_OBJECT_UNIVERSAL_IDENTIFIER,
       targetFieldUniversalIdentifier: STOCK_MOVE_LINE_FIELD_UNIVERSAL_IDENTIFIERS.move,
     }),
-    printoutsField(FIELD_IDS.printouts),
   ],
 });

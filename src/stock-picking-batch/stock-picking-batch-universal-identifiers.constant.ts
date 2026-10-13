@@ -8,7 +8,6 @@ export const STOCK_PICKING_BATCH_FIELD_UNIVERSAL_IDENTIFIERS = {
   scheduledDate: '517659a6-b47b-4855-8a85-a923397d918a',
   isWave: 'e834c854-88d5-4a9b-bb10-eda59eda6b22',
   pickings: '6e333f0a-9018-4fe0-a29d-7b08e3fb3ebe',
-  printouts: 'be624fa6-7565-4a31-b2e6-d8fa496d1ad5',
 } as const;
 // Fields this module adds to objects of other modules, and the inverse lists.
 export const STOCK_PICKING_BATCH_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS = {

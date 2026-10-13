@@ -45,7 +45,7 @@ export const MOVE_FIELDS = {
 } satisfies FieldMap<
   | 'reference' | 'product' | 'productUomQty' | 'quantity' | 'productUom' | 'state' | 'picked' | 'location'
   | 'locationDest' | 'locationFinal' | 'date' | 'dateDeadline' | 'pickingType' | 'picking' | 'restrictPartner'
-  | 'procureMethod' | 'rule' | 'moveLines' | 'moveOrigs' | 'moveDests' | 'printouts'
+  | 'procureMethod' | 'rule' | 'moveLines' | 'moveOrigs' | 'moveDests'
 >;
 
 export const MOVE_LINE_FIELDS = {
@@ -87,12 +87,11 @@ export const PRODUCT_TEMPLATE_STOCK_FIELDS = {
   virtualAvailable: CORE.productTemplateVirtualAvailable,
   incomingQty: CORE.productTemplateIncomingQty,
   outgoingQty: CORE.productTemplateOutgoingQty,
-  printouts: TRACKING.templatePrintouts,
 } satisfies FieldMap<
   | 'isStorable' | 'tracking' | 'serialPrefixFormat' | 'responsible' | 'routes' | 'saleDelay' | 'descriptionPicking'
   | 'descriptionPickingin' | 'descriptionPickingout' | 'propertyStockProduction' | 'propertyStockInventory'
   | 'useExpirationDate' | 'expirationTime' | 'useTime' | 'removalTime' | 'alertTime' | 'qtyAvailable'
-  | 'virtualAvailable' | 'incomingQty' | 'outgoingQty' | 'printouts'
+  | 'virtualAvailable' | 'incomingQty' | 'outgoingQty'
 >;
 
 export const PRODUCT_PRODUCT_STOCK_FIELDS = {
@@ -106,15 +105,10 @@ export const PRODUCT_PRODUCT_STOCK_FIELDS = {
   orderpoints: ORDERPOINT.productProductOrderpoints,
   putawayRules: ROUTING.productProductPutawayRules,
   storageCapacities: ROUTING.productProductStorageCapacities,
-  printouts: TRACKING.variantPrintouts,
 } satisfies FieldMap<
   | 'qtyAvailable' | 'freeQty' | 'incomingQty' | 'outgoingQty' | 'virtualAvailable' | 'stockQuants' | 'stockLots'
-  | 'orderpoints' | 'putawayRules' | 'storageCapacities' | 'printouts'
+  | 'orderpoints' | 'putawayRules' | 'storageCapacities'
 >;
-
-export const PRODUCT_UOM_STOCK_FIELDS = {
-  printouts: CORE.productUomPrintouts,
-} satisfies FieldMap<'printouts'>;
 
 export const LOCATION_FIELDS = {
   ...STOCK_LOCATION_FIELD_UNIVERSAL_IDENTIFIERS,
@@ -124,7 +118,7 @@ export const LOCATION_FIELDS = {
 } satisfies FieldMap<
   | 'name' | 'completeName' | 'location' | 'usage' | 'warehouse' | 'removalStrategy' | 'storageCategory'
   | 'cyclicInventoryFrequency' | 'nextInventoryDate' | 'lastInventoryDate' | 'barcode' | 'replenishLocation'
-  | 'quants' | 'children' | 'putawayRules' | 'printouts' | 'active'
+  | 'quants' | 'children' | 'putawayRules' | 'active'
 >;
 
 export const WAREHOUSE_FIELDS = {
@@ -166,7 +160,7 @@ export const PICKING_TYPE_FIELDS = {
   | 'autoPrintReceptionReportLabels' | 'autoPrintPackages' | 'autoPrintPackageLabel' | 'packageLabelToPrint'
   | 'autoBatch' | 'batchGroupByPartner' | 'batchGroupByDestination' | 'batchGroupBySrcLoc' | 'batchGroupByDestLoc'
   | 'waveGroupByProduct' | 'waveGroupByCategory' | 'waveCategories' | 'waveGroupByLocation' | 'waveLocations'
-  | 'batchMaxLines' | 'batchMaxPickings' | 'batchAutoConfirm' | 'pickings' | 'sequence' | 'active' | 'barcode' | 'printouts'
+  | 'batchMaxLines' | 'batchMaxPickings' | 'batchAutoConfirm' | 'pickings' | 'sequence' | 'active' | 'barcode'
 >;
 
 export const LOT_FIELDS = {
@@ -178,16 +172,16 @@ export const LOT_FIELDS = {
   productExpiryAlert: EXPIRY.lotProductExpiryAlert,
 } satisfies FieldMap<
   | 'name' | 'product' | 'ref' | 'location' | 'productQty' | 'expirationDate' | 'useDate' | 'removalDate'
-  | 'alertDate' | 'productExpiryAlert' | 'quants' | 'note' | 'printouts'
+  | 'alertDate' | 'productExpiryAlert' | 'quants' | 'note'
 >;
 
 export const PACKAGE_FIELDS = STOCK_PACKAGE_FIELD_UNIVERSAL_IDENTIFIERS satisfies FieldMap<
   | 'name' | 'completeName' | 'packageType' | 'location' | 'parentPackage' | 'packageDest' | 'packDate'
-  | 'shippingWeight' | 'childPackages' | 'packageHistories' | 'printouts'
+  | 'shippingWeight' | 'childPackages' | 'packageHistories'
 >;
 
 export const BATCH_FIELDS = STOCK_PICKING_BATCH_FIELD_UNIVERSAL_IDENTIFIERS satisfies FieldMap<
-  'name' | 'description' | 'responsible' | 'pickingType' | 'state' | 'scheduledDate' | 'isWave' | 'pickings' | 'printouts'
+  'name' | 'description' | 'responsible' | 'pickingType' | 'state' | 'scheduledDate' | 'isWave' | 'pickings'
 >;
 
 export const ORDERPOINT_FIELDS = STOCK_WAREHOUSE_ORDERPOINT_FIELD_UNIVERSAL_IDENTIFIERS satisfies FieldMap<

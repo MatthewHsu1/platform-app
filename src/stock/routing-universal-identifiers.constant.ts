@@ -50,7 +50,6 @@ export const STOCK_PACKAGE_TYPE_FIELD_UNIVERSAL_IDENTIFIERS = {
   barcode: 'b5dc6f4c-eb5f-449c-a227-c956f328db5d',
   packageUse: '2d156415-5527-4906-8382-eae30c4afb79',
   routes: '865c4719-c567-453d-afd7-22afbf5006db',
-  printouts: '2033e3e5-c3bc-4f15-bb1b-108b38b8ef19',
   uoms: '6ec3a8ca-6609-46aa-8caf-bd367a99b394',
   storageCategoryCapacities: '5bcbec34-4b65-4419-ac28-5ed75c3e50e3',
   putawayRules: '98f943dd-d90d-480f-a32e-c39be0c02535',

@@ -6,7 +6,6 @@ import {
   manyToOneField,
   numberField,
   oneToManyField,
-  printoutsField,
   selectField,
   textField,
 } from 'src/shared/fields';
@@ -58,7 +57,6 @@ export default defineObject({
       { value: 'DISPOSABLE', label: 'Disposable Box', color: 'gray' },
       { value: 'REUSABLE', label: 'Reusable Box (totes)', color: 'green' },
     ]),
-    printoutsField(FIELD_IDS.printouts),
     oneToManyField({
       universalIdentifier: FIELD_IDS.uoms,
       name: 'uoms',

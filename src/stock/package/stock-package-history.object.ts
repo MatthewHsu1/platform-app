@@ -1,6 +1,6 @@
 import { defineObject, OnDeleteAction } from 'twenty-sdk/define';
 
-import { appTextField, appWritten, manyToOneField, oneToManyField, printoutsField } from 'src/shared/fields';
+import { appTextField, appWritten, manyToOneField, oneToManyField } from 'src/shared/fields';
 import {
   STOCK_LOCATION_OBJECT_UNIVERSAL_IDENTIFIER,
   STOCK_MOVE_LINE_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -105,7 +105,6 @@ export default defineObject({
         junctionTargetFieldUniversalIdentifier: LINK_FIELD_IDS.stockPicking,
       }),
     ),
-    printoutsField(HISTORY_FIELD_IDS.printouts),
     oneToManyField({
       universalIdentifier: HISTORY_FIELD_IDS.moveLines,
       name: 'moveLines',
