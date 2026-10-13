@@ -87,7 +87,7 @@ All notable changes to this application are documented in this file.
 
 ## 2.0.0
 
-- The app is now "Platform", our generic business app. It replaces the Spirit app (same universal id).
+- The app is now "Platform", our generic business app. It replaces the previous 1.x app (same universal id).
 - CRM: Lead (`crmLead`, lead and opportunity in one record), Lost reason, and the buttons
   Convert to opportunity, Mark won, Mark lost and Restore.
 - UTM: Source, Medium and Campaign, with default rows.
