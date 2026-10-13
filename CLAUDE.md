@@ -35,8 +35,11 @@ Twenty app (twenty-sdk 2.45.0, same as the server). Read `README.md` first. Desi
   version; the website follows Twenty's main branch. Paths are from this folder:
   - `../twenty/packages/twenty-docs/developers/extend/apps/`: the app docs, one folder per
     topic (data, logic, layout, config, operations). Read the page for the piece you add.
-  - `../twenty/packages/twenty-agent-skills/skills/develop-app/SKILL.md`: Twenty's own
-    workflow for changing an app.
+  - Twenty's own skills are installed in this repo (`.agents/skills/`: `develop-app`,
+    `manage-app`, `publish-app`). Where they say to sync with `yarn twenty apply` or
+    `yarn twenty dev`, this file wins: `apply` and `dev` skip the install hooks, `apply`
+    writes `package.json`'s version over the installed one, and on this app's size they
+    are as slow as a publish. Check live with `app:publish --private` + `app:install`.
   - `../twenty/packages/create-twenty-app/src/constants/template/AGENTS.md`: Twenty's
     pitfalls for every app. Its `yarn twenty dev:add` writes to `src/objects/` and the like;
     move the file into its module folder.
