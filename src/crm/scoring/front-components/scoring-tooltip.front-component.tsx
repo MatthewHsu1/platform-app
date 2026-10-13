@@ -27,6 +27,8 @@ export const SCORING_FACTORS_TEXTS = [
   msg('Exploration'),
   msg('Consulting'),
   msg('Belgium'),
+  msg('Your role does not allow this.'),
+  msg('This action needs a signed-in person: an API key cannot use it.'),
 ];
 
 type Explanation = { probability: number; teamName: string | null; usesSample: boolean; top: TooltipEntry[]; low: TooltipEntry[] };

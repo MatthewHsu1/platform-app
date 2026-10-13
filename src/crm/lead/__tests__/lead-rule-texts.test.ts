@@ -97,7 +97,7 @@ describe('lead rule texts', () => {
   });
 
   it('lists every answer of the scoring explanation, and the catalog holds each', () => {
-    const texts = Object.values(SCORING_FACTORS_MESSAGES);
+    const texts = [...Object.values(SCORING_FACTORS_MESSAGES), NOT_ALLOWED_MESSAGE, NO_MEMBER_DETAIL];
 
     expect(SCORING_FACTORS_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
     expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
