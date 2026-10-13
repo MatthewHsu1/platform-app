@@ -3,6 +3,7 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import { msg, useLocale, useSelectedObjectMetadata, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 import { Button } from 'twenty-ui/primitives/input';
 
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { describeRouteError } from 'src/shared/describe-route-error';
 import { DataTable } from 'src/shared/front-components/data-table';
 import { closePopUp, ErrorText, usePopUpCall } from 'src/shared/front-components/pop-up';
@@ -120,10 +121,11 @@ export const ReceptionReport = ({ pickingIds }: { pickingIds?: string[] }) => {
     }
   };
 
-  if (ids.length === 0) {
+  const selectionMessage = checkSelection(ids.length, 'many');
+  if (selectionMessage !== null) {
     return (
       <div style={styles.panel}>
-        <div>{t('Select all is not supported here. Tick the records you want instead.')}</div>
+        <div>{t(selectionMessage)}</div>
       </div>
     );
   }

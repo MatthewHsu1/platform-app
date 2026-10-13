@@ -4,6 +4,7 @@ import { Trans, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-comp
 import { Button, Input } from 'twenty-ui/primitives/input';
 
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { localToday } from 'src/shared/utils/local-today.util';
 import { readWorkspaceMembers } from 'src/shared/front-components/read-workspace-members';
 import { readStockStyles } from 'src/stock/stock-theme';
@@ -42,11 +43,12 @@ const RequestCount = () => {
     }
   };
 
-  if (selectedIds.length === 0) {
+  const selectionMessage = checkSelection(selectedIds.length, 'many');
+  if (selectionMessage !== null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

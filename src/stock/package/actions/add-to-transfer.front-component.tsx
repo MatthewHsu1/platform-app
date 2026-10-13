@@ -9,6 +9,7 @@ import {
   ADD_TO_TRANSFER_ROUTE_PATH,
 } from 'src/stock/package/actions/package-actions-universal-identifiers.constant';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { readStockStyles } from 'src/stock/stock-theme';
 import { ChoiceSelect, FieldRow, PopupPanel } from 'src/stock/tracking-controls';
@@ -69,11 +70,12 @@ const AddToTransfer = () => {
       });
   });
 
-  if (packageIds.length === 0) {
+  const selectionMessage = checkSelection(packageIds.length, 'many');
+  if (selectionMessage !== null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

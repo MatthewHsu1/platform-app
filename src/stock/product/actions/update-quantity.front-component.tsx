@@ -3,6 +3,7 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import { Trans, useSelectedObjectMetadata, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 import { Button, Input } from 'twenty-ui/primitives/input';
 
+import { selectOneRecord } from 'src/shared/front-components/selection-check';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
 import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { LOCATION_USAGE, PRODUCT_TRACKING } from 'src/stock/stock-options.constant';
@@ -47,7 +48,7 @@ const parseCounted = (text: string) => {
 const UpdateQuantity = () => {
   const { t } = useTranslate();
   const styles = readStockStyles();
-  const [recordId] = useSelectedRecordIds();
+  const { id: recordId, message: selectionMessage } = selectOneRecord(useSelectedRecordIds());
   const objectMetadata = useSelectedObjectMetadata();
   const { busy, error, setError, call } = usePopUpCall(t('The quantities could not be updated.'));
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -117,7 +118,7 @@ const UpdateQuantity = () => {
       );
     };
 
-    if (recordId !== undefined) {
+    if (recordId !== null) {
       load().catch(() => setError(t('The stock of this product could not be read.')));
     }
   });
@@ -177,11 +178,11 @@ const UpdateQuantity = () => {
     return tracking !== undefined && tracking !== null && tracking !== PRODUCT_TRACKING.NONE;
   };
 
-  if (recordId === undefined) {
+  if (recordId === null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

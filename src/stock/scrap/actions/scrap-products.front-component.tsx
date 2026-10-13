@@ -3,6 +3,7 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import { msg, Trans, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 import { Button, Input } from 'twenty-ui/primitives/input';
 
+import { selectOneRecord } from 'src/shared/front-components/selection-check';
 import { describeRouteError } from 'src/shared/describe-route-error';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
 import { InsufficientQuantityPanel, readRefusedScrapId } from 'src/stock/scrap/actions/scrap-panels';
@@ -33,8 +34,7 @@ const INSUFFICIENT_TEXT: InsufficientQuantityText = {
 const ScrapProducts = () => {
   const { t } = useTranslate();
   const styles = readStockStyles();
-  const selectedIds = useSelectedRecordIds();
-  const pickingId = selectedIds[0] ?? null;
+  const { id: pickingId, message: selectionMessage } = selectOneRecord(useSelectedRecordIds());
   const fallbackError = t('The scrap could not be validated.');
   const { busy: calling, error, setError, call } = usePopUpCall(fallbackError);
   const [creating, setCreating] = useState(false);
@@ -140,7 +140,7 @@ const ScrapProducts = () => {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

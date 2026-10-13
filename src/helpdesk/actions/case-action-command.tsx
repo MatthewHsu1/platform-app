@@ -1,5 +1,6 @@
 import { Command, enqueueSnackbar, t, useSelectedRecordIds } from 'twenty-sdk/front-component';
 
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { describeRouteError } from 'src/shared/describe-route-error';
 import { postAppRoute } from 'src/shared/front-components/post-app-route';
 
@@ -21,12 +22,9 @@ export const makeCaseActionCommand = ({
     const caseIds = useSelectedRecordIds();
 
     const execute = async () => {
-      // "Select all" hands the command no ids.
-      if (caseIds.length === 0) {
-        await enqueueSnackbar({
-          message: t('Select all is not supported here. Tick the records you want instead.'),
-          variant: 'error',
-        });
+      const selectionMessage = checkSelection(caseIds.length, 'many');
+      if (selectionMessage !== null) {
+        await enqueueSnackbar({ message: t(selectionMessage), variant: 'error' });
         return;
       }
 

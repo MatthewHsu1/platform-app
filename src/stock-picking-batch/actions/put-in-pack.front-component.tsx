@@ -6,6 +6,7 @@ import {
   STOCK_PICKING_BATCH_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS,
   STOCK_PICKING_BATCH_ROUTE_PATHS,
 } from 'src/stock-picking-batch/stock-picking-batch-universal-identifiers.constant';
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { PUT_IN_PACK_TEXT } from 'src/stock/package/actions/put-in-pack.front-component';
 import { PutInPackFlow } from 'src/stock/package/actions/put-in-pack-flow';
 import { ClosablePanel, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
@@ -61,8 +62,10 @@ const BatchPutInPack = () => {
   const { error, call } = usePopUpCall(t(PUT_IN_PACK_TEXT.failed));
   const [moveLineIds, setMoveLineIds] = useState<string[] | null>(null);
 
+  const selectionMessage = checkSelection(selectedIds.length, 'many');
+
   useRunOnce(() => {
-    if (selectedIds.length > 0) {
+    if (selectionMessage === null) {
       void call<{ moveLineIds: string[] }>(STOCK_PICKING_BATCH_ROUTE_PATHS.putInPackLines, { batchIds: selectedIds }).then((result) => {
         if (result !== null) {
           setMoveLineIds(result.moveLineIds);
@@ -71,8 +74,8 @@ const BatchPutInPack = () => {
     }
   });
 
-  if (selectedIds.length === 0) {
-    return <ClosablePanel message={null} error={t(PUT_IN_PACK_TEXT.selectAll)} busy={false} closeLabel={t(PUT_IN_PACK_TEXT.close)} />;
+  if (selectionMessage !== null) {
+    return <ClosablePanel message={null} error={t(selectionMessage)} busy={false} closeLabel={t(PUT_IN_PACK_TEXT.close)} />;
   }
   if (moveLineIds === null) {
     return (

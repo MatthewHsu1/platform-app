@@ -7,7 +7,6 @@ export type PutInPackText = {
   failed: MessageDescriptor;
   packed: MessageDescriptor;
   choicesUnread: MessageDescriptor;
-  selectAll: MessageDescriptor;
   close: MessageDescriptor;
   destinationTitle: MessageDescriptor;
   destinationExplanation: MessageDescriptor;

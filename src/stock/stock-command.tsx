@@ -1,5 +1,6 @@
 import { Command, enqueueSnackbar, t, useSelectedRecordIds } from 'twenty-sdk/front-component';
 
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { describeRouteError } from 'src/shared/describe-route-error';
 import { postAppRoute } from 'src/shared/front-components/post-app-route';
 
@@ -26,12 +27,9 @@ export const makeStockCommand = ({
     const selectedRecordIds = useSelectedRecordIds();
 
     const execute = async () => {
-      // "Select all" hands the command no ids, and the command only shows with a selection.
-      if (selectedRecordIds.length === 0) {
-        await enqueueSnackbar({
-          message: t('Select all is not supported here. Tick the records you want instead.'),
-          variant: 'error',
-        });
+      const selectionMessage = checkSelection(selectedRecordIds.length, 'many');
+      if (selectionMessage !== null) {
+        await enqueueSnackbar({ message: t(selectionMessage), variant: 'error' });
         return;
       }
 

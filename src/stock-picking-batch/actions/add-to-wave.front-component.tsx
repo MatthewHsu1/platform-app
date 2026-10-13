@@ -10,6 +10,7 @@ import {
   STOCK_PICKING_BATCH_ROUTE_PATHS,
 } from 'src/stock-picking-batch/stock-picking-batch-universal-identifiers.constant';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { readWorkspaceMembers } from 'src/shared/front-components/read-workspace-members';
 import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { type WorkspaceMemberChoice } from 'src/shared/front-components/types/workspace-member-choice.type';
@@ -105,11 +106,12 @@ const AddToWave = () => {
       .catch(() => setError(t('The users could not be read.')));
   });
 
-  if (selectedIds.length === 0) {
+  const selectionMessage = checkSelection(selectedIds.length, 'many');
+  if (selectionMessage !== null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

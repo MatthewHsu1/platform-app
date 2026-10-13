@@ -1,5 +1,6 @@
 import { AppPath, Command, enqueueSnackbar, msg, navigate, t, useSelectedRecordIds } from 'twenty-sdk/front-component';
 
+import { selectOneRecord } from 'src/shared/front-components/selection-check';
 import { describeRouteError } from 'src/shared/describe-route-error';
 import { postAppRoute } from 'src/shared/front-components/post-app-route';
 import { STATUS_TARGETS_ROUTE_PATH } from 'src/stock/stock-reports-universal-identifiers.constant';
@@ -8,7 +9,6 @@ import { type StatusTargetsAnswer } from 'src/stock/utils/types/status-targets-a
 
 // The extractor reads only entry files: the Returns button lists these for the catalog.
 export const STATUS_BUTTON_TEXTS = {
-  selectAll: msg('Select all is not supported here. Tick the records you want instead.'),
   nothing: msg('Nothing to show.'),
   several: msg('{count} records: see the tables on this page.'),
   failed: msg('Could not open the list.'),
@@ -18,11 +18,11 @@ export const STATUS_BUTTON_TEXTS = {
 // of chosen records, so several only say how many there are.
 export const makeStatusButton = (button: StatusButton) => {
   const StatusButtonCommand = () => {
-    const [recordId] = useSelectedRecordIds();
+    const { id: recordId, message: selectionMessage } = selectOneRecord(useSelectedRecordIds());
 
     const execute = async () => {
-      if (recordId === undefined) {
-        await enqueueSnackbar({ message: t(STATUS_BUTTON_TEXTS.selectAll), variant: 'error' });
+      if (recordId === null) {
+        await enqueueSnackbar({ message: t(selectionMessage), variant: 'error' });
         return;
       }
       try {

@@ -4,6 +4,7 @@ import { msg, useLocale, useSelectedRecordIds, useTranslate } from 'twenty-sdk/f
 import { Button, Input } from 'twenty-ui/primitives/input';
 import { themeCssVariables } from 'twenty-ui/theme';
 
+import { selectOneRecord } from 'src/shared/front-components/selection-check';
 import { type BasedOn } from 'src/stock/orderpoint/types/based-on.type';
 import { type ReplenishmentInfo } from 'src/stock/orderpoint/types/replenishment-info.type';
 import { type ResupplyOption } from 'src/stock/orderpoint/types/resupply-option.type';
@@ -144,7 +145,7 @@ const ReplenishmentInformation = () => {
   const locale = useLocale();
   const styles = readStockStyles();
   const theme = themeCssVariables;
-  const [orderpointId] = useSelectedRecordIds();
+  const { id: orderpointId, message: selectionMessage } = selectOneRecord(useSelectedRecordIds());
   const { busy, error, call } = usePopUpCall(t('Could not read the replenishment information.'));
   const [info, setInfo] = useState<ReplenishmentInfo | null>(null);
   const [basedOn, setBasedOn] = useState<BasedOn>('ONE_MONTH');
@@ -156,7 +157,7 @@ const ReplenishmentInformation = () => {
   const latestReload = useRef(0);
 
   useRunOnce(() => {
-    if (orderpointId === undefined) {
+    if (orderpointId === null) {
       return;
     }
     void call<ReplenishmentInfo>(ORDERPOINT_ROUTE_PATHS.replenishmentInfo, { orderpointId }).then((next) => {
@@ -240,11 +241,11 @@ const ReplenishmentInformation = () => {
     }
   };
 
-  if (orderpointId === undefined) {
+  if (orderpointId === null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

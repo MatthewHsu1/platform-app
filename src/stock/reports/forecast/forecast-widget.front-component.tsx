@@ -1,6 +1,7 @@
 import { defineFrontComponent } from 'twenty-sdk/define';
 import { msg, useSelectedObjectMetadata, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 
+import { SELECTION_PROBLEM_TEXT, selectOneRecord } from 'src/shared/front-components/selection-check';
 import { ErrorText } from 'src/shared/front-components/pop-up';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { ForecastView } from 'src/stock/reports/forecast/forecast-view';
@@ -65,7 +66,7 @@ const ForecastWidget = () => {
   const styles = readPopUpStyles();
   const selectedIds = useSelectedRecordIds();
   const requestKey = REQUEST_KEY_BY_OBJECT[useSelectedObjectMetadata()?.nameSingular ?? ''];
-  const recordId = selectedIds.length === 1 ? selectedIds[0] : null;
+  const { id: recordId, message: selectionMessage } = selectOneRecord(selectedIds);
   const report = useForecastReport({
     requestKey,
     recordId,
@@ -76,7 +77,7 @@ const ForecastWidget = () => {
   if (recordId === null || requestKey === undefined) {
     return (
       <div style={styles.panel}>
-        <div>{t('Select all is not supported here. Tick the records you want instead.')}</div>
+        <div>{t(selectionMessage ?? SELECTION_PROBLEM_TEXT.none)}</div>
       </div>
     );
   }

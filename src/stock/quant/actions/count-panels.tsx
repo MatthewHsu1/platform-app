@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 import { Button, Input } from 'twenty-ui/primitives/input';
 
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
 import { toIsoDateTime, toLocalDateTime } from 'src/shared/front-components/utils/local-date-time.util';
 import { textOrNull } from 'src/shared/utils/text-or-null.util';
@@ -155,7 +156,7 @@ export const makeApplyCountsPopUp = ({ askName, text }: { askName: boolean; text
     const { busy, error, call } = usePopUpCall(t(text.failed));
     const [request, setRequest] = useState<ApplyRequest | null>(null);
     const [conflict, setConflict] = useState<CountQuantView[] | null>(null);
-    const selectAll = selectedIds.length === 0;
+    const selectionMessage = checkSelection(selectedIds.length, 'many');
 
     // The request is kept only once the route answered, so a refusal leaves the name form on screen with its error.
     const apply = async (next: ApplyRequest, conflictAnswer: ConflictAnswer | null) => {
@@ -179,13 +180,13 @@ export const makeApplyCountsPopUp = ({ askName, text }: { askName: boolean; text
     };
 
     useRunOnce(() => {
-      if (!askName && !selectAll) {
+      if (!askName && selectionMessage === null) {
         void apply({ inventoryName: null, accountingDate: null }, null);
       }
     });
 
-    if (selectAll) {
-      return <ClosablePanel message={null} error={t(text.selectAll)} busy={false} closeLabel={t(text.close)} />;
+    if (selectionMessage !== null) {
+      return <ClosablePanel message={null} error={t(selectionMessage)} busy={false} closeLabel={t(text.close)} />;
     }
     if (conflict !== null && request !== null) {
       return (

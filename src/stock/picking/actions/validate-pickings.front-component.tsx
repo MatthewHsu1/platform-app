@@ -26,7 +26,6 @@ const TEXT: ValidateText = {
   validatedWithBackorders: msg('Validated. Backorders created: {count}.'),
   failed: msg('Could not validate the transfer.'),
   discardFailed: msg('Could not remove the expired lines.'),
-  emptySelection: msg('Select at least one transfer.'),
   validating: msg('Validating…'),
   close: msg('Close'),
   expiredTitle: msg('Confirmation'),

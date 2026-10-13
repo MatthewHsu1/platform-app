@@ -2,6 +2,7 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import { msg, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 import { Callout } from 'twenty-ui/components';
 
+import { selectOneRecord } from 'src/shared/front-components/selection-check';
 import { ErrorText } from 'src/shared/front-components/pop-up';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { FORECAST_TEXT } from 'src/stock/reports/forecast/forecast-widget.front-component';
@@ -45,7 +46,7 @@ const ForecastProductWidget = () => {
   const { t } = useTranslate();
   const styles = readPopUpStyles();
   const selectedIds = useSelectedRecordIds();
-  const recordId = selectedIds.length === 1 ? selectedIds[0] : null;
+  const { id: recordId, message: selectionMessage } = selectOneRecord(selectedIds);
   const report = useForecastReport({
     requestKey: 'productTemplateId',
     recordId,
@@ -56,7 +57,7 @@ const ForecastProductWidget = () => {
   if (recordId === null) {
     return (
       <div style={styles.panel}>
-        <Callout variant="neutral" title={t('Select all is not supported here. Tick the records you want instead.')} />
+        <Callout variant="neutral" title={t(selectionMessage)} />
       </div>
     );
   }
