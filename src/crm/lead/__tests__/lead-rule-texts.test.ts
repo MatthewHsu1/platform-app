@@ -9,7 +9,7 @@ import {
   SALES_TEAM_RULE_TEXTS,
   UTM_RULE_TEXTS,
 } from 'src/crm/lead/actions/mark-won.front-component';
-import { SELECT_ONE_LEAD, SELECT_SOME_LEADS } from 'src/crm/lead/actions/lead-action-route';
+import { NO_MEMBER_DETAIL, SELECT_ONE_LEAD, SELECT_SOME_LEADS } from 'src/crm/lead/actions/lead-action-route';
 import { LEADS_NOT_FOUND } from 'src/crm/lead/lead-messages.constant';
 import { CONVERT_MESSAGES } from 'src/crm/lead/actions/convert-messages.constant';
 import { CONVERT_TEXTS } from 'src/crm/lead/actions/convert-lead.front-component';
@@ -97,7 +97,7 @@ describe('lead rule texts', () => {
   });
 
   it('lists every answer of the scoring explanation, and the catalog holds each', () => {
-    const texts = Object.values(SCORING_FACTORS_MESSAGES);
+    const texts = [...Object.values(SCORING_FACTORS_MESSAGES), NOT_ALLOWED_MESSAGE, NO_MEMBER_DETAIL];
 
     expect(SCORING_FACTORS_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
     expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
@@ -107,7 +107,7 @@ describe('lead rule texts', () => {
     const listed = MARK_WON_TEXTS.map((descriptor) => descriptor.message);
 
     expect(listed).toEqual(
-      expect.arrayContaining([MARK_WON_NOT_OPPORTUNITY, MARK_WON_ALREADY_WON, MARK_WON_LOST, MARK_WON_NO_STAGE, NOT_ALLOWED_MESSAGE]),
+      expect.arrayContaining([MARK_WON_NOT_OPPORTUNITY, MARK_WON_ALREADY_WON, MARK_WON_LOST, MARK_WON_NO_STAGE, NOT_ALLOWED_MESSAGE, NO_MEMBER_DETAIL]),
     );
     expect(listed.filter((text) => !(text in CATALOG))).toEqual([]);
   });
@@ -123,6 +123,8 @@ describe('lead rule texts', () => {
       RESTORE_NOT_LOST,
       AUTOMATIC_NOT_PENDING,
       AUTOMATIC_ALREADY,
+      NOT_ALLOWED_MESSAGE,
+      NO_MEMBER_DETAIL,
     ];
 
     expect(LEAD_ACTION_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
@@ -130,7 +132,7 @@ describe('lead rule texts', () => {
   });
 
   it('lists every answer and note of the convert buttons, and the catalog holds each', () => {
-    const texts = Object.values(CONVERT_MESSAGES);
+    const texts = [...Object.values(CONVERT_MESSAGES), NOT_ALLOWED_MESSAGE, NO_MEMBER_DETAIL];
 
     expect(CONVERT_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
     expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
@@ -199,5 +201,6 @@ describe('lead rule texts', () => {
 
     expect([...used].filter((text) => !listed.has(text))).toEqual([]);
     expect([...listed].filter((text) => !(text in CATALOG))).toEqual([]);
+    expect([...listed]).toEqual(expect.arrayContaining([NOT_ALLOWED_MESSAGE, NO_MEMBER_DETAIL]));
   });
 });

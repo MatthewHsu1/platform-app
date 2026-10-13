@@ -33,7 +33,11 @@ const handler = async (payload: RoutePayload) => {
 
     await writeApplicationVariables({ CRM_PLS_START_DATE: startDate, CRM_PLS_FIELDS: fields });
 
-    return jsonResponse(200, await rebuildScoring({ plsStartDate: startDate, plsFields: fields }));
+    const outcome = await rebuildScoring({ plsStartDate: startDate, plsFields: fields });
+
+    return outcome.kind === 'held'
+      ? jsonResponse(409, { error: translate(locale, SCORING_MESSAGES.alreadyRunning) })
+      : jsonResponse(200, outcome.result);
   } catch (error) {
     if (error instanceof GraphqlForbiddenError) {
       return notAllowedResponse(locale, error);

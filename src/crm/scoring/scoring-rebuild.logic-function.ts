@@ -11,7 +11,9 @@ const handler = async () => {
     return { skipped: true };
   }
 
-  return rebuildScoring();
+  const outcome = await rebuildScoring();
+
+  return outcome.kind === 'held' ? { skipped: true, reason: 'another rebuild is running' } : outcome.result;
 };
 
 export default defineLogicFunction({

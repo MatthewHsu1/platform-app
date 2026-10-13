@@ -2,17 +2,14 @@ import { type RoutePayload } from 'twenty-sdk/define';
 import { describe, expect, it } from 'vitest';
 
 import { LeadActionError } from 'src/crm/lead/actions/lead-action-error';
-import { makeApplyLeadUpdate, makeFindLead, makeLeadRouteErrors, makeLeadRouteHandler } from 'src/crm/lead/actions/lead-action-route';
-import { makeFakeLeadStore } from 'src/crm/lead/__tests__/fakes/fake-lead-store';
-import { readLeadRow } from 'src/crm/lead/lead-selection';
-import { type StageRow } from 'src/crm/lead/types/stage-row.type';
-import { makeWriteLeadAsCaller } from 'src/crm/lead/write-leads-as-application';
+import { makeFindLead, makeLeadRouteErrors, makeLeadRouteHandler } from 'src/crm/lead/actions/lead-action-route';
 import { jsonResponse } from 'src/shared/route-response';
 import { type GraphqlResponse, requireData } from 'src/shared/twenty-graphql';
 
 const payload = {} as RoutePayload;
-const withErrors = makeLeadRouteErrors(async () => 'en');
-const leadRoute = makeLeadRouteHandler(async () => 'en');
+const memberBehind = async () => true;
+const withErrors = makeLeadRouteErrors(async () => 'en', memberBehind);
+const leadRoute = makeLeadRouteHandler(async () => 'en', memberBehind);
 
 // The answer Twenty gives the clicking user's token when their role lacks the right.
 const refusedForRole: GraphqlResponse<unknown> = {
@@ -20,6 +17,9 @@ const refusedForRole: GraphqlResponse<unknown> = {
   errors: [{ message: 'Permission denied on crmLead', extensions: { code: 'FORBIDDEN', subCode: 'PERMISSION_DENIED' } }],
   caller: 'person',
 };
+
+// What a route answers when nobody is signed in behind the call (an API key).
+const REFUSAL = { error: 'Your role does not allow this.', detail: 'This action needs a signed-in person: an API key cannot use it.' };
 
 describe('lead route errors', () => {
   it("answers 409 with a plain sentence and Twenty's text as detail when the user's role refuses", async () => {
@@ -94,64 +94,65 @@ describe('reading the lead a button works on', () => {
   });
 });
 
-describe('writing the update of a one-lead button', () => {
-  const NOW = '2026-10-09T12:00:00.000Z';
-  const STAGES: StageRow[] = [
-    { id: 'new', name: 'New', sequence: 1, isWon: false, fold: false, rottingThresholdDays: 0, createdAt: '2026-01-01T00:00:00.000Z', teamIds: [] },
-    { id: 'won', name: 'Won', sequence: 50, isWon: true, fold: false, rottingThresholdDays: 0, createdAt: '2026-01-01T00:00:00.000Z', teamIds: [] },
-  ];
-  const pendingLead = () =>
-    readLeadRow({ id: 'l1', createdAt: '2026-09-01T09:00:00.000Z', leadType: 'OPPORTUNITY', wonStatus: 'PENDING', stageId: 'new', probability: 40, dateLastStageUpdate: NOW });
-  const WON = { kind: 'update' as const, data: { stageId: 'won', probability: 100 } };
-  const notFound = { notFound: 'Lead not found.' };
+describe('a lead route called with nobody signed in behind it', () => {
+  // Twenty runs a route called with an API key on the app's own token, so the
+  // key's role never reaches the reads and writes: such a call is refused first.
+  const nobody = async () => false;
 
-  // The caller's token as Twenty treats it: the write lands in the store unless the role refuses it.
-  const setup = ({ member, refused = false }: { member: boolean; refused?: boolean }) => {
-    const store = makeFakeLeadStore({ leads: [pendingLead()], stages: STAGES, now: NOW });
-    const asCaller: { leadId: string; data: Record<string, unknown> }[] = [];
-    const updateAsUser = async (leadId: string, data: Record<string, unknown>) => {
-      if (refused) {
-        requireData(refusedForRole, 'Update the lead');
-      }
-      asCaller.push({ leadId, data });
-      await store.writeApi.updateLeads([leadId], data);
-    };
-    const applyLeadUpdate = makeApplyLeadUpdate({
-      hasMemberBehind: async () => member,
-      updateAsUser,
-      writeAsCaller: makeWriteLeadAsCaller(store.writeApi),
-    });
-
-    return { store, asCaller, applyLeadUpdate };
-  };
-
-  it('closes a lead marked won through an API key on the day it is won, written with the caller\'s token', async () => {
-    const { store, asCaller, applyLeadUpdate } = setup({ member: false });
-
-    const response = await applyLeadUpdate('l1', WON, notFound);
-
-    expect(response.status).toBe(200);
-    expect(asCaller).toHaveLength(1);
-    expect(asCaller[0].data).toMatchObject({ stageId: 'won', probability: 100, wonStatus: 'WON', dateClosed: NOW });
-    expect(store.rows.get('l1')).toMatchObject({ stageId: 'won', probability: 100, wonStatus: 'WON', dateClosed: NOW });
-    expect(store.moves.map((entry) => entry.moves)).toEqual([{ won: 1, lost: 0 }]);
-  });
-
-  it('answers as before and writes nothing when the role behind an API key may not update the lead', async () => {
-    const { store, applyLeadUpdate } = setup({ member: false, refused: true });
-
-    const response = await withErrors(() => applyLeadUpdate('l1', WON, notFound))(payload);
+  it('answers 409 before the route reads or writes anything', async () => {
+    const calls: string[] = [];
+    const response = await makeLeadRouteErrors(async () => 'en', nobody)(async () => {
+      calls.push('route');
+      return jsonResponse(200, {});
+    })(payload);
 
     expect(response.status).toBe(409);
-    expect(store.writes).toEqual([]);
-    expect(store.moves).toEqual([]);
+    expect(JSON.parse(String(response.body))).toEqual(REFUSAL);
+    expect(calls).toEqual([]);
   });
 
-  it("sends a member's write as it is, for the lead trigger to apply the save rules", async () => {
-    const { asCaller, applyLeadUpdate } = setup({ member: true });
+  it('refuses the same way in the routes that answer their result', async () => {
+    const calls: string[] = [];
+    const response = await makeLeadRouteHandler(async () => 'en', nobody)(async () => {
+      calls.push('route');
+      return {};
+    })(payload);
 
-    await applyLeadUpdate('l1', WON, notFound);
+    expect(response.status).toBe(409);
+    expect(JSON.parse(String(response.body))).toEqual(REFUSAL);
+    expect(calls).toEqual([]);
+  });
 
-    expect(asCaller).toEqual([{ leadId: 'l1', data: { stageId: 'won', probability: 100 } }]);
+  it('answers 500, not a refusal, when telling who is calling fails', async () => {
+    const response = await makeLeadRouteErrors(async () => 'en', async () => {
+      throw new Error('Read the signed-in user: connection reset');
+    })(async () => jsonResponse(200, {}))(payload);
+
+    expect(response.status).toBe(500);
+  });
+});
+
+describe('every lead button route called with nobody signed in behind it', () => {
+  // Twenty runs every one of these routes with the clicked button. An API key
+  // calling one directly reaches it on the app's own token, so the key's role
+  // applies to none of its reads and writes: each route must refuse first.
+  it.each([
+    ['mark lost', () => import('src/crm/lead/actions/mark-lost.logic-function')],
+    ['restore', () => import('src/crm/lead/actions/restore-lead.logic-function')],
+    ['use automatic probability', () => import('src/crm/lead/actions/use-automatic-probability.logic-function')],
+    ['convert', () => import('src/crm/lead/actions/convert-lead.logic-function')],
+    ['convert many', () => import('src/crm/lead/actions/convert-leads.logic-function')],
+    ['merge', () => import('src/crm/lead/actions/merge-leads.logic-function')],
+    ['merge prepare', () => import('src/crm/lead/actions/merge-leads-prepare.logic-function')],
+    ['convert prepare', () => import('src/crm/lead/actions/convert-lead-prepare.logic-function')],
+    ['convert many prepare', () => import('src/crm/lead/actions/convert-leads-prepare.logic-function')],
+    ['similar leads', () => import('src/crm/lead/actions/similar-leads.logic-function')],
+    ['scoring explanation', () => import('src/crm/scoring/scoring-factors.logic-function')],
+  ])('the %s route answers 409 without reading or writing', async (_name, load) => {
+    const { default: route } = await load();
+    const response = await route.config.handler({} as RoutePayload, {} as never);
+
+    expect(response.status).toBe(409);
+    expect(JSON.parse(String(response.body))).toEqual(REFUSAL);
   });
 });

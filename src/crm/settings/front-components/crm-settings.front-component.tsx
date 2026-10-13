@@ -54,6 +54,7 @@ export const CRM_SETTINGS_TEXTS = [
 export const SCORING_TEXTS = [
   msg('Only a workspace administrator can update the probabilities.'),
   msg('Choose the day from which leads are counted.'),
+  msg('Update probabilities is already running. Try again in a moment.'),
 ];
 
 // What each section of the page shows.
