@@ -4,6 +4,7 @@ import { msg, Trans, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front
 import { Button } from 'twenty-ui/primitives/input';
 
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { QuantRows, readQuantViewsAsUser } from 'src/stock/quant/actions/count-panels';
 import { type CountQuantView } from 'src/stock/quant/types/count-quant-view.type';
 import { type CountRowsText } from 'src/stock/quant/types/count-rows-text.type';
@@ -42,11 +43,12 @@ const ClearCounts = () => {
     }
   };
 
-  if (selectedIds.length === 0) {
+  const selectionMessage = checkSelection(selectedIds.length, 'many');
+  if (selectionMessage !== null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

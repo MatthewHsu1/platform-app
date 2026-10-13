@@ -3,6 +3,7 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import {
   closeSidePanel,
   enqueueSnackbar,
+  type MessageDescriptor,
   Trans,
   unmountFrontComponent,
   useSelectedRecordIds,
@@ -10,6 +11,7 @@ import {
 } from 'twenty-sdk/front-component';
 import { Button, Input } from 'twenty-ui/primitives/input';
 
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { describeRouteError } from 'src/shared/describe-route-error';
 import { type ReturnAction } from 'src/stock/picking/types/return-action.type';
 import { type ReturnResult } from 'src/stock/picking/types/return-result.type';
@@ -27,7 +29,7 @@ type ReturnRowsAnswer = { rows: ReturnRowAnswer[]; canExchange: boolean };
 type ReturnRowView = ReturnRowAnswer & { text: string };
 // Translated when shown; `detail` is the route's own message, already translated.
 type Problem =
-  | { kind: 'selectAll' }
+  | { kind: 'selection'; message: MessageDescriptor }
   | { kind: 'loadFailed'; detail: string }
   | { kind: 'saveFailed'; detail: string };
 
@@ -52,10 +54,10 @@ const ReturnPicking = () => {
 
   useEffect(() => {
     const load = async () => {
-      // "Select all" hands the button no ids.
-      if (selectionKey.length === 0) {
+      const selectionMessage = checkSelection(selectionKey === '' ? 0 : selectionKey.split(',').length, 'many');
+      if (selectionMessage !== null) {
         setRows([]);
-        setProblem({ kind: 'selectAll' });
+        setProblem({ kind: 'selection', message: selectionMessage });
         return;
       }
       try {
@@ -94,8 +96,8 @@ const ReturnPicking = () => {
   };
 
   const describeProblem = (shown: Problem) => {
-    if (shown.kind === 'selectAll') {
-      return t('Select all is not supported here. Tick the records you want instead.');
+    if (shown.kind === 'selection') {
+      return t(shown.message);
     }
     if (shown.detail.length > 0) {
       return shown.detail;

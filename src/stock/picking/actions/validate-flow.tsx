@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { closeSidePanel, enqueueSnackbar, unmountFrontComponent, useTranslate } from 'twenty-sdk/front-component';
 import { Button } from 'twenty-ui/primitives/input';
 
+import { SELECTION_PROBLEM_TEXT } from 'src/shared/front-components/selection-check';
 import { DISCARD_EXPIRED_LINES_ROUTE_PATH } from 'src/product-expiry/actions/product-expiry-actions-universal-identifiers.constant';
 import { readExpiryQuestion } from 'src/product-expiry/actions/read-expiry-question';
 import { describeRouteError } from 'src/shared/describe-route-error';
@@ -118,7 +119,7 @@ export const ValidateFlow = ({
 
   useRunOnce(() => {
     if (body === null) {
-      setScreen({ kind: 'error', message: t(text.emptySelection) });
+      setScreen({ kind: 'error', message: t(SELECTION_PROBLEM_TEXT.none) });
       return;
     }
     void run({});

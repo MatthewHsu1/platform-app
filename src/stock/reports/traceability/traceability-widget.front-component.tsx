@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
 import { msg, useSelectedObjectMetadata, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 
+import { selectOneRecord } from 'src/shared/front-components/selection-check';
 import { describeRouteError } from 'src/shared/describe-route-error';
 import { PRINT_TEXT } from 'src/stock/printing/commands/print-picking-ready.front-component';
 import { ErrorText } from 'src/shared/front-components/pop-up';
@@ -45,7 +46,7 @@ const TraceabilityWidget = () => {
   const styles = readPopUpStyles();
   const selectedIds = useSelectedRecordIds();
   const model = useSelectedObjectMetadata()?.nameSingular ?? 'stockLot';
-  const recordId = selectedIds.length === 1 ? selectedIds[0] : null;
+  const { id: recordId, message: selectionMessage } = selectOneRecord(selectedIds);
   const loadFailed = t('Could not load the traceability report.');
   const [data, setData] = useState<TraceabilityAnswer | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +82,7 @@ const TraceabilityWidget = () => {
   if (recordId === null) {
     return (
       <div style={styles.panel}>
-        <div>{t('Select all is not supported here. Tick the records you want instead.')}</div>
+        <div>{t(selectionMessage)}</div>
       </div>
     );
   }

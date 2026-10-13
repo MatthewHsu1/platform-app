@@ -10,6 +10,7 @@ import {
 } from 'src/crm/lead/actions/lead-actions-universal-identifiers.constant';
 import { ChoiceSelect } from 'src/shared/front-components/choice-select';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { queryAsUser } from 'src/shared/front-components/query-as-user';
 import { randomId } from 'src/shared/utils/random-id.util';
@@ -59,11 +60,12 @@ const MarkLost = () => {
       });
   });
 
-  if (leadIds.length === 0) {
+  const selectionMessage = checkSelection(leadIds.length, 'many');
+  if (selectionMessage !== null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

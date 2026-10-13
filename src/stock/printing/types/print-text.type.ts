@@ -6,6 +6,5 @@ export type PrintText = {
   failed: MessageDescriptor;
   ready: MessageDescriptor;
   open: MessageDescriptor;
-  selectAll: MessageDescriptor;
   close: MessageDescriptor;
 };

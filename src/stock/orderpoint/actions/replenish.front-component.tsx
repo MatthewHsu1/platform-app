@@ -3,6 +3,7 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import { useSelectedObjectMetadata, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 import { Button, Input } from 'twenty-ui/primitives/input';
 
+import { selectOneRecord } from 'src/shared/front-components/selection-check';
 import { type ReplenishForm } from 'src/stock/orderpoint/types/replenish-form.type';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
 import { toIsoDateTime, toLocalDateTime } from 'src/shared/front-components/utils/local-date-time.util';
@@ -23,7 +24,7 @@ const parseQuantity = (text: string) => {
 const Replenish = () => {
   const { t } = useTranslate();
   const styles = readStockStyles();
-  const [recordId] = useSelectedRecordIds();
+  const { id: recordId, message: selectionMessage } = selectOneRecord(useSelectedRecordIds());
   const fromProduct = useSelectedObjectMetadata()?.nameSingular === 'productTemplate';
   const { busy, error, call } = usePopUpCall(t('Could not replenish.'));
   const [form, setForm] = useState<ReplenishForm | null>(null);
@@ -47,7 +48,7 @@ const Replenish = () => {
   };
 
   useRunOnce(() => {
-    if (recordId === undefined) {
+    if (recordId === null) {
       return;
     }
     void load(fromProduct ? { productTemplateId: recordId } : { productId: recordId }, (next) => {
@@ -104,11 +105,11 @@ const Replenish = () => {
     await finishWith(result.message);
   };
 
-  if (recordId === undefined) {
+  if (recordId === null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

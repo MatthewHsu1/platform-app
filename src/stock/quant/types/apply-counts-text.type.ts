@@ -17,5 +17,4 @@ export type ApplyCountsText = {
   close: MessageDescriptor;
   applied: MessageDescriptor;
   failed: MessageDescriptor;
-  selectAll: MessageDescriptor;
 };

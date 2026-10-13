@@ -14,7 +14,6 @@ const TEXT: ValidateText = {
   validatedWithBackorders: msg('Validated. Backorders created: {count}.'),
   failed: msg('Could not validate the batch.'),
   discardFailed: msg('Could not remove the expired lines.'),
-  emptySelection: msg('Select all is not supported here. Tick the records you want instead.'),
   validating: msg('Validating…'),
   close: msg('Close'),
   expiredTitle: msg('Confirmation'),

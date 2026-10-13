@@ -10,6 +10,7 @@ import {
 } from 'twenty-sdk/front-component';
 import { Button } from 'twenty-ui/primitives/input';
 
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { describeRouteError } from 'src/shared/describe-route-error';
 import { postAppRoute } from 'src/shared/front-components/post-app-route';
 import { readStockStyles } from 'src/stock/stock-theme';
@@ -30,9 +31,9 @@ const CancelPicking = () => {
   };
 
   const confirm = async () => {
-    // "Select all" hands the button no ids.
-    if (pickingIds.length === 0) {
-      setError(t('Select all is not supported here. Tick the records you want instead.'));
+    const selectionMessage = checkSelection(pickingIds.length, 'many');
+    if (selectionMessage !== null) {
+      setError(t(selectionMessage));
       return;
     }
     setIsSaving(true);

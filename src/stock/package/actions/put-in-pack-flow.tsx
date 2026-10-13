@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { enqueueSnackbar, useSelectedObjectMetadata, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 import { Button } from 'twenty-ui/primitives/input';
 
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { randomId } from 'src/shared/utils/random-id.util';
 import { textOrNull } from 'src/shared/utils/text-or-null.util';
 import {
@@ -61,7 +62,7 @@ export const PutInPackFlow = ({ moveLineIds, text }: { moveLineIds?: string[]; t
         : isPackages
           ? { packageIds: selectedIds }
           : { lineIds: selectedIds };
-  const selectAll = moveLineIds === undefined && selectedIds.length === 0;
+  const selectionMessage = moveLineIds === undefined ? checkSelection(selectedIds.length, 'many') : null;
 
   const run = async (extra: Record<string, unknown>) => {
     const result = await call<PutInPackRouteResult>(isPackages ? PUT_IN_PACK_PACKAGES_ROUTE_PATH : PUT_IN_PACK_LINES_ROUTE_PATH, {
@@ -106,16 +107,16 @@ export const PutInPackFlow = ({ moveLineIds, text }: { moveLineIds?: string[]; t
   };
 
   useRunOnce(() => {
-    if (!selectAll) {
+    if (selectionMessage === null) {
       void run({});
     }
   });
 
-  if (selectAll) {
+  if (selectionMessage !== null) {
     return (
       <ClosablePanel
         message={null}
-        error={t(text.selectAll)}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t(text.close)}
       />

@@ -3,6 +3,7 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import { AppPath, msg, navigate, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 import { Button } from 'twenty-ui/primitives/input';
 
+import { selectOneRecord } from 'src/shared/front-components/selection-check';
 import { searchCompanies, searchPeople } from 'src/crm/lead/actions/components/customer-search';
 import { useSalesChoices } from 'src/crm/lead/actions/components/use-sales-choices';
 import {
@@ -55,7 +56,7 @@ const NONE = '';
 const ConvertLead = () => {
   const { t } = useTranslate();
   const styles = readPopUpStyles();
-  const [leadId] = useSelectedRecordIds();
+  const { id: leadId, message: selectionMessage } = selectOneRecord(useSelectedRecordIds());
   const choices = useSalesChoices();
   const { busy, error, call } = usePopUpCall(t('Could not convert the lead.'));
   const preparing = usePopUpCall(t('Could not read the lead.'));
@@ -73,16 +74,16 @@ const ConvertLead = () => {
   };
 
   useRunOnce(() => {
-    if (leadId !== undefined) {
+    if (leadId !== null) {
       void prepare({});
     }
   });
 
-  if (leadId === undefined) {
+  if (leadId === null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

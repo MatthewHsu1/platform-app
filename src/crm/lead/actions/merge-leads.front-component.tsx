@@ -12,6 +12,7 @@ import {
 import { ChoiceSelect } from 'src/shared/front-components/choice-select';
 import { DataTable } from 'src/shared/front-components/data-table';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 
 // The texts a merge writes or answers. The translation extractor reads only front-component files, so they are
@@ -97,11 +98,12 @@ const MergeLeads = () => {
     }
   });
 
-  if (leadIds.length === 0) {
+  const selectionMessage = checkSelection(leadIds.length, 'many');
+  if (selectionMessage !== null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

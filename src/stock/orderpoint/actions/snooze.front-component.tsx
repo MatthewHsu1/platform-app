@@ -7,6 +7,7 @@ import { localToday } from 'src/shared/utils/local-today.util';
 import { type SnoozePeriod } from 'src/stock/orderpoint/types/snooze-period.type';
 import { snoozeUntil } from 'src/stock/orderpoint/utils/snooze-until.util';
 import { ClosablePanel, closePopUp, ErrorText, finishWith, usePopUpCall } from 'src/shared/front-components/pop-up';
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { readStockStyles } from 'src/stock/stock-theme';
 import { ORDERPOINT_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS, ORDERPOINT_ROUTE_PATHS } from 'src/stock/stock-universal-identifiers.constant';
 import { ChoiceSelect, FieldRow, PopupPanel } from 'src/stock/tracking-controls';
@@ -36,11 +37,12 @@ const Snooze = () => {
     }
   };
 
-  if (selectedIds.length === 0) {
+  const selectionMessage = checkSelection(selectedIds.length, 'many');
+  if (selectionMessage !== null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

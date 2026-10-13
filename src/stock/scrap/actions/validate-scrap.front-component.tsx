@@ -3,6 +3,7 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import { msg, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 
 import { ClosablePanel, finishWith, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { InsufficientQuantityPanel } from 'src/stock/scrap/actions/scrap-panels';
 import { type InsufficientQuantityText } from 'src/stock/scrap/types/insufficient-quantity-text.type';
 import { type ScrapValidateAnswer } from 'src/stock/scrap/types/scrap-validate-answer.type';
@@ -51,11 +52,12 @@ const ValidateScrap = () => {
     }
   });
 
-  if (selectedIds.length === 0) {
+  const selectionMessage = checkSelection(selectedIds.length, 'many');
+  if (selectionMessage !== null) {
     return (
       <ClosablePanel
         message={null}
-        error={t('Select all is not supported here. Tick the records you want instead.')}
+        error={t(selectionMessage)}
         busy={false}
         closeLabel={t('Close')}
       />

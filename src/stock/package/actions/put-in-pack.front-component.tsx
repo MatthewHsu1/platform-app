@@ -9,7 +9,6 @@ export const PUT_IN_PACK_TEXT: PutInPackText = {
   failed: msg('Could not put in pack.'),
   packed: msg('Packed.'),
   choicesUnread: msg('The choices could not be read.'),
-  selectAll: msg('Select all is not supported here. Tick the records you want instead.'),
   close: msg('Close'),
   destinationTitle: msg('Package Destination'),
   destinationExplanation: msg('The products go to different locations. Choose where the package goes.'),

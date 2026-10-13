@@ -9,7 +9,6 @@ export const PRINT_TEXT: Omit<PrintText, 'open'> = {
   printing: msg('Preparing the print…'),
   failed: msg('Could not print.'),
   ready: msg('Ready to print'),
-  selectAll: msg('Select all is not supported here. Tick the records you want instead.'),
   close: msg('Close'),
 };
 

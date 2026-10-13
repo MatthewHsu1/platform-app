@@ -23,7 +23,6 @@ const TEXT: ApplyCountsText = {
   close: msg('Close'),
   applied: msg('Counts applied.'),
   failed: msg('The counts could not be applied.'),
-  selectAll: msg('Select all is not supported here. Tick the records you want instead.'),
 };
 
 export default defineFrontComponent({

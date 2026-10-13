@@ -8,7 +8,6 @@ export type ValidateText = {
   validatedWithBackorders: MessageDescriptor;
   failed: MessageDescriptor;
   discardFailed: MessageDescriptor;
-  emptySelection: MessageDescriptor;
   validating: MessageDescriptor;
   close: MessageDescriptor;
   expiredTitle: MessageDescriptor;

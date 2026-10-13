@@ -5,6 +5,7 @@ import { Button } from 'twenty-ui/primitives/input';
 import { LinkList } from 'src/shared/front-components/link-list';
 import { ClosablePanel, closePopUp, usePopUpCall, useRunOnce } from 'src/shared/front-components/pop-up';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
+import { checkSelection } from 'src/shared/front-components/selection-check';
 import { printViewUrl } from 'src/stock/printing/print-view-url';
 import { type PrintLink } from 'src/stock/printing/types/print-link.type';
 import { type PrintReportKey } from 'src/stock/printing/types/print-report-key.type';
@@ -53,9 +54,9 @@ export const PrintNow = ({
     }
   });
 
-  // "Select all" hands the pop-up no ids.
-  if (ids.length === 0) {
-    return <ClosablePanel message={null} error={t(text.selectAll)} busy={false} closeLabel={t(text.close)} onClose={onClose} />;
+  const selectionMessage = checkSelection(ids.length, 'many');
+  if (selectionMessage !== null) {
+    return <ClosablePanel message={null} error={t(selectionMessage)} busy={false} closeLabel={t(text.close)} onClose={onClose} />;
   }
   if (links === null) {
     return (
