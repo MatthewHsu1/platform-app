@@ -1,19 +1,12 @@
-import { useEffect, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
 import { msg, useSelectedObjectMetadata, useSelectedRecordIds, useTranslate } from 'twenty-sdk/front-component';
 
-import { describeRouteError } from 'src/shared/describe-route-error';
-import { ErrorText, usePopUpCall } from 'src/shared/front-components/pop-up';
+import { ErrorText } from 'src/shared/front-components/pop-up';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
-import { postAppRoute } from 'src/shared/front-components/post-app-route';
 import { ForecastView } from 'src/stock/reports/forecast/forecast-view';
-import { type ForecastAnswer } from 'src/stock/reports/forecast/types/forecast-answer.type';
 import { type ForecastText } from 'src/stock/reports/forecast/types/forecast-text.type';
-import {
-  FORECAST_RESERVE_ROUTE_PATH,
-  FORECAST_ROUTE_PATH,
-  FORECAST_UNIVERSAL_IDENTIFIERS,
-} from 'src/stock/stock-reports-universal-identifiers.constant';
+import { useForecastReport } from 'src/stock/reports/forecast/use-forecast-report';
+import { FORECAST_UNIVERSAL_IDENTIFIERS } from 'src/stock/stock-reports-universal-identifiers.constant';
 
 // The texts the routes answer, listed here so the extractor puts them in the catalog.
 export const FORECAST_ROUTE_TEXTS = [
@@ -73,44 +66,12 @@ const ForecastWidget = () => {
   const selectedIds = useSelectedRecordIds();
   const requestKey = REQUEST_KEY_BY_OBJECT[useSelectedObjectMetadata()?.nameSingular ?? ''];
   const recordId = selectedIds.length === 1 ? selectedIds[0] : null;
-  const loadFailed = t('Could not load the forecast.');
-  const changing = usePopUpCall(t('Could not change the reservation.'));
-  const [data, setData] = useState<ForecastAnswer | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [version, setVersion] = useState(0);
-
-  useEffect(() => {
-    if (recordId === null || requestKey === undefined) {
-      return;
-    }
-    // An answer for a record the view has since moved past is dropped.
-    let isCurrent = true;
-
-    void postAppRoute<ForecastAnswer>(FORECAST_ROUTE_PATH, { [requestKey]: recordId })
-      .then((next) => {
-        if (isCurrent) {
-          setData(next);
-          setLoadError(null);
-        }
-      })
-      .catch((caught: unknown) => {
-        if (isCurrent) {
-          setLoadError(describeRouteError(caught, loadFailed));
-        }
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [recordId, requestKey, version, loadFailed]);
-
-  const runLinked = async (moveId: string, action: 'reserve' | 'unreserve') => {
-    const done = await changing.call(FORECAST_RESERVE_ROUTE_PATH, { moveId, action });
-
-    if (done !== null) {
-      setVersion((current) => current + 1);
-    }
-  };
+  const report = useForecastReport({
+    requestKey,
+    recordId,
+    loadFailed: t('Could not load the forecast.'),
+    changeFailed: t('Could not change the reservation.'),
+  });
 
   if (recordId === null || requestKey === undefined) {
     return (
@@ -123,15 +84,15 @@ const ForecastWidget = () => {
   return (
     <div style={styles.panel}>
       <div style={styles.title}>{t('Forecasted Report')}</div>
-      <ErrorText error={loadError ?? changing.error} />
-      {data === null && loadError === null ? <div style={styles.muted}>{t('Loading…')}</div> : null}
-      {data === null ? null : (
+      <ErrorText error={report.error} />
+      {report.data === null && report.error === null ? <div style={styles.muted}>{t('Loading…')}</div> : null}
+      {report.data === null ? null : (
         <ForecastView
-          data={data}
+          data={report.data}
           text={FORECAST_TEXT}
-          busy={changing.busy}
-          onReserve={(moveId) => void runLinked(moveId, 'reserve')}
-          onUnreserve={(moveId) => void runLinked(moveId, 'unreserve')}
+          busy={report.busy}
+          onReserve={(moveId) => void report.runLinked(moveId, 'reserve')}
+          onUnreserve={(moveId) => void report.runLinked(moveId, 'unreserve')}
         />
       )}
     </div>

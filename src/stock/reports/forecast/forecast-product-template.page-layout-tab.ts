@@ -11,6 +11,6 @@ export default definePageLayoutTab(
     title: 'Forecast',
     position: 15,
     icon: 'IconChartLine',
-    widgets: [frontComponentWidget(IDS.productTemplateTabWidget, 'Forecast', IDS.widget)],
+    widgets: [frontComponentWidget(IDS.productTemplateTabWidget, 'Forecast', IDS.productWidget)],
   }),
 );
