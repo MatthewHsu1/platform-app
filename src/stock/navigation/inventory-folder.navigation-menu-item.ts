@@ -6,6 +6,6 @@ export default defineNavigationMenuItem({
   universalIdentifier: INVENTORY_FOLDER_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER,
   name: 'Inventory',
   icon: 'IconBuildingWarehouse',
-  position: 2,
+  position: 103,
   type: NavigationMenuItemType.FOLDER,
 });
