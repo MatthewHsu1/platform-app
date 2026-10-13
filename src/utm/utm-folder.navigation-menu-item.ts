@@ -6,6 +6,6 @@ export default defineNavigationMenuItem({
   universalIdentifier: CRM_SCREEN_IDS.utmFolder,
   name: 'UTM',
   icon: 'IconSpeakerphone',
-  position: 3,
+  position: 103,
   type: NavigationMenuItemType.FOLDER,
 });

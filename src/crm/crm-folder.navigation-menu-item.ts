@@ -9,6 +9,6 @@ export default defineNavigationMenuItem({
   universalIdentifier: CRM_FOLDER_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIER,
   name: 'CRM',
   icon: 'IconTarget',
-  position: 0,
+  position: 100,
   type: NavigationMenuItemType.FOLDER,
 });
