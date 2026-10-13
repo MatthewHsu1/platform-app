@@ -14,7 +14,6 @@ export const STOCK_LOCATION_FIELD_UNIVERSAL_IDENTIFIERS = {
   nextInventoryDate: 'b8b1c50b-b01c-4890-be8c-42cc11d6843e',
   warehouse: '54b57b21-6d10-4949-b6ce-90c90db95e80',
   seedKey: 'd003c107-351c-4078-9a74-f3c95dc101c4',
-  printouts: '9d2edf7a-135b-4127-9002-03c096454362',
   warehouseViews: '7d58d995-2987-4449-899a-8d9af4ea1e63',
   warehouseLotStocks: 'fe0a3631-489d-42d8-a4cc-5eb495335c4e',
   warehouseInputs: '5ac5a6f8-6212-4c70-9eff-6cd7d4735d2c',
@@ -114,7 +113,6 @@ export const STOCK_PICKING_TYPE_FIELD_UNIVERSAL_IDENTIFIERS = {
   createBackorder: 'a2bffbd9-d58f-41e8-bd76-b984675a15f7',
   moveType: '6a77ec1b-5fa5-463a-aadb-18a5f154fdf0',
   seedKey: '9bdc10b3-e4e2-412f-9c10-26091f82bf6f',
-  printouts: 'b8216ca1-6db7-40e2-acc6-81eb58962059',
   inTypeWarehouses: '0b51cfbc-a187-4bd2-9630-13c4af19db81',
   outTypeWarehouses: 'adda6fcd-2a0d-44c0-9a3b-abafbf1c9ed4',
   intTypeWarehouses: '5e7ede99-5d2a-4077-91e8-91edffcff3b3',
@@ -151,7 +149,6 @@ export const STOCK_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS = {
   productProductIncomingQty: '455bb084-1ed9-45e2-af9b-6479f1ac6765',
   productProductOutgoingQty: '191cd02d-06e9-4242-85d8-b0dee444e780',
   productProductVirtualAvailable: '56be9969-1887-4b22-9510-75702470a277',
-  productUomPrintouts: '3b493153-d754-4e31-84cf-3fa02406449c',
   productCategoryPackagingReserveMethod: '8a2c95a4-6d59-4eb4-a458-97b34e716d43',
   companyPropertyStockCustomer: 'c331f4ff-a42a-450c-ae86-2495c061fa89',
   companyPropertyStockSupplier: 'b83a65a3-ba01-4507-a8d9-d323349a00eb',
@@ -280,7 +277,6 @@ export const STOCK_MOVE_FIELD_UNIVERSAL_IDENTIFIERS = {
   packagingUom: '8e456825-9fa3-4c93-a009-72c840a59d01',
   packagingUomQty: '497c62ea-d7fb-44ff-937f-0f8ea8e9784d',
   moveLines: '76457262-af4d-4182-82ee-0b7fc59ce28b',
-  printouts: '749d5f5f-af8e-4b32-aad9-c923bc844736',
 } as const;
 export const STOCK_MOVE_PRODUCT_LOCATION_INDEX_UNIVERSAL_IDENTIFIER = 'a2fc9308-a07b-401d-b91e-4ec13067234f';
 export const STOCK_MOVE_PRODUCT_LOCATION_INDEX_FIELD_UNIVERSAL_IDENTIFIERS = {
@@ -515,7 +511,6 @@ export const STOCK_LOT_FIELD_UNIVERSAL_IDENTIFIERS = {
   note: '11e37236-9d61-4ee5-a1ce-db2bd317439f',
   location: 'af702d93-248a-4209-9cf6-f228f5343e04',
   productQty: '89383792-d6f4-4045-bdc8-2e2a3c9636dd',
-  printouts: '0070e50d-9972-4c60-86ac-faf656b169cc',
   quants: 'f99864bf-7c2e-4486-a230-415eed08af13',
   moveLines: '6424cf35-76ca-4a58-9152-435c7dc65708',
   scraps: '096e2d87-912b-40ce-8adf-310b4c652b21',
@@ -536,8 +531,6 @@ export const STOCK_TRACKING_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS = {
   templateTracking: 'ef039f10-a75f-4494-b161-cd7294fd8b69',
   templateLotSequence: '02ddf637-e8e6-482f-8600-be804c965601',
   templateSerialPrefixFormat: '2e29ef2e-434f-49fe-8b37-70118818d086',
-  templatePrintouts: 'd8ab60b8-e0ab-4caf-9b5b-1b590a7b839e',
-  variantPrintouts: '42d1ded4-abc8-4dc7-98da-9b644b046dcc',
   irSequenceProductTemplates: '505b31d1-8cd3-49c5-97c1-b40a7b81d198',
 } as const;
 export const STOCK_LOT_PRODUCT_NAME_INDEX_UNIVERSAL_IDENTIFIER = 'e6606fcf-692f-4e29-b0dc-cc763c6be7f5';
@@ -586,7 +579,6 @@ export const STOCK_PACKAGE_FIELD_UNIVERSAL_IDENTIFIERS = {
   packageDest: '9ac98cfa-fcef-42b4-b319-c54d971470d7',
   shippingWeight: '509e63bb-d40a-4f70-af73-2c8f4784e08d',
   packDate: '0aed0c10-90d5-434e-900c-a2c5d93d113b',
-  printouts: 'b2bbc6f8-1e7f-49ac-b09f-79ef4ef75d16',
   childPackages: 'db0ddb14-ed43-4e6a-b25a-072e3b4b0a7d',
   childPackageDests: '82225cab-6456-48c7-a8e5-8f1c8239f9aa',
   quants: '794ff07c-82af-4a46-9439-479c86de6fa3',
@@ -610,7 +602,6 @@ export const STOCK_PACKAGE_HISTORY_FIELD_UNIVERSAL_IDENTIFIERS = {
   parentDestName: '8578a9c6-5ce7-4dfc-b94c-ef9495015212',
   outermostDest: 'f1d3b5e4-af74-41c3-aab2-c4157ca5751d',
   pickings: '3221b286-72bb-4811-9fbf-21cf1ef40bde',
-  printouts: '70fb6e40-2f4d-426f-a26e-c21e48a3762f',
   moveLines: 'fee74e3d-58bb-481a-afdc-498186da8bc3',
 } as const;
 export const STOCK_PACKAGE_HISTORY_STOCK_PICKING_REL_OBJECT_UNIVERSAL_IDENTIFIER = 'aa76c579-9697-4928-a5b7-0203dcd07bd7';

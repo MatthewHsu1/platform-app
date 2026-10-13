@@ -2,6 +2,13 @@
 
 All notable changes to this application are documented in this file.
 
+## 2.4.1 (unreleased)
+
+- Printouts: only the transfer keeps a Printouts field now. It holds the signed delivery slip. The
+  field is gone from moves, locations, operation types, lots, packages, package history, package
+  types, batches, products, variants and units. No code ever wrote files there. Prints are still
+  one-time pages and save nothing.
+
 ## 2.4.0 (unreleased)
 
 - Roles: building blocks per module (Employee; Inventory User and Administrator; Products:

@@ -5,7 +5,6 @@ import {
   manyToOneField,
   numberField,
   oneToManyField,
-  printoutsField,
   textField,
 } from 'src/shared/fields';
 import { STOCK_PACKAGE_TYPE_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/stock/routing-universal-identifiers.constant';
@@ -81,7 +80,6 @@ export default defineObject({
       type: FieldType.DATE,
       defaultValue: 'now',
     },
-    printoutsField(FIELD_IDS.printouts),
     oneToManyField({
       universalIdentifier: FIELD_IDS.childPackages,
       name: 'childPackages',
