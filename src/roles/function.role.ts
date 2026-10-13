@@ -16,6 +16,17 @@ import {
 } from 'src/crm/crm-universal-identifiers.constant';
 import { CRM_LEAD_SCORING_FREQUENCY_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/crm/scoring/scoring-universal-identifiers.constant';
 import {
+  HELPDESK_TICKET_CATEGORY_OBJECT_UNIVERSAL_IDENTIFIER,
+  HELPDESK_TICKET_OBJECT_UNIVERSAL_IDENTIFIER,
+  HELPDESK_TICKET_STAGE_OBJECT_UNIVERSAL_IDENTIFIER,
+  HELPDESK_TICKET_STAGE_TEAM_OBJECT_UNIVERSAL_IDENTIFIER,
+  HELPDESK_TICKET_TAG_OBJECT_UNIVERSAL_IDENTIFIER,
+  HELPDESK_TICKET_TAG_REL_OBJECT_UNIVERSAL_IDENTIFIER,
+  HELPDESK_TICKET_TEAM_CATEGORY_OBJECT_UNIVERSAL_IDENTIFIER,
+  HELPDESK_TICKET_TEAM_MEMBER_OBJECT_UNIVERSAL_IDENTIFIER,
+  HELPDESK_TICKET_TEAM_OBJECT_UNIVERSAL_IDENTIFIER,
+} from 'src/helpdesk/helpdesk-universal-identifiers.constant';
+import {
   PRODUCT_ATTR_EXCLUSION_VALUE_IDS_REL_OBJECT_UNIVERSAL_IDENTIFIER,
   PRODUCT_ATTRIBUTE_CUSTOM_VALUE_OBJECT_UNIVERSAL_IDENTIFIER,
   PRODUCT_ATTRIBUTE_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -144,7 +155,7 @@ export default defineApplicationRole({
   universalIdentifier: FUNCTION_ROLE_UNIVERSAL_IDENTIFIER,
   label: `${APP_DISPLAY_NAME} function role`,
   description:
-    'Runs the install hook, the triggers, the daily job, the buttons, lead assignment, lead scoring, the plug calls, the Roles page and the CRM settings page.',
+    'Runs the install hook, the triggers, the daily job, the buttons, lead assignment, lead scoring, the plug calls, the Roles page, the CRM settings page and the work case triggers.',
   canReadAllObjectRecords: false,
   canUpdateAllObjectRecords: false,
   canSoftDeleteAllObjectRecords: false,
@@ -163,6 +174,15 @@ export default defineApplicationRole({
     readWriteAndDestroy(CRM_TEAM_OBJECT_UNIVERSAL_IDENTIFIER),
     readWriteAndDestroy(CRM_TEAM_MEMBER_OBJECT_UNIVERSAL_IDENTIFIER),
     readWriteAndDestroy(CRM_STAGE_TEAM_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndDestroy(HELPDESK_TICKET_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndRestore(HELPDESK_TICKET_TEAM_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndRestore(HELPDESK_TICKET_STAGE_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndRestore(HELPDESK_TICKET_CATEGORY_OBJECT_UNIVERSAL_IDENTIFIER),
+    readAndWrite(HELPDESK_TICKET_TAG_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndDestroy(HELPDESK_TICKET_TEAM_MEMBER_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndDestroy(HELPDESK_TICKET_TEAM_CATEGORY_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndDestroy(HELPDESK_TICKET_STAGE_TEAM_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndDestroy(HELPDESK_TICKET_TAG_REL_OBJECT_UNIVERSAL_IDENTIFIER),
     readWriteAndRestore(UTM_SOURCE_OBJECT_UNIVERSAL_IDENTIFIER),
     readWriteAndDestroy(UTM_MEDIUM_OBJECT_UNIVERSAL_IDENTIFIER),
     readWriteAndDestroy(UTM_CAMPAIGN_OBJECT_UNIVERSAL_IDENTIFIER),
