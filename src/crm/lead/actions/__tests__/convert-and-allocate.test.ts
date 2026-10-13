@@ -91,13 +91,39 @@ describe('convertAndAllocate', () => {
     ]);
   });
 
-  it('leaves the website off a new company when another company holds it, and says so on the lead', async () => {
-    const state = { ...emptyConvertState([northside]), companies: [{ id: 'other', name: 'Northside Gyms', website: 'https://northside.example' }] };
+  it('links the lead and its new contact to the company that already holds its website', async () => {
+    const holder = { id: 'other', name: 'Northside Gyms', website: 'northside.example' };
+    const state = { ...emptyConvertState([northside]), companies: [holder] };
+
+    await makeConvertAndAllocate(makeFakeConvertApi(state))([northside], options());
+
+    expect(state.companies).toEqual([holder]);
+    expect(state.people.map((row) => row.companyId)).toEqual(['other']);
+    expect(state.notes.filter((note) => note.objectSingular === 'crmLead')).toEqual([]);
+    expect(state.leadWrites[0].data).toMatchObject({ personId: state.people[0].id, companyId: 'other' });
+  });
+
+  it('prefers the company with the lead company name to the one holding its website', async () => {
+    const state = {
+      ...emptyConvertState([northside]),
+      companies: [
+        { id: 'by-website', name: 'Northside Gyms', website: 'northside.example' },
+        { id: 'by-name', name: 'Northside Fitness', website: null },
+      ],
+    };
+
+    await makeConvertAndAllocate(makeFakeConvertApi(state))([northside], options());
+
+    expect(state.leadWrites[0].data).toMatchObject({ companyId: 'by-name' });
+  });
+
+  it('leaves the website off a new company when a company the user cannot link holds it, and says so on the lead', async () => {
+    const state = { ...emptyConvertState([northside]), companies: [{ id: 'trashed', name: 'Northside Gyms', website: 'northside.example', hidden: true }] };
 
     await makeConvertAndAllocate(makeFakeConvertApi(state))([northside], options());
 
     expect(state.companies.map((row) => [row.name, row.website])).toEqual([
-      ['Northside Gyms', 'https://northside.example'],
+      ['Northside Gyms', 'northside.example'],
       ['Northside Fitness', null],
     ]);
     expect(state.notes.filter((note) => note.objectSingular === 'crmLead').map((note) => note.title)).toEqual([

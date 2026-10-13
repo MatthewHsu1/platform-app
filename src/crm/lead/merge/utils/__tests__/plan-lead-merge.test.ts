@@ -289,4 +289,24 @@ describe('planLeadMerge', () => {
 
     expect(planLeadMerge({ leads: [spaces, named], stages: SAMPLE_STAGES }).data.referred).toBe('  ');
   });
+
+  it('keeps the joined text a stopped merge left on a lead, even when another lead now ranks first', () => {
+    const first = leadRow({ id: 'first', createdAt: at(1), leadType: 'OPPORTUNITY', probability: 80, description: { markdown: 'Budget 20k' } });
+    const joined = leadRow({ id: 'joined', createdAt: at(2), leadType: 'OPPORTUNITY', probability: 40, description: { markdown: 'Wants 12 treadmills\n\nBudget 20k\n\nDelivery in March' } });
+    const last = leadRow({ id: 'last', createdAt: at(3), description: { markdown: 'Delivery in March' } });
+
+    expect(planLeadMerge({ leads: [first, joined, last], stages: SAMPLE_STAGES }).data.description).toEqual({
+      markdown: 'Wants 12 treadmills\n\nBudget 20k\n\nDelivery in March',
+    });
+  });
+
+  it('keeps one copy of a text two leads share, and a text that only starts like another one', () => {
+    const head = leadRow({ id: 'head', createdAt: at(1), leadType: 'OPPORTUNITY', description: { markdown: 'Call back' } });
+    const same = leadRow({ id: 'same', createdAt: at(2), description: { markdown: 'Call back' } });
+    const longer = leadRow({ id: 'longer', createdAt: at(3), description: { markdown: 'Call back on Monday' } });
+
+    expect(planLeadMerge({ leads: [head, same, longer], stages: SAMPLE_STAGES }).data.description).toEqual({
+      markdown: 'Call back\n\nCall back on Monday',
+    });
+  });
 });

@@ -11,6 +11,7 @@ import { translate } from 'src/shared/i18n/translate';
 import { NOT_ALLOWED_MESSAGE } from 'src/shared/not-allowed';
 import { UserError } from 'src/shared/user-error';
 import { derivedId } from 'src/shared/utils/derived-id.util';
+import { normalizeDomain } from 'src/shared/utils/normalize-domain.util';
 
 type Customer = { personId: string | null; companyId: string | null };
 
@@ -39,7 +40,8 @@ export const makeConvertAndAllocate = (api: ConvertApi) => async (leads: LeadRow
   const now = api.now();
   const locale = await api.readLocale();
 
-  // A value Twenty keeps unique is held by another record: the record is made
+  // A value Twenty keeps unique is held by another record the user cannot
+  // link to (one in the trash, or one their role hides): the record is made
   // without it, after a note on the lead says so.
   const ensureRecord = async ({
     exists,
@@ -75,12 +77,18 @@ export const makeConvertAndAllocate = (api: ConvertApi) => async (leads: LeadRow
     const companyMade = await api.recordExists('company', newCompanyId);
     const companyIdByName =
       companyMade || options.companyId !== null || partnerName.length === 0 ? null : await api.findCompanyIdByExactName(partnerName);
-    const companyTarget = planCustomerCompany({ lead, chosenCompanyId: options.companyId, companyIdByName });
+    const website = lead.website?.primaryLinkUrl?.trim() ?? '';
+    const companyIdByWebsite =
+      companyMade || options.companyId !== null || partnerName.length === 0 || companyIdByName !== null || website.length === 0
+        ? null
+        : await api.findCompanyIdByWebsite(normalizeDomain(website));
+    const companyTarget = planCustomerCompany({ lead, chosenCompanyId: options.companyId, companyIdByName, companyIdByWebsite });
     const existingCompanyId = companyTarget !== null && 'id' in companyTarget ? companyTarget.id : null;
     const plan = planCreateCustomer({
       lead,
       chosenCompanyId: options.companyId,
       companyIdByName,
+      companyIdByWebsite,
       existingCompanyAddress: existingCompanyId === null ? null : await api.readCompanyAddress(existingCompanyId),
       salespersonId: options.salespersonIds[0] ?? null,
     });

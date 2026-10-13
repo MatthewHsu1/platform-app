@@ -53,6 +53,33 @@ const refuseWholeCreate = async (
   throw new Error(refused.map((row) => api.translate(locale, UTM_MESSAGES.archivedName, { name: row.name ?? '' })).join(' '));
 };
 
+// Twenty's UI saves a new row before its name is typed, so the first name a
+// row without one gets counts as its create: the counter numbers it. A name an
+// archived row holds cannot be stored twice: it is put back, the row stays
+// without a name.
+const numberFirstName = async (api: UtmTriggerApi, object: UtmNamedObject, archivedHoldNames: boolean, event: UtmEvent) => {
+  const row = { id: event.recordId, name: textOf(event.properties.after?.name) };
+  const others = await otherRows(api, object, [row]);
+  const [plan] = planUniqueNameCreate({
+    created: [row],
+    existingNames: namesOf(others, (other) => !archivedHoldNames || other.active !== false),
+    archivedNames: archivedHoldNames ? namesOf(others, (other) => other.active === false) : [],
+  });
+
+  if (plan?.kind === 'refuse') {
+    await api.putBack(
+      object,
+      event.recordId,
+      { name: null },
+      api.translate(await api.memberLocale(event.workspaceMemberId), UTM_MESSAGES.nameTaken, { name: row.name ?? '' }),
+    );
+  } else if (plan?.kind === 'write') {
+    await api.update(object, event.recordId, { name: plan.name });
+  }
+};
+
+const isFirstName = (event: UtmEvent) => textOf(event.properties.before?.name) === null && textOf(event.properties.after?.name) !== null;
+
 // A staff save that gives a name another row holds is put back: names are unique.
 const putBackTakenName = async (api: UtmTriggerApi, object: UtmNamedObject, event: UtmEvent) => {
   const name = textOf(event.properties.after?.name);
@@ -82,8 +109,9 @@ const staffNameWrites = (events: UtmEvent[]) =>
   );
 
 // New campaigns get a unique identifier, the creator as responsible and the
-// first stage; a staff save that empties one of them, or takes another
-// campaign's identifier, is put back. A deleted campaign leaves its leads and
+// first stage; the first name typed into a campaign saved without one is
+// numbered the same way. A staff save that empties one of them, or takes
+// another campaign's identifier, is put back. A deleted campaign leaves its leads and
 // its tag links.
 export const makeRunCampaignTrigger =
   (api: UtmTriggerApi) =>
@@ -141,7 +169,7 @@ export const makeRunCampaignTrigger =
             return;
           }
           if ((event.properties.updatedFields ?? []).includes('name')) {
-            await putBackTakenName(api, 'utmCampaign', event);
+            await (isFirstName(event) ? numberFirstName(api, 'utmCampaign', true, event) : putBackTakenName(api, 'utmCampaign', event));
           }
         });
       }
@@ -164,8 +192,9 @@ export const makeRunCampaignTrigger =
     errors.throwIfAny();
   };
 
-// Sources and mediums: a new row gets a unique name through the counter, a
-// staff rename to a taken name is put back, the default rows other parts rely
+// Sources and mediums: a new row, or the first name typed into a row saved
+// without one, gets a unique name through the counter, a staff rename to a
+// taken name is put back, the default rows other parts rely
 // on cannot be deleted, and a deleted row leaves its leads.
 export const makeRunUtmNameTrigger =
   (rules: UtmNameRules, api: UtmTriggerApi) =>
@@ -196,7 +225,9 @@ export const makeRunUtmNameTrigger =
 
     if (operation === 'updated') {
       for (const event of staffNameWrites(events)) {
-        await errors.run(event.recordId, () => putBackTakenName(api, rules.object, event));
+        await errors.run(event.recordId, () =>
+          isFirstName(event) ? numberFirstName(api, rules.object, rules.archivedHoldNames, event) : putBackTakenName(api, rules.object, event),
+        );
       }
     }
 

@@ -11,7 +11,15 @@ const freshState = (): FakeMergeState => ({
   leads: new Map([
     [
       'head',
-      leadRow({ id: 'head', createdAt: '2026-02-01T00:00:01.000Z', name: 'Gym A', leadType: 'OPPORTUNITY', probability: 60, stageId: 'gen-1' }),
+      leadRow({
+        id: 'head',
+        createdAt: '2026-02-01T00:00:01.000Z',
+        name: 'Gym A',
+        leadType: 'OPPORTUNITY',
+        probability: 60,
+        stageId: 'gen-1',
+        description: { markdown: 'Wants 12 treadmills' },
+      }),
     ],
     [
       'tail-1',
@@ -24,9 +32,20 @@ const freshState = (): FakeMergeState => ({
         priority: 'HIGH',
         tags: ['Gym'],
         language: 'fr_FR',
+        description: { markdown: 'Budget 20k\n\nCall after 5 pm' },
       }),
     ],
-    ['tail-2', leadRow({ id: 'tail-2', createdAt: '2026-02-01T00:00:03.000Z', name: 'Gym C', probability: 10, tags: ['Hotel', 'Gym'] })],
+    [
+      'tail-2',
+      leadRow({
+        id: 'tail-2',
+        createdAt: '2026-02-01T00:00:03.000Z',
+        name: 'Gym C',
+        probability: 10,
+        tags: ['Hotel', 'Gym'],
+        description: { markdown: 'Delivery in March' },
+      }),
+    ],
   ]),
   notes: [
     { id: 'n1', title: 'Call notes', body: 'called', leadIds: ['tail-1'] },
@@ -69,7 +88,13 @@ describe('mergeLeads', () => {
       ['Own note', ['head']],
       ['Merge summary', ['head']],
     ]);
-    expect(state.leads.get('head')).toMatchObject({ priority: 'HIGH', tags: ['Gym', 'Hotel'], language: 'fr_FR', stageId: 'gen-1' });
+    expect(state.leads.get('head')).toMatchObject({
+      priority: 'HIGH',
+      tags: ['Gym', 'Hotel'],
+      language: 'fr_FR',
+      stageId: 'gen-1',
+      description: { markdown: 'Wants 12 treadmills\n\nBudget 20k\n\nCall after 5 pm\n\nDelivery in March' },
+    });
   });
 
   it.each(['addNote', 'renameNote', 'moveNoteLinks', 'moveTaskLinks', 'moveAttachment', 'writeHead', 'softDeleteLeads'] as const)(
