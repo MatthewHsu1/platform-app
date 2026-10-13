@@ -8,7 +8,7 @@ import { textOrNull } from 'src/shared/utils/text-or-null.util';
 export const CASE_SELECTION = `id createdAt deletedAt number name description { markdown blocknote }
   assignedUserId stageId personId companyId partnerName partnerEmail { primaryEmail additionalEmails }
   teamId categoryId channel priority kanbanState duplicateId lastStageUpdate assignedDate closedDate
-  unattended active ticketTypeId productId updatedBy { source workspaceMemberId }`;
+  unattended active ticketTypeId productId slaDeadline slaStateExpired updatedBy { source workspaceMemberId }`;
 
 const text = (value: unknown) => (typeof value === 'string' ? textOrNull(value) : null);
 const flag = (value: unknown) => (typeof value === 'boolean' ? value : null);
@@ -41,6 +41,8 @@ export const readCaseRow = (node: Record<string, unknown>): CaseRow => ({
   active: flag(node.active),
   ticketTypeId: text(node.ticketTypeId),
   productId: text(node.productId),
+  slaDeadline: text(node.slaDeadline),
+  slaStateExpired: flag(node.slaStateExpired),
   updatedBy: objectOrNull(node.updatedBy),
 });
 
@@ -67,6 +69,8 @@ type TeamNode = {
   active: boolean | null;
   createdAt: string;
   parentId: string | null;
+  useSla: boolean | null;
+  resourceCalendarId: string | null;
 };
 
 // Everything a save rule reads besides the case: stages and teams (archived ones too, they
@@ -82,7 +86,7 @@ export const loadCaseContext = async (cases: CaseRow[]): Promise<CaseContext> =>
   }>({
     stages: { of: stages, filter: {}, selection: 'id name sequence active unattended closed fold createdAt' },
     stageTeams: { of: stageTeams, filter: {}, selection: 'stageId teamId' },
-    teams: { of: teams, filter: {}, selection: 'id name sequence active createdAt parentId' },
+    teams: { of: teams, filter: {}, selection: 'id name sequence active createdAt parentId useSla resourceCalendarId' },
     members: { of: members, filter: {}, selection: 'teamId workspaceMemberId' },
     people: { of: people, filter: { id: { in: personIds } }, selection: 'id companyId' },
   });
@@ -99,7 +103,7 @@ export const loadCaseContext = async (cases: CaseRow[]): Promise<CaseContext> =>
       createdAt: row.createdAt,
       teamIds: found.stageTeams.filter((link) => link.stageId === row.id).map((link) => link.teamId),
     })),
-    teams: found.teams.map((row) => ({ ...row, sequence: row.sequence ?? 0, active: row.active !== false })),
+    teams: found.teams.map((row) => ({ ...row, sequence: row.sequence ?? 0, active: row.active !== false, useSla: row.useSla === true })),
     memberships: found.members,
     personCompanies: new Map(found.people.map((row) => [row.id, row.companyId])),
     settings: await readHelpdeskSettings(),

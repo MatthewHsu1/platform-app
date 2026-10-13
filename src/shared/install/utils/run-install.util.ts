@@ -154,9 +154,24 @@ export const runInstall = async ({
       }
     }
 
+    // Seed keys by object, read once and kept up to date as rows are made, so a row can name a parent
+    // made earlier in this run, in its own object or in another one.
+    const seedKeysByObject = new Map<string, Map<string, string>>();
+    const seedKeysOf = async (universalIdentifier: string) => {
+      const known = seedKeysByObject.get(universalIdentifier);
+
+      if (known !== undefined) {
+        return known;
+      }
+      const read = await api.listSeedKeys(findObject(objects, universalIdentifier));
+
+      seedKeysByObject.set(universalIdentifier, read);
+      return read;
+    };
+
     for (const { objectUniversalIdentifier, rows } of spec.seedRows) {
       const object = findObject(objects, objectUniversalIdentifier);
-      const idBySeedKey = await api.listSeedKeys(object);
+      const idBySeedKey = await seedKeysOf(objectUniversalIdentifier);
 
       for (const row of rows) {
         if (idBySeedKey.has(row.seedKey)) {
@@ -166,7 +181,7 @@ export const runInstall = async ({
         const values: Record<string, unknown> = { ...row.values, seedKey: row.seedKey };
 
         if (row.parentSeedKey !== undefined && row.parentFieldName !== undefined) {
-          const parentId = idBySeedKey.get(row.parentSeedKey);
+          const parentId = (await seedKeysOf(row.parentObjectUniversalIdentifier ?? objectUniversalIdentifier)).get(row.parentSeedKey);
 
           if (parentId === undefined) {
             throw new Error(`Install: seed row ${row.seedKey} needs ${row.parentSeedKey} first`);

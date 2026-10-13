@@ -11,7 +11,7 @@ import { sameValue } from 'src/shared/utils/same-value.util';
 // A change to one of these moves a case in or out of its team's open counts.
 const COUNTED_FIELDS = ['teamId', 'assignedUserId', 'stageId', 'priority', 'active', 'unattended'] as const;
 
-const emptyResult = (): CaseEventsResult => ({ written: [], stageSaved: [], teamsToCount: [], created: [] });
+const emptyResult = (): CaseEventsResult => ({ written: [], stageSaved: [], teamsToCount: [], teamSet: [], created: [] });
 
 export const applyCaseCreates = async (events: CaseEvent[], api: CaseApi, now: string): Promise<CaseEventsResult> => {
   const fresh = await api.readCases(events.map((item) => item.recordId));
@@ -85,6 +85,9 @@ export const applyCaseUpdates = async (events: CaseEvent[], api: CaseApi, now: s
       });
 
       pending = { ...pending, ...plan.data };
+      if (item.after.teamId !== null && item.before?.teamId !== item.after.teamId && !result.teamSet.includes(id)) {
+        result.teamSet.push(id);
+      }
       if (plan.stageSaved) {
         result.stageSaved.push({ caseId: id, stageId: item.after.stageId });
       }

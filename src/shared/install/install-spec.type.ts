@@ -50,6 +50,8 @@ export type SeedRow = {
   values: Record<string, unknown>;
   parentSeedKey?: string;
   parentFieldName?: string;
+  // The object the parent row belongs to, when it is not the row's own object. Its rows come earlier in the spec.
+  parentObjectUniversalIdentifier?: string;
 };
 
 export type SeedRowsSpec = { objectUniversalIdentifier: string; rows: SeedRow[] };

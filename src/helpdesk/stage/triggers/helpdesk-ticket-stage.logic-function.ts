@@ -9,6 +9,7 @@ import { readHelpdeskSettings } from 'src/helpdesk/read-helpdesk-settings';
 import { recomputeTeamCounts } from 'src/helpdesk/recompute-team-counts';
 import 'src/helpdesk/stage/stage-delete-entries';
 import { planStageDelete } from 'src/helpdesk/stage/utils/plan-stage-delete.util';
+import 'src/helpdesk-sla/sla-delete-entries';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { restoreIfStillDeleted } from 'src/shared/triggers/put-back';
 import { records } from 'src/shared/triggers/records';

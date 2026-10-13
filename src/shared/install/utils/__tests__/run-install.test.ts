@@ -327,6 +327,29 @@ describe('seed rows', () => {
     expect(api.createdSeedRows).toEqual([]);
   });
 
+  it('links a seed row to a parent made earlier in another object', async () => {
+    const api = fakeApi();
+    const pack: SeedRowsSpec = {
+      objectUniversalIdentifier: REASON,
+      rows: [
+        {
+          seedKey: 'reason.small',
+          values: { name: 'Small' },
+          parentSeedKey: 'uom.product_uom_unit',
+          parentFieldName: 'uom',
+          parentObjectUniversalIdentifier: UOM_OBJECT,
+        },
+      ],
+    };
+
+    await runInstall({ api, specs: [{ ...spec, seedRows: [units, pack] }], previousVersion: undefined });
+
+    expect(api.createdSeedRows[api.createdSeedRows.length - 1]).toEqual({
+      object: 'crmLostReason',
+      values: { name: 'Small', seedKey: 'reason.small', uomId: 'id-uom.product_uom_unit' },
+    });
+  });
+
   it('skips a seed key that already exists, even after a rename', async () => {
     const api = fakeApi({ seedKeys: { uomUom: { 'uom.product_uom_unit': 'unit-id' } } });
     await runInstall({ api, specs: [spec], previousVersion: undefined });

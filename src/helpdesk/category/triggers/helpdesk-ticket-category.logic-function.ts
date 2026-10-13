@@ -6,6 +6,7 @@ import { CATEGORY_DELETE_RULES } from 'src/helpdesk/delete-rules/category-delete
 import { HELPDESK_MESSAGES } from 'src/helpdesk/helpdesk-messages.constant';
 import { HELPDESK_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS } from 'src/helpdesk/helpdesk-universal-identifiers.constant';
 import { runTreePass } from 'src/helpdesk/tree/run-tree-pass';
+import 'src/helpdesk-sla/sla-delete-entries';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { restoreCascaded } from 'src/shared/triggers/cascade-restore';
 import { records } from 'src/shared/triggers/records';

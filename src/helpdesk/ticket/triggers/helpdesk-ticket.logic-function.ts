@@ -10,8 +10,14 @@ import 'src/helpdesk/ticket/case-delete-entries';
 import { TWENTY_CASE_API } from 'src/helpdesk/ticket/twenty-case-api';
 import { type CaseEvent } from 'src/helpdesk/ticket/types/case-event.type';
 import 'src/helpdesk-ticket-related/case-related-delete-entries';
-import { attachSlasToNewCases, recomputeSlasOnStageSave, restoreSlaRowsOfCases } from 'src/helpdesk-sla/case-sla-hooks';
+import {
+  attachSlasToCasesWithNewTeam,
+  attachSlasToNewCases,
+  recomputeSlasOnStageSave,
+  restoreSlaRowsOfCases,
+} from 'src/helpdesk-sla/case-sla-hooks';
 import { clearCaseFromLeads } from 'src/helpdesk-crm/clear-case-from-leads';
+import 'src/helpdesk-sla/sla-delete-entries';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { updatedFieldsOf } from 'src/shared/triggers/event-values';
 import { records } from 'src/shared/triggers/records';
@@ -44,16 +50,22 @@ const handler = async (payload: DatabaseEventBatchPayload<RawEvent>) => {
   const { operation, events } = readEvents(payload);
   const now = new Date().toISOString();
   const errors = errorCollector();
+  const warnings: string[] = [];
 
   if (operation === 'created') {
     const result = await applyCaseCreates(events.map(toCaseEvent), TWENTY_CASE_API, now);
 
-    await errors.run('service levels', () => attachSlasToNewCases(result.created, now));
+    await errors.run('service levels', async () => {
+      warnings.push(...(await attachSlasToNewCases(result.created, now)));
+    });
     await errors.run('team counts', () => recomputeTeamCounts(result.teamsToCount));
   } else if (operation === 'updated') {
     const result = await applyCaseUpdates(events.map(toCaseEvent), TWENTY_CASE_API, now);
 
-    await errors.run('service levels', () => recomputeSlasOnStageSave(result.stageSaved, now));
+    await errors.run('service levels', async () => {
+      warnings.push(...(await attachSlasToCasesWithNewTeam(result.teamSet, now)));
+      await recomputeSlasOnStageSave(result.stageSaved, now);
+    });
     await errors.run('team counts', () => recomputeTeamCounts(result.teamsToCount));
   } else if (operation === 'deleted' || operation === 'destroyed') {
     const ids = events.map((event) => event.recordId);
@@ -79,7 +91,8 @@ const handler = async (payload: DatabaseEventBatchPayload<RawEvent>) => {
   }
   errors.throwIfAny();
 
-  return {};
+  // The service level engine reports a team without working hours here, where the function's log shows it.
+  return { warnings };
 };
 
 export default defineLogicFunction({

@@ -4,6 +4,7 @@ import { applyDeleteRules } from 'src/helpdesk/delete-rules/apply-delete-rules';
 import { TAG_DELETE_RULES } from 'src/helpdesk/delete-rules/tag-delete-rules';
 import { HELPDESK_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS } from 'src/helpdesk/helpdesk-universal-identifiers.constant';
 import 'src/helpdesk/tag/tag-delete-entries';
+import 'src/helpdesk-sla/sla-delete-entries';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { records } from 'src/shared/triggers/records';
 

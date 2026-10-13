@@ -131,6 +131,15 @@ describe('case updates', () => {
     expect(result.teamsToCount.sort()).toEqual(['teamA', 'teamB']);
   });
 
+  it('reports a case whose team was set, and not one whose team stayed', async () => {
+    const withoutTeam = { ...placed, teamId: null, assignedUserId: null };
+    const teamSet = { ...withoutTeam, teamId: 'teamA' };
+    const { api } = fakeApi([teamSet]);
+
+    expect((await applyCaseUpdates([event(withoutTeam, teamSet, ['team', 'teamId'])], api, NOW)).teamSet).toEqual(['case1']);
+    expect((await applyCaseUpdates([event(placed, { ...placed, priority: 'HIGH' }, ['priority'])], fakeApi([placed]).api, NOW)).teamSet).toEqual([]);
+  });
+
   it('counts the team when only the priority changes', async () => {
     const after = { ...placed, priority: 'VERY_HIGH' };
     const { api } = fakeApi([after]);

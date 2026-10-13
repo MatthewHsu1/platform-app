@@ -52,6 +52,15 @@ const OUTSIDE_INVENTORY = [
   'helpdeskTicketType',
   'helpdeskTicketTypeTeam',
   'helpdeskTicketRelated',
+  'resourceCalendar',
+  'resourceCalendarAttendance',
+  'resourceCalendarLeave',
+  'helpdeskSla',
+  'helpdeskTicketSla',
+  'helpdeskSlaTeam',
+  'helpdeskSlaCategory',
+  'helpdeskSlaTag',
+  'helpdeskSlaIgnoreStage',
 ];
 
 const rowOf = (nameSingular: string) => {

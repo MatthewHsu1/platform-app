@@ -8,6 +8,7 @@ import 'src/helpdesk/team/team-delete-entries';
 import { runTreePass } from 'src/helpdesk/tree/run-tree-pass';
 import 'src/helpdesk-type/team-type-delete-entries';
 import { applyTeamCalendarDefault } from 'src/helpdesk-sla/team-sla-hooks';
+import 'src/helpdesk-sla/sla-delete-entries';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { records } from 'src/shared/triggers/records';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
