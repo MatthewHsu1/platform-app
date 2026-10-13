@@ -63,9 +63,12 @@ jobs:
       - name: Unit tests
         run: yarn test
 
+      # twenty-sdk comes from the fork's release (package.json). TWENTY_FAST_BUILD=1 makes it
+      # bundle the manifest in batches and keep node_modules packages external, so the build
+      # fits in the runner's memory.
       - name: Build the app package
         env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          TWENTY_FAST_BUILD: '1'
         run: yarn twenty dev:build --tarball
 
       - name: Check the package exists
