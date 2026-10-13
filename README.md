@@ -88,7 +88,7 @@ ruled object. Twenty's own Company, Opportunity and Task have no rule.
 
 The rules are Platform's `ROW_ACCESS_CONFIG` variable, written by Platform on every Roles page
 save, install and daily run; do not edit it. Our Twenty fork enforces them (module
-`packages/twenty-server/src/engine/twenty-orm/owner-row-access/` in `twenty/source`). A value the
+`packages/twenty-server/src/engine/twenty-orm/owner-row-access/` in the Twenty fork). A value the
 server cannot read hides ruled objects from everyone but Admin and Platform until the next run
 writes a good one. Platform not installed: no rules, Twenty behaves as upstream.
 

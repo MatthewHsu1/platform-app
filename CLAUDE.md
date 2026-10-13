@@ -31,19 +31,19 @@ Twenty app (twenty-sdk 2.45.0, same as the server). Read `README.md` first. Desi
   `BUILDING_BLOCKS`, and adds its drop-down and the owner field of each ruled object to
   `ROLE_MODULES`. Platform makes one Twenty role per mix of blocks; block keys are never renamed.
 - The design notes for each module, including where its data model comes from, are in `docs/superpowers/` (not in git); read the handoff `docs/superpowers/sdd/2026-10-06-twenty-v2.45.6-upgrade/handoff.md` §9 before starting a module.
-- Twenty app docs: read the copy in the submodule, not the website. It matches our twenty-sdk
+- Twenty app docs: read the copy in the Twenty fork (`../twenty`), not the website. It matches our twenty-sdk
   version; the website follows Twenty's main branch. Paths are from this folder:
-  - `../../../../twenty/packages/twenty-docs/developers/extend/apps/`: the app docs, one folder per
+  - `../twenty/packages/twenty-docs/developers/extend/apps/`: the app docs, one folder per
     topic (data, logic, layout, config, operations). Read the page for the piece you add.
-  - `../../../../twenty/packages/twenty-agent-skills/skills/develop-app/SKILL.md`: Twenty's own
+  - `../twenty/packages/twenty-agent-skills/skills/develop-app/SKILL.md`: Twenty's own
     workflow for changing an app.
-  - `../../../../twenty/packages/create-twenty-app/src/constants/template/AGENTS.md`: Twenty's
+  - `../twenty/packages/create-twenty-app/src/constants/template/AGENTS.md`: Twenty's
     pitfalls for every app. Its `yarn twenty dev:add` writes to `src/objects/` and the like;
     move the file into its module folder.
-  - `../../../../twenty/packages/twenty-apps/`: real apps to copy patterns from.
+  - `../twenty/packages/twenty-apps/`: real apps to copy patterns from.
   - Website: https://docs.twenty.com/developers/extend/apps/getting-started/quick-start
 - `yarn lint` uses the rules of Twenty's own code, with types (`--type-aware`) and Twenty's
-  custom rules from the fork's checkout (`../../../../twenty`). After the fork changes, rebuild
+  custom rules from the fork's checkout (`../twenty`). After the fork changes, rebuild
   those rules there: `npx nx build twenty-oxlint-rules`. Fix the code; do not turn a rule off.
 - Triggers read rows, call a pure planner in `utils/`, and write only what differs. A trigger
   skips events the app itself caused (its writes run as `'application'`), re-reads the row before

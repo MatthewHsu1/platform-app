@@ -2,7 +2,7 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["react", "typescript", "unicorn", "import"],
   "jsPlugins": [
-    "../../../../twenty/packages/twenty-oxlint-rules/dist/oxlint-plugin.mjs"
+    "../twenty/packages/twenty-oxlint-rules/dist/oxlint-plugin.mjs"
   ],
   "options": {
     "typeAware": true
