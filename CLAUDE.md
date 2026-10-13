@@ -43,8 +43,8 @@ Twenty app (twenty-sdk 2.45.0, same as the server). Read `README.md` first. Desi
   - `../../../../twenty/packages/twenty-apps/`: real apps to copy patterns from.
   - Website: https://docs.twenty.com/developers/extend/apps/getting-started/quick-start
 - `yarn lint` uses the rules of Twenty's own code, with types (`--type-aware`) and Twenty's
-  custom rules from the submodule. After the submodule moves, rebuild those rules from
-  `../../../../twenty`: `npx nx build twenty-oxlint-rules`. Fix the code; do not turn a rule off.
+  custom rules from the fork's checkout (`../../../../twenty`). After the fork changes, rebuild
+  those rules there: `npx nx build twenty-oxlint-rules`. Fix the code; do not turn a rule off.
 - Triggers read rows, call a pure planner in `utils/`, and write only what differs. A trigger
   skips events the app itself caused (its writes run as `'application'`), re-reads the row before
   it puts a change back, and collects its errors instead of stopping at the first one, so one bad
