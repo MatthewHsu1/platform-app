@@ -8,6 +8,7 @@ import { themeCssVariables } from 'twenty-ui/theme';
 
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { formatDay } from 'src/shared/front-components/utils/format-day.util';
+import { readSummaryGrids } from 'src/stock/reports/forecast/forecast-summary-grids';
 import { ForecastGraph, makeFormat, openRecord, sum } from 'src/stock/reports/forecast/forecast-view';
 import { type ForecastAnswer } from 'src/stock/reports/forecast/types/forecast-answer.type';
 import { type ForecastProduct } from 'src/stock/reports/forecast/types/forecast-product.type';
@@ -113,6 +114,7 @@ export const ForecastSummaryView = ({
   const locale = useLocale();
   const styles = readPopUpStyles();
   const theme = themeCssVariables;
+  const grids = readSummaryGrids();
   const format = makeFormat(locale, data.digits);
   const productById = new Map(data.products.map((product) => [product.id, product]));
   const unitOf = (productId: string) => productById.get(productId)?.uomName ?? '';
@@ -224,7 +226,7 @@ export const ForecastSummaryView = ({
         <span style={styles.muted}>{t(text.warehouse, { name: data.warehouse.name })}</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 9rem), 1fr))', gap: theme.spacing[3] }} role="group" aria-label={t(text.summaryLabel)}>
+      <div style={grids.metrics} role="group" aria-label={t(text.summaryLabel)}>
         <Metric color="gray" label={t(text.onHand)} value={format(onHand)} note={t(text.onHandNote)} />
         {toRemove === null ? null : <Metric color="orange" label={t(text.toRemove)} value={format(toRemove)} note={t(text.toRemoveNote)} />}
         <Metric color="gray" label={t(text.incoming)} value={format(incoming)} note={t(text.incomingNote)} />
@@ -233,7 +235,7 @@ export const ForecastSummaryView = ({
         <Metric color="green" label={t(text.free)} value={format(free)} note={t(text.freeNote)} valueColor={theme.color.green} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 18rem), 1fr))', gap: theme.spacing[3], alignItems: 'start' }}>
+      <div style={grids.graphAndDates}>
         <Panel title={t(text.chartTitle)} note={t(text.chartNote)}>
           <div role="img" aria-label={t(text.chartTitle)}>
             <ForecastGraph graph={data.graph} today={data.today} emptyText={t(text.graphEmpty)} />
@@ -339,7 +341,7 @@ export const ForecastSummaryView = ({
         {data.truncated ? <div style={styles.muted}>{t(text.truncated)}</div> : null}
       </Section.Root>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 16rem), 1fr))', gap: theme.spacing[3], alignItems: 'start' }}>
+      <div style={grids.breakdownAndSum}>
         <Panel title={t(text.breakdownTitle)} note={t(text.breakdownNote)}>
           <div>
             <DetailRow label={t(text.freeStock)} note={t(text.freeStockNote)} value={withUnit(free)} valueColor={theme.color.green} />

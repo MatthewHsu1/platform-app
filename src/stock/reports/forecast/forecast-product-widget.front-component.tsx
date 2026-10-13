@@ -5,6 +5,7 @@ import { Callout } from 'twenty-ui/components';
 import { ErrorText } from 'src/shared/front-components/pop-up';
 import { readPopUpStyles } from 'src/shared/front-components/pop-up-styles';
 import { FORECAST_TEXT } from 'src/stock/reports/forecast/forecast-widget.front-component';
+import { ForecastSummarySkeleton } from 'src/stock/reports/forecast/forecast-summary-skeleton';
 import { ForecastSummaryView } from 'src/stock/reports/forecast/forecast-summary-view';
 import { type ForecastSummaryText } from 'src/stock/reports/forecast/types/forecast-summary-text.type';
 import { useForecastReport } from 'src/stock/reports/forecast/use-forecast-report';
@@ -27,7 +28,7 @@ const SUMMARY_TEXT: ForecastSummaryText = {
   planningNote: msg('Key dates used for this forecast'),
   reservationsTitle: msg('Reservations and outgoing stock'),
   reservationsNote: msg('Where the stock goes, and what covers each delivery'),
-  reservationCount: msg('{count} lines'),
+  reservationCount: msg('Lines: {count}'),
   noReservations: msg('Nothing is planned to leave or arrive.'),
   breakdownTitle: msg('Inventory breakdown'),
   breakdownNote: msg('Stock totals by forecast measure'),
@@ -63,7 +64,7 @@ const ForecastProductWidget = () => {
   return (
     <div style={styles.panel}>
       <ErrorText error={report.error} />
-      {report.data === null && report.error === null ? <div style={styles.muted}>{t('Loading…')}</div> : null}
+      {report.data === null && report.error === null ? <ForecastSummarySkeleton label={t('Loading…')} /> : null}
       {report.data === null ? null : (
         <ForecastSummaryView
           data={report.data}
