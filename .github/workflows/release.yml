@@ -63,9 +63,13 @@ jobs:
       - name: Unit tests
         run: yarn test
 
+      # The build is one Node process. It bundles each of the ~940 config files
+      # (each bundle holds a copy of twenty-sdk, about 2 MB) and keeps every compiled
+      # bundle in memory until it ends, so the heap grows with the file count and
+      # peaks at about 8 GB. 8192 failed on the runner. The runner has 16 GB.
       - name: Build the app package
         env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          NODE_OPTIONS: --max-old-space-size=12288
         run: yarn twenty dev:build --tarball
 
       - name: Check the package exists
