@@ -28,7 +28,9 @@ A deadline is counted in working hours in the team's time zone, across weekends,
   rows of policies that no longer apply and adds the missing ones.
 - A case shows the earliest deadline of its rows in progress and whether any row is expired. The "SLA
   expired" lists also show a row in progress whose deadline has passed, so no job flags it.
-- A team that uses SLA and has no working hours gets rows without a deadline, and a warning in the
-  function's log.
+- A team that uses SLA starts on the standard working hours. If staff clear them, its cases get rows
+  without a deadline, and a warning in the function's log.
+- A row expires when the case is saved after the deadline (a stage change); a policy with no team lists
+  applies to every team.
 - A policy that rows still name cannot be deleted: the delete is undone with a note. Policy changes
   change no row.

@@ -30,7 +30,9 @@ export type InstallApi = {
     aggregate?: { operation: 'SUM'; fieldMetadataId: string };
     cardFieldMetadataIds?: string[];
   }) => Promise<void>;
-  createListView: (input: { objectMetadataId: string; name: string; icon: string; fieldMetadataIds: string[] }) => Promise<string>;
+  createListView: (input: { objectMetadataId: string; name: string; icon: string }) => Promise<string>;
+  showViewField: (input: { viewId: string; fieldMetadataId: string; position: number }) => Promise<void>;
+  deleteView: (viewId: string) => Promise<void>;
   createViewFilterGroup: (input: { viewId: string; logicalOperator: 'AND' | 'OR'; parentViewFilterGroupId?: string }) => Promise<string>;
   createViewFilter: (input: {
     viewId: string;
@@ -114,39 +116,46 @@ const findFieldId = (object: InstallObject, name: string) => {
 };
 
 // A table view with its columns and filters. `anyOf` becomes one group of alternatives; a member that is itself a
-// list of conditions becomes a group inside it.
+// list of conditions becomes a group inside it. The label field is the first column: Twenty keeps it in the lowest
+// position.
 const makeListView = async (api: InstallApi, object: InstallObject, list: ListViewSpec) => {
-  const viewId = await api.createListView({
-    objectMetadataId: object.id,
-    name: list.name,
-    icon: list.icon,
-    fieldMetadataIds: list.columns.map((fieldName) => findFieldId(object, fieldName)),
-  });
-  const filterOf = (filter: ViewFilterSpec) => ({
-    viewId,
-    fieldMetadataId: findFieldId(object, filter.fieldName),
-    operand: filter.operand,
-    value: viewFilterValue(filter.value, filter.operand),
-  });
+  const viewId = await api.createListView({ objectMetadataId: object.id, name: list.name, icon: list.icon });
 
-  for (const filter of list.filters) {
-    await api.createViewFilter(filterOf(filter));
-  }
-  if (list.anyOf === undefined || list.anyOf.length === 0) {
-    return;
-  }
-  const alternatives = await api.createViewFilterGroup({ viewId, logicalOperator: 'OR' });
-
-  for (const member of list.anyOf) {
-    if ('allOf' in member) {
-      const group = await api.createViewFilterGroup({ viewId, logicalOperator: 'AND', parentViewFilterGroupId: alternatives });
-
-      for (const filter of member.allOf) {
-        await api.createViewFilter({ ...filterOf(filter), viewFilterGroupId: group });
-      }
-    } else {
-      await api.createViewFilter({ ...filterOf(member), viewFilterGroupId: alternatives });
+  // A list that stops half made would be found by name on the next install and left as it is: it is removed
+  // instead, so the next install makes it again.
+  try {
+    for (const [position, fieldName] of list.columns.entries()) {
+      await api.showViewField({ viewId, fieldMetadataId: findFieldId(object, fieldName), position });
     }
+    const filterOf = (filter: ViewFilterSpec) => ({
+      viewId,
+      fieldMetadataId: findFieldId(object, filter.fieldName),
+      operand: filter.operand,
+      value: viewFilterValue(filter.value, filter.operand),
+    });
+
+    for (const filter of list.filters) {
+      await api.createViewFilter(filterOf(filter));
+    }
+    if (list.anyOf === undefined || list.anyOf.length === 0) {
+      return;
+    }
+    const alternatives = await api.createViewFilterGroup({ viewId, logicalOperator: 'OR' });
+
+    for (const member of list.anyOf) {
+      if ('allOf' in member) {
+        const group = await api.createViewFilterGroup({ viewId, logicalOperator: 'AND', parentViewFilterGroupId: alternatives });
+
+        for (const filter of member.allOf) {
+          await api.createViewFilter({ ...filterOf(filter), viewFilterGroupId: group });
+        }
+      } else {
+        await api.createViewFilter({ ...filterOf(member), viewFilterGroupId: alternatives });
+      }
+    }
+  } catch (error) {
+    await api.deleteView(viewId).catch(() => undefined);
+    throw error;
   }
 };
 

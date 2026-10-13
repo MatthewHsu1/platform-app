@@ -19,7 +19,7 @@ listed even when tracking is off, because a button condition cannot read a setti
 
 ## Settings
 
-Settings → Applications → Platform → Work cases: assign new cases to their creator, track duplicates, and the stage a duplicate moves to. Anyone may look; the workspace admin and Work cases: Administrator change them. A deleted duplicate stage empties the setting.
+Settings → Applications → Platform → Work cases: assign new cases to their creator, track duplicates, and the stage a duplicate moves to. Anyone may look; the workspace admin and Work cases: Administrator change them. A deleted duplicate stage empties the setting. The settings are read from Twenty on each use: a trigger runs in the worker, whose copy of the app variables can be out of date for a while after a save.
 
 ## Access
 

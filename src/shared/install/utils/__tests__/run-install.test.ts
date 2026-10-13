@@ -164,6 +164,12 @@ const makeFakeApi = ({
 
       return 'view-1';
     },
+    showViewField: async (input) => {
+      state.listCalls.push({ name: 'showViewField', input });
+    },
+    deleteView: async (viewId) => {
+      state.listCalls.push({ name: 'deleteView', input: viewId });
+    },
     createViewFilterGroup: async (input) => {
       state.listCalls.push({ name: 'createViewFilterGroup', input });
 
@@ -344,7 +350,9 @@ describe('list views', () => {
     });
 
     expect(state.listCalls).toEqual([
-      { name: 'createListView', input: { objectMetadataId: 'o-lead', name: 'Expired', icon: 'IconAlarm', fieldMetadataIds: ['field-name', 'field-state'] } },
+      { name: 'createListView', input: { objectMetadataId: 'o-lead', name: 'Expired', icon: 'IconAlarm' } },
+      { name: 'showViewField', input: { viewId: 'view-1', fieldMetadataId: 'field-name', position: 0 } },
+      { name: 'showViewField', input: { viewId: 'view-1', fieldMetadataId: 'field-state', position: 1 } },
       { name: 'createViewFilterGroup', input: { viewId: 'view-1', logicalOperator: 'OR' } },
       { name: 'createViewFilter', input: { viewId: 'view-1', fieldMetadataId: 'field-state', operand: 'IS', value: '["EXPIRED"]', viewFilterGroupId: 'group-1' } },
       { name: 'createViewFilterGroup', input: { viewId: 'view-1', logicalOperator: 'AND', parentViewFilterGroupId: 'group-1' } },
@@ -367,6 +375,22 @@ describe('list views', () => {
     const result = await runInstall({ api: refusing, specs: [spec('Other')], previousVersion: undefined });
 
     expect(result.skippedBoards).toEqual([{ name: 'Other', reason: 'no permission' }]);
+  });
+
+  it('removes a list that stopped half made, so the next install makes it again', async () => {
+    const { api, state } = makeFakeApi({ leadFields: [{ id: 'field-name', name: 'name' }] });
+    const failing = { ...api, showViewField: async () => Promise.reject(new Error('Label identifier view field has to be in the lowest position')) };
+    const result = await runInstall({
+      api: failing,
+      specs: [{ ...EMPTY_SPEC, lists: [{ objectUniversalIdentifier: LEAD, name: 'Half', icon: 'IconUser', columns: ['name'], filters: [] }] }],
+      previousVersion: undefined,
+    });
+
+    expect(result.skippedBoards).toHaveLength(1);
+    expect(state.listCalls).toEqual([
+      { name: 'createListView', input: { objectMetadataId: 'o-lead', name: 'Half', icon: 'IconUser' } },
+      { name: 'deleteView', input: 'view-1' },
+    ]);
   });
 });
 

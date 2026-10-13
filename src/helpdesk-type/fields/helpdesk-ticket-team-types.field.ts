@@ -11,7 +11,7 @@ import { oneToManyField } from 'src/shared/fields';
 export default defineField({
   ...oneToManyField({
     universalIdentifier: INVERSE_IDS.helpdeskTicketTeamTypes,
-    name: 'types',
+    name: 'ticketTypes',
     label: 'Types',
     icon: 'IconTags',
     targetObjectUniversalIdentifier: HELPDESK_TICKET_TYPE_TEAM_OBJECT_UNIVERSAL_IDENTIFIER,

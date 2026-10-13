@@ -154,28 +154,57 @@ export const twentyInstallApi: InstallApi = {
     }
   },
 
-  createListView: async ({ objectMetadataId, name, icon, fieldMetadataIds }) => {
-    const data = requireData(
+  createListView: async ({ objectMetadataId, name, icon }) => {
+    const viewId = requireData(
       await twentyMetadata<{ createView: { id: string } }>(
         'application',
         `mutation CreateList($input: CreateViewInput!) { createView(input: $input) { id } }`,
         { input: { name, icon, objectMetadataId, type: 'TABLE' } },
       ),
       `Create view ${name}`,
-    );
+    ).createView.id;
 
-    for (const [position, fieldMetadataId] of fieldMetadataIds.entries()) {
+    // Twenty puts one column of its own choosing into a new table view. It is removed, so the columns the list
+    // asks for are the only ones and the label field can take the lowest position.
+    const made = requireData(
+      await twentyMetadata<{ getViewFields: { id: string }[] }>(
+        'application',
+        `query MadeColumns($viewId: String!) { getViewFields(viewId: $viewId) { id } }`,
+        { viewId },
+      ),
+      `Read the columns of view ${name}`,
+    ).getViewFields;
+
+    for (const { id } of made) {
       requireData(
         await twentyMetadata(
           'application',
-          `mutation ShowColumn($input: CreateViewFieldInput!) { createViewField(input: $input) { id } }`,
-          { input: { viewId: data.createView.id, fieldMetadataId, position, isVisible: true } },
+          `mutation DropColumn($input: DestroyViewFieldInput!) { destroyViewField(input: $input) { id } }`,
+          { input: { id } },
         ),
-        `Show a column on ${name}`,
+        `Remove a column of view ${name}`,
       );
     }
 
-    return data.createView.id;
+    return viewId;
+  },
+
+  showViewField: async ({ viewId, fieldMetadataId, position }) => {
+    requireData(
+      await twentyMetadata(
+        'application',
+        `mutation ShowColumn($input: CreateViewFieldInput!) { createViewField(input: $input) { id } }`,
+        { input: { viewId, fieldMetadataId, position, isVisible: true } },
+      ),
+      'Show a column',
+    );
+  },
+
+  deleteView: async (viewId) => {
+    requireData(
+      await twentyMetadata('application', `mutation DropView($id: String!) { deleteView(id: $id) }`, { id: viewId }),
+      'Remove a view',
+    );
   },
 
   createViewFilterGroup: async (input) =>

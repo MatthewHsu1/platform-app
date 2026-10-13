@@ -8,8 +8,9 @@ import { HELPDESK_TICKET_SLA_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/helpdesk-sl
 import { HELPDESK_TICKET_TYPE_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/helpdesk-type/helpdesk-type-universal-identifiers.constant';
 import { type ModuleInstallSpec } from 'src/shared/install/install-spec.type';
 
-// The columns a case list or card shows; every other field stays a hidden column.
-const CASE_COLUMNS = ['number', 'name', 'stage', 'priority', 'assignedUser', 'team', 'person', 'company', 'slaDeadline', 'createdAt'];
+// The columns a case list shows, the label field first (Twenty keeps it in the lowest position); every other field
+// stays a hidden column.
+const CASE_COLUMNS = ['name', 'number', 'stage', 'priority', 'assignedUser', 'team', 'person', 'company', 'slaDeadline', 'createdAt'];
 
 // The cases board (stage columns are drawn by the case board sync), the lists of cases, and the order of the main
 // lists. The "SLA expired" lists catch a case or row that is flagged expired and also one still in progress whose
