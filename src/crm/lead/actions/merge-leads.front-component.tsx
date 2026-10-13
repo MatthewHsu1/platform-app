@@ -58,6 +58,8 @@ export const MERGE_TEXTS = [
   msg('Campaign: {value}'),
   msg('Medium: {value}'),
   msg('Source: {value}'),
+  msg('Your role does not allow this.'),
+  msg('This action needs a signed-in person: an API key cannot use it.'),
 ];
 
 type MergeLine = { id: string; name: string | null; leadType: string | null; stage: string | null; probability: number | null };

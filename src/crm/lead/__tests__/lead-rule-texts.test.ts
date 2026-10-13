@@ -123,6 +123,8 @@ describe('lead rule texts', () => {
       RESTORE_NOT_LOST,
       AUTOMATIC_NOT_PENDING,
       AUTOMATIC_ALREADY,
+      NOT_ALLOWED_MESSAGE,
+      NO_MEMBER_DETAIL,
     ];
 
     expect(LEAD_ACTION_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
@@ -130,7 +132,7 @@ describe('lead rule texts', () => {
   });
 
   it('lists every answer and note of the convert buttons, and the catalog holds each', () => {
-    const texts = Object.values(CONVERT_MESSAGES);
+    const texts = [...Object.values(CONVERT_MESSAGES), NOT_ALLOWED_MESSAGE, NO_MEMBER_DETAIL];
 
     expect(CONVERT_TEXTS.map((descriptor) => descriptor.message)).toEqual(texts);
     expect(texts.filter((text) => !(text in CATALOG))).toEqual([]);
@@ -199,5 +201,6 @@ describe('lead rule texts', () => {
 
     expect([...used].filter((text) => !listed.has(text))).toEqual([]);
     expect([...listed].filter((text) => !(text in CATALOG))).toEqual([]);
+    expect([...listed]).toEqual(expect.arrayContaining([NOT_ALLOWED_MESSAGE, NO_MEMBER_DETAIL]));
   });
 });

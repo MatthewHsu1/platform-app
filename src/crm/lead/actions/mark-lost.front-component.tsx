@@ -26,6 +26,8 @@ export const LEAD_ACTION_TEXTS = [
   msg('Only a lost lead can be restored.'),
   msg('Only a pending lead can follow the automatic probability.'),
   msg('The probability already follows the automatic one.'),
+  msg('Your role does not allow this.'),
+  msg('This action needs a signed-in person: an API key cannot use it.'),
 ];
 
 type LostReason = { id: string; name: string | null };

@@ -32,6 +32,8 @@ export const CONVERT_TEXTS = [
   msg('Another contact already uses {email}, so the new contact was made without it.'),
   msg('Company created without website'),
   msg('Another company already uses the website {website}, so the new company was made without it.'),
+  msg('Your role does not allow this.'),
+  msg('This action needs a signed-in person: an API key cannot use it.'),
 ];
 
 type Duplicate = { id: string; name: string | null; leadType: string | null; email: string | null; stage: string | null };

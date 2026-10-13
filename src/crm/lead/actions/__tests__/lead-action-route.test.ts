@@ -18,6 +18,9 @@ const refusedForRole: GraphqlResponse<unknown> = {
   caller: 'person',
 };
 
+// What a route answers when nobody is signed in behind the call (an API key).
+const REFUSAL = { error: 'Your role does not allow this.', detail: 'This action needs a signed-in person: an API key cannot use it.' };
+
 describe('lead route errors', () => {
   it("answers 409 with a plain sentence and Twenty's text as detail when the user's role refuses", async () => {
     const response = await withErrors(async () => {
@@ -95,7 +98,6 @@ describe('a lead route called with nobody signed in behind it', () => {
   // Twenty runs a route called with an API key on the app's own token, so the
   // key's role never reaches the reads and writes: such a call is refused first.
   const nobody = async () => false;
-  const REFUSAL = { error: 'Your role does not allow this.', detail: 'This action needs a signed-in person: an API key cannot use it.' };
 
   it('answers 409 before the route reads or writes anything', async () => {
     const calls: string[] = [];
@@ -127,5 +129,30 @@ describe('a lead route called with nobody signed in behind it', () => {
     })(async () => jsonResponse(200, {}))(payload);
 
     expect(response.status).toBe(500);
+  });
+});
+
+describe('every lead button route called with nobody signed in behind it', () => {
+  // Twenty runs every one of these routes with the clicked button. An API key
+  // calling one directly reaches it on the app's own token, so the key's role
+  // applies to none of its reads and writes: each route must refuse first.
+  it.each([
+    ['mark lost', () => import('src/crm/lead/actions/mark-lost.logic-function')],
+    ['restore', () => import('src/crm/lead/actions/restore-lead.logic-function')],
+    ['use automatic probability', () => import('src/crm/lead/actions/use-automatic-probability.logic-function')],
+    ['convert', () => import('src/crm/lead/actions/convert-lead.logic-function')],
+    ['convert many', () => import('src/crm/lead/actions/convert-leads.logic-function')],
+    ['merge', () => import('src/crm/lead/actions/merge-leads.logic-function')],
+    ['merge prepare', () => import('src/crm/lead/actions/merge-leads-prepare.logic-function')],
+    ['convert prepare', () => import('src/crm/lead/actions/convert-lead-prepare.logic-function')],
+    ['convert many prepare', () => import('src/crm/lead/actions/convert-leads-prepare.logic-function')],
+    ['similar leads', () => import('src/crm/lead/actions/similar-leads.logic-function')],
+    ['scoring explanation', () => import('src/crm/scoring/scoring-factors.logic-function')],
+  ])('the %s route answers 409 without reading or writing', async (_name, load) => {
+    const { default: route } = await load();
+    const response = await route.config.handler({} as RoutePayload, {} as never);
+
+    expect(response.status).toBe(409);
+    expect(JSON.parse(String(response.body))).toEqual(REFUSAL);
   });
 });
