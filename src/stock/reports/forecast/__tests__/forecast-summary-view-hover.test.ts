@@ -1,5 +1,4 @@
-import { createElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { createElement, type ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ForecastSummaryView } from 'src/stock/reports/forecast/forecast-summary-view';
@@ -17,6 +16,11 @@ vi.mock('twenty-sdk/front-component', () => ({
 }));
 
 // Every text is its own key, so the page shows plain strings, as a translated page does.
+// The project has no types for react-dom, so the server renderer is loaded by a name the type checker does not follow.
+const SERVER_RENDERER = 'react-dom/server';
+const renderToStaticMarkup = async (element: ReactElement) =>
+  ((await import(SERVER_RENDERER)) as { renderToStaticMarkup: (element: ReactElement) => string }).renderToStaticMarkup(element);
+
 const TEXT = new Proxy({}, { get: (_, key) => ({ message: String(key) }) }) as ForecastSummaryText;
 
 const ANSWER: ForecastAnswer = {
@@ -74,8 +78,8 @@ const ANSWER: ForecastAnswer = {
 // listener reads the event it is given; the front component sandbox gives none, and the tab fails with
 // "Cannot use 'in' operator to search for 'composedPath' in undefined".
 describe('summary report in the front component sandbox', () => {
-  it('has no hover tooltip: every text is plain markup', () => {
-    const page = renderToStaticMarkup(
+  it('has no hover tooltip: every text is plain markup', async () => {
+    const page = await renderToStaticMarkup(
       createElement(ForecastSummaryView, { data: ANSWER, text: TEXT, busy: false, onReserve: () => undefined, onUnreserve: () => undefined }),
     );
 
