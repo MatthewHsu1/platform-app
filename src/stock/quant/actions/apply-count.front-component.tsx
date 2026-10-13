@@ -1,0 +1,34 @@
+import { defineFrontComponent } from 'twenty-sdk/define';
+import { msg } from 'twenty-sdk/front-component';
+
+import { makeApplyCountsPopUp } from 'src/stock/quant/actions/count-panels';
+import { type ApplyCountsText } from 'src/stock/quant/types/apply-counts-text.type';
+import { APPLY_COUNT_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER } from 'src/stock/stock-universal-identifiers.constant';
+
+const TEXT: ApplyCountsText = {
+  rows: {
+    counted: msg('Counted: {counted}'),
+    onHand: msg('On hand: {onHand}'),
+    difference: msg('Difference: {difference}'),
+  },
+  adjustmentTitle: msg('Inventory adjustment reference'),
+  adjustmentReason: msg('Inventory reason'),
+  apply: msg('Apply'),
+  conflictTitle: msg('Conflict in inventory'),
+  conflictBody: msg('The stock of these rows moved after they were counted.'),
+  keepCounted: msg('Keep counted quantity'),
+  keepDifference: msg('Keep difference'),
+  discard: msg('Discard'),
+  working: msg('Working…'),
+  close: msg('Close'),
+  applied: msg('Counts applied.'),
+  failed: msg('The counts could not be applied.'),
+  selectAll: msg('Select all is not supported here. Tick the records you want instead.'),
+};
+
+export default defineFrontComponent({
+  universalIdentifier: APPLY_COUNT_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
+  name: 'stock-quant-apply-count',
+  description: 'Applies the count of the open stock row, asking first when it is outdated.',
+  component: makeApplyCountsPopUp({ askName: false, text: TEXT }),
+});

@@ -1,0 +1,25 @@
+import { defineIndex } from 'twenty-sdk/define';
+
+import {
+  PRODUCT_VARIANT_COMBINATION_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
+  PRODUCT_VARIANT_COMBINATION_INDEX_FIRST_FIELD_UNIVERSAL_IDENTIFIER,
+  PRODUCT_VARIANT_COMBINATION_INDEX_SECOND_FIELD_UNIVERSAL_IDENTIFIER,
+  PRODUCT_VARIANT_COMBINATION_INDEX_UNIVERSAL_IDENTIFIER,
+  PRODUCT_VARIANT_COMBINATION_OBJECT_UNIVERSAL_IDENTIFIER,
+} from 'src/product/product-universal-identifiers.constant';
+
+export default defineIndex({
+  universalIdentifier: PRODUCT_VARIANT_COMBINATION_INDEX_UNIVERSAL_IDENTIFIER,
+  objectUniversalIdentifier: PRODUCT_VARIANT_COMBINATION_OBJECT_UNIVERSAL_IDENTIFIER,
+  isUnique: true,
+  fields: [
+    {
+      universalIdentifier: PRODUCT_VARIANT_COMBINATION_INDEX_FIRST_FIELD_UNIVERSAL_IDENTIFIER,
+      fieldUniversalIdentifier: FIELD_IDS.productProduct,
+    },
+    {
+      universalIdentifier: PRODUCT_VARIANT_COMBINATION_INDEX_SECOND_FIELD_UNIVERSAL_IDENTIFIER,
+      fieldUniversalIdentifier: FIELD_IDS.productTemplateAttributeValue,
+    },
+  ],
+});

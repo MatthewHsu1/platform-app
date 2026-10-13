@@ -1,0 +1,14 @@
+import { PRODUCT_TEMPLATE_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/product/product-universal-identifiers.constant';
+import { defineCommandMenuItem } from 'twenty-sdk/define';
+
+import { makePrintCommand } from 'src/stock/printing/print-commands';
+import { LABEL_UNIVERSAL_IDENTIFIERS } from 'src/stock/stock-printing-universal-identifiers.constant';
+
+export default defineCommandMenuItem(
+  makePrintCommand({
+    label: 'Print Labels',
+    objectUniversalIdentifier: PRODUCT_TEMPLATE_OBJECT_UNIVERSAL_IDENTIFIER,
+    frontComponentUniversalIdentifier: LABEL_UNIVERSAL_IDENTIFIERS.chooseLabelsLayout,
+    commandUniversalIdentifier: LABEL_UNIVERSAL_IDENTIFIERS.productTemplateCommand,
+  }),
+);

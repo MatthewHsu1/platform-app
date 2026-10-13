@@ -1,0 +1,46 @@
+{
+  "name": "platform",
+  "version": "2.4.0",
+  "license": "MIT",
+  "engines": {
+    "node": "^24.5.0",
+    "npm": "please-use-yarn",
+    "yarn": ">=4.0.2"
+  },
+  "keywords": [],
+  "files": [
+    "**/*",
+    "!**/*.map"
+  ],
+  "packageManager": "yarn@4.13.0",
+  "scripts": {
+    "twenty": "twenty",
+    "lint": "oxlint --type-aware -c .oxlintrc.json .",
+    "lint:fix": "oxlint --type-aware --fix -c .oxlintrc.json .",
+    "typecheck": "tsgo --noEmit -p tsconfig.spec.json",
+    "test": "vitest run --config vitest.unit.config.ts",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "@types/react": "^19.0.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260116.1",
+    "oxlint": "1.53.0",
+    "oxlint-tsgolint": "0.16.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "twenty-client-sdk": "2.45.0",
+    "twenty-sdk": "2.45.0",
+    "twenty-ui": "2.45.0",
+    "typescript": "^5.9.3",
+    "vite-tsconfig-paths": "^4.2.1",
+    "vitest": "^4.0.0"
+  },
+  "dependencies": {
+    "@resvg/resvg-wasm": "2.6.2",
+    "bwip-js": "4.11.4",
+    "libphonenumber-js": "1.12.10",
+    "pdf-lib": "1.17.1",
+    "react-querybuilder": "8.24.3"
+  }
+}

@@ -1,0 +1,25 @@
+import { defineIndex } from 'twenty-sdk/define';
+
+import {
+  PRODUCT_TEMPLATE_UOM_UOM_REL_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
+  PRODUCT_TEMPLATE_UOM_UOM_REL_INDEX_FIRST_FIELD_UNIVERSAL_IDENTIFIER,
+  PRODUCT_TEMPLATE_UOM_UOM_REL_INDEX_SECOND_FIELD_UNIVERSAL_IDENTIFIER,
+  PRODUCT_TEMPLATE_UOM_UOM_REL_INDEX_UNIVERSAL_IDENTIFIER,
+  PRODUCT_TEMPLATE_UOM_UOM_REL_OBJECT_UNIVERSAL_IDENTIFIER,
+} from 'src/product/product-universal-identifiers.constant';
+
+export default defineIndex({
+  universalIdentifier: PRODUCT_TEMPLATE_UOM_UOM_REL_INDEX_UNIVERSAL_IDENTIFIER,
+  objectUniversalIdentifier: PRODUCT_TEMPLATE_UOM_UOM_REL_OBJECT_UNIVERSAL_IDENTIFIER,
+  isUnique: true,
+  fields: [
+    {
+      universalIdentifier: PRODUCT_TEMPLATE_UOM_UOM_REL_INDEX_FIRST_FIELD_UNIVERSAL_IDENTIFIER,
+      fieldUniversalIdentifier: FIELD_IDS.productTemplate,
+    },
+    {
+      universalIdentifier: PRODUCT_TEMPLATE_UOM_UOM_REL_INDEX_SECOND_FIELD_UNIVERSAL_IDENTIFIER,
+      fieldUniversalIdentifier: FIELD_IDS.uomUom,
+    },
+  ],
+});

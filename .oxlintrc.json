@@ -1,0 +1,162 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "unicorn", "import"],
+  "jsPlugins": [
+    "../../../../twenty/packages/twenty-oxlint-rules/dist/oxlint-plugin.mjs"
+  ],
+  "options": {
+    "typeAware": true
+  },
+  "categories": {
+    "correctness": "off"
+  },
+  "ignorePatterns": ["node_modules", "dist", ".twenty", "locales"],
+  "rules": {
+    "func-style": ["error", "declaration", { "allowArrowFunctions": true }],
+    "no-console": [
+      "warn",
+      { "allow": ["group", "groupCollapsed", "groupEnd"] }
+    ],
+    "no-script-url": "error",
+    "no-control-regex": "off",
+    "no-debugger": "error",
+    "no-duplicate-imports": "error",
+    "no-undef": "off",
+    "no-unused-vars": "off",
+    "no-redeclare": "off",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**../"],
+            "message": "Relative imports are not allowed. Import from `src/` instead."
+          },
+          {
+            "group": ["lodash"],
+            "message": "Please use the standalone lodash package (for instance: `import groupBy from 'lodash.groupby'` instead of `import { groupBy } from 'lodash'`)"
+          }
+        ]
+      }
+    ],
+
+    "import/no-duplicates": "error",
+
+    "react/no-unescaped-entities": "off",
+    "react/prop-types": "off",
+    "react/jsx-key": "off",
+    "react/display-name": "off",
+    "react/jsx-uses-react": "off",
+    "react/react-in-jsx-scope": "off",
+    "react/jsx-no-useless-fragment": "off",
+    "react/jsx-no-script-url": "error",
+    "react/jsx-props-no-spreading": ["error", { "explicitSpread": "ignore" }],
+
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+
+    "typescript/no-redeclare": "error",
+    "typescript/ban-ts-comment": "error",
+    "typescript/consistent-type-imports": [
+      "error",
+      {
+        "prefer": "type-imports",
+        "fixStyle": "inline-type-imports"
+      }
+    ],
+    "typescript/explicit-function-return-type": "off",
+    "typescript/explicit-module-boundary-types": "off",
+    "typescript/no-empty-object-type": [
+      "error",
+      {
+        "allowInterfaces": "with-single-extends"
+      }
+    ],
+    "typescript/no-empty-function": "off",
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/no-unused-vars": [
+      "warn",
+      {
+        "vars": "all",
+        "varsIgnorePattern": "^_",
+        "args": "after-used",
+        "argsIgnorePattern": "^_"
+      }
+    ],
+    "typescript/strict-boolean-expressions": [
+      "error",
+      {
+        "allowNullableBoolean": true,
+        "allowNullableObject": true,
+        "allowString": true,
+        "allowNumber": true,
+        "allowNullableString": true,
+        "allowNullableNumber": true,
+        "allowNullableEnum": true,
+        "allowAny": true
+      }
+    ],
+
+    "twenty/no-hardcoded-colors": "error",
+    "twenty/component-props-naming": "error",
+    "twenty/no-icu-escaping-apostrophe": "error",
+    "twenty/no-miscased-acronym-in-identifier": "error",
+    "twenty/no-miscased-acronym-in-message": "error",
+    "twenty/types-folder-filename": [
+      "error",
+      { "convention": "kebab-case-type-suffix" }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.spec.ts", "**/__tests__/**"],
+      "rules": {
+        "typescript/no-explicit-any": "off"
+      }
+    },
+    {
+      "files": ["**/constants/*.ts", "**/*.constants.ts"],
+      "rules": {
+        "twenty/max-consts-per-file": ["error", { "max": 1 }]
+      }
+    },
+    {
+      "files": ["src/constants/universal-identifiers.ts"],
+      "rules": {
+        "twenty/max-consts-per-file": "off"
+      }
+    },
+    {
+      "files": ["**/*.object.ts"],
+      "rules": {
+        "twenty/no-hardcoded-colors": "off"
+      }
+    },
+    {
+      "files": ["**/*.logic-function.ts", "**/logic-functions/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**../"],
+                "message": "Relative imports are not allowed. Import from `src/` instead."
+              },
+              {
+                "group": ["lodash"],
+                "message": "Please use the standalone lodash package (for instance: `import groupBy from 'lodash.groupby'` instead of `import { groupBy } from 'lodash'`)"
+              },
+              {
+                "group": ["twenty-shared", "twenty-shared/*"],
+                "message": "Logic functions must not import from twenty-shared directly. Import runtime types and helpers from `twenty-sdk/logic-function` instead so the logic-function bundle stays minimal."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

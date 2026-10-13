@@ -1,0 +1,1 @@
+export const PLUG_POINTS_VARIABLE_KEY = 'PLUG_POINTS';

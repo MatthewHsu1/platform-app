@@ -1,0 +1,16 @@
+export type ValidateOptions = {
+  // undefined: ask when a backorder is needed; true: answered "no backorder"; false: answered "create backorder".
+  cancelBackorder?: boolean;
+  skipExpired?: boolean;
+  skipPreChecks?: boolean;
+  pickingsToDetach?: string[];
+  batchesToValidate?: string[];
+  // The "No backorder" button: the less-quantities task goes on every transfer validated, not only the asked ones.
+  logEveryTransfer?: boolean;
+  // The caller runs the batch hook itself, once for a click that validates in several calls.
+  skipBatchHook?: boolean;
+  // The zone of the user's browser, for the dates on the prints Validate makes.
+  printTimeZone?: string;
+  // The caller makes the prints itself, once for a click that validates in several calls.
+  skipPrints?: boolean;
+};

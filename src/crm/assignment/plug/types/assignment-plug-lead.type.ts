@@ -1,0 +1,28 @@
+export type AssignmentPlugLead = {
+  id: string;
+  name: string | null;
+  createdAt: string;
+  leadType: string | null;
+  wonStatus: string | null;
+  priority: string | null;
+  probability: number | null;
+  teamId: string | null;
+  salespersonId: string | null;
+  dateOpen: string | null;
+  stageId: string | null;
+  email: string | null;
+  phone: { callingCode: string | null; number: string | null } | null;
+  contactName: string | null;
+  partnerName: string | null;
+  personId: string | null;
+  companyId: string | null;
+  sourceId: string | null;
+  mediumId: string | null;
+  campaignId: string | null;
+  tags: string[];
+  language: string | null;
+  address: { street1: string | null; street2: string | null; city: string | null; postcode: string | null; state: string | null; country: string | null };
+  expectedRevenue: { amountMicros: number | null; currencyCode: string | null } | null;
+  referred: string | null;
+  dateDeadline: string | null;
+};

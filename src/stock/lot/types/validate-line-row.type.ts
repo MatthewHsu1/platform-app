@@ -1,0 +1,33 @@
+import { type MoveState } from 'src/stock/types/move-state.type';
+import { type ProductTracking } from 'src/stock/types/product-tracking.type';
+
+export type ValidateLineRow = {
+  id: string;
+  pickingId: string | null;
+  pickingName: string;
+  pickingUsesLots: boolean;
+  moveId: string | null;
+  productId: string;
+  productName: string;
+  tracking: ProductTracking;
+  quantity: number;
+  productUomId: string;
+  quantityProductUom: number;
+  picked: boolean;
+  movePicked: boolean;
+  moveState: string;
+  isInventory: boolean;
+  isScrap: boolean;
+  hasPickingType: boolean;
+  useCreateLots: boolean;
+  useExistingLots: boolean;
+  lotId: string | null;
+  lotName: string | null;
+  expirationDate: string | null;
+  locationId: string;
+  locationDestId: string;
+  moveLocationDestId: string;
+  state: MoveState;
+  packageId: string | null;
+  resultPackageId: string | null;
+};
