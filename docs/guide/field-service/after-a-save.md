@@ -41,8 +41,8 @@ seconds after an order is made. A refused change is undone with a note on the re
 - A location counts its sub-locations and the equipment in it and below it.
 - Team names and equipment names are unique among the rows not in the trash: a taken name is undone with a
   note (a new row loses it). A blank name is never taken.
-- The warranty end follows the warranty start, length and unit (no length: today). An end before the start is
-  refused.
+- The warranty end follows the warranty start, length and unit (no length: today); the length and unit are the
+  product's, see [Equipment stock and warranty](equipment-stock.md). An end before the start is refused.
 
 ## Deletes
 

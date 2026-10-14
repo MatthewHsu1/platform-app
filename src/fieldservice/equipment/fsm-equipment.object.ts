@@ -23,7 +23,7 @@ import {
   FSM_PERSON_FIELD_UNIVERSAL_IDENTIFIERS as WORKER_IDS,
   FSM_PERSON_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
-import { manyToOneField, numberField, oneToManyField, selectField, textField } from 'src/shared/fields';
+import { appWritten, manyToOneField, numberField, oneToManyField, selectField, textField } from 'src/shared/fields';
 
 const partnerField = (universalIdentifier: string, name: string, label: string, isCompany: boolean, inverseUniversalIdentifier: string) =>
   manyToOneField({
@@ -39,8 +39,8 @@ const partnerField = (universalIdentifier: string, name: string, label: string, 
   });
 
 // A machine at a location that staff service. The service area follows the location unless staff set it; the
-// warranty end follows the warranty start, length and unit unless staff set it. The warranty length and unit
-// sit on the equipment until equipment links to a product. Owner and manager are a person or a company.
+// warranty end follows the warranty start, length and unit unless staff set it. The warranty length and unit are
+// the product's, copied here by app code. Owner and manager are a person or a company.
 export default defineObject({
   universalIdentifier: FSM_EQUIPMENT_OBJECT_UNIVERSAL_IDENTIFIER,
   nameSingular: 'fsmEquipment',
@@ -108,8 +108,8 @@ export default defineObject({
     textField(FIELD_IDS.serial, 'serial', 'Serial number', 'IconBarcode'),
     { ...dateField(FIELD_IDS.warrantyStartDate, 'warrantyStartDate', 'Warranty start', 'IconCalendarPlus'), defaultValue: 'now' },
     dateField(FIELD_IDS.warrantyEndDate, 'warrantyEndDate', 'Warranty end', 'IconCalendarMinus'),
-    numberField(FIELD_IDS.productWarranty, 'productWarranty', 'Warranty length', 'IconShieldCheck', { decimals: 0, int: true, defaultValue: 0 }),
-    selectField(FIELD_IDS.productWarrantyType, 'productWarrantyType', 'Warranty unit', 'IconShieldCheck', WARRANTY_UNIT.MONTH, WARRANTY_UNIT_OPTIONS),
+    appWritten(numberField(FIELD_IDS.productWarranty, 'productWarranty', 'Warranty length', 'IconShieldCheck', { decimals: 0, int: true, defaultValue: 0 })),
+    appWritten(selectField(FIELD_IDS.productWarrantyType, 'productWarrantyType', 'Warranty unit', 'IconShieldCheck', WARRANTY_UNIT.MONTH, WARRANTY_UNIT_OPTIONS)),
     oneToManyField({
       universalIdentifier: FIELD_IDS.orders,
       name: 'orders',
