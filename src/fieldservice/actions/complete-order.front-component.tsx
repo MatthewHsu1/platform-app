@@ -7,7 +7,8 @@ import { COMPLETE_ORDER_ROUTE_PATH, FIELDSERVICE_ACTION_UNIVERSAL_IDENTIFIERS } 
 // The answers of the field service buttons and the notes the field service rules write. The translation extractor
 // reads only front-component files, so they are listed here to reach the catalog; each must match its source text
 // exactly (src/fieldservice/fieldservice-messages.constant.ts, actions/fieldservice-action-messages.constant.ts,
-// src/fieldservice-stock/fieldservice-stock-messages.constant.ts).
+// src/fieldservice-stock/fieldservice-stock-messages.constant.ts,
+// src/fieldservice-equipment-stock/fieldservice-equipment-stock-messages.constant.ts).
 export const FIELDSERVICE_RULE_TEXTS = [
   msg('Only the Complete button moves a service order to Completed.'),
   msg('{date} is a holiday: {name}.'),
@@ -38,6 +39,8 @@ export const FIELDSERVICE_RULE_TEXTS = [
   msg('Set the service location of the opportunity first.'),
   msg('Create a warehouse first.'),
   msg('A service order needs a warehouse.'),
+  msg('This serial belongs to another product.'),
+  msg('Other equipment already has this serial.'),
 ];
 
 export default defineFrontComponent({
