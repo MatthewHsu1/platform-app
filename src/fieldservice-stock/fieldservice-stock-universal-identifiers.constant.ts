@@ -49,6 +49,14 @@ export const FIELDSERVICE_STOCK_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS = {
   stockWarehouse: '54e78bab-091d-4522-9e79-6aea7b3645d5',
 } as const;
 
+// The Inventory tab of the order page: its moves table (with the view behind it) and the card of its location.
+export const FIELDSERVICE_STOCK_PAGE_UNIVERSAL_IDENTIFIERS = {
+  tabInventory: 'a9607d49-a6c3-4224-97ca-6cf63acec71c',
+  widgetMoves: 'e734114e-faa5-488e-b23a-416cf7d73543',
+  widgetLocation: '5f7334a1-1de6-49c7-a4fe-7a963837bdb7',
+  viewMoves: 'c04281fd-78b0-4786-80c4-597608129367',
+} as const;
+
 // The view location the module makes, found by this key after staff rename it.
 export const FIELDSERVICE_STOCK_SEED_KEYS = {
   fieldLocation: 'fieldservice_stock.stock_location_field',

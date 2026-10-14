@@ -1,6 +1,8 @@
-import { ViewFilterOperand, ViewType } from 'twenty-sdk/define';
+import { type defineView, ViewFilterOperand, ViewType } from 'twenty-sdk/define';
 
 import { listColumns, viewPartId } from 'src/stock/views/list-columns';
+
+type ViewFilter = NonNullable<Parameters<typeof defineView>[0]['filters']>[number];
 
 // Twenty's marker for "the record the page shows".
 const CURRENT_RECORD = JSON.stringify({ selectedRecordIds: [], isCurrentRecordSelected: true });
@@ -8,7 +10,7 @@ const CURRENT_RECORD = JSON.stringify({ selectedRecordIds: [], isCurrentRecordSe
 // A related table on a record page: its columns, and a filter that keeps only
 // the rows that point at the page's record. A table over a link object, or two
 // relations away, compares through the field of the related row that points
-// at the page's record.
+// at the page's record. `extraFilters` narrow it further: every filter holds.
 export const tableWidgetView = ({
   universalIdentifier,
   name,
@@ -17,6 +19,7 @@ export const tableWidgetView = ({
   all,
   parentField,
   throughField,
+  extraFilters = [],
 }: {
   universalIdentifier: string;
   name: string;
@@ -25,6 +28,7 @@ export const tableWidgetView = ({
   all: string[];
   parentField: string;
   throughField?: string;
+  extraFilters?: ViewFilter[];
 }) => ({
   universalIdentifier,
   name,
@@ -41,5 +45,6 @@ export const tableWidgetView = ({
       value: CURRENT_RECORD,
       ...(throughField === undefined ? {} : { relationTargetFieldMetadataUniversalIdentifier: throughField }),
     },
+    ...extraFilters,
   ],
 });
