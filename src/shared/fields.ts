@@ -220,6 +220,21 @@ export const selectField = (
   options: options.map((option, position) => ({ ...option, position })),
 });
 
+export const multiSelectField = (
+  universalIdentifier: string,
+  name: string,
+  label: string,
+  icon: string,
+  options: SelectFieldOption[],
+) => ({
+  universalIdentifier,
+  name,
+  label,
+  icon,
+  type: FieldType.MULTI_SELECT as const,
+  options: options.map((option, position) => ({ ...option, position })),
+});
+
 // The signed delivery slip kept on a transfer: the newest 60.
 export const printoutsField = (universalIdentifier: string) =>
   appWritten({

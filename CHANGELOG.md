@@ -19,6 +19,10 @@ All notable changes to this application are documented in this file.
 - Install: the order stages, the `FO` number series, the Default Team, the Orders board and the To assign and To
   schedule lists. Settings: the hours an order may wait by priority, and equipment fill on new orders.
 - The building blocks Field service: User (own documents), User, Dispatcher and Manager on the Roles page.
+- Stage rules: a rule row lists the order fields a stage needs (team, location, description, assigned to, scheduled
+  window, instructions, resolution, actual window, signature, template, type). A move into the stage while one is
+  empty is undone with a note, and the Complete and Cancel buttons refuse with the same text. Manager edits the
+  rules; the stage list on a rule is made on install and staff keep it in line with the order's.
 
 ## 2.5.0 (unreleased)
 

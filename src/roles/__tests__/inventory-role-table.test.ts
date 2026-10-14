@@ -68,6 +68,7 @@ const OUTSIDE_INVENTORY = [
   'fsmTeam',
   'fsmOrderType',
   'fsmTemplate',
+  'fsmStageRule',
   'fsmLocationPerson',
   'fsmEquipmentFsmOrderRel',
   'fsmOrderFsmPersonRel',

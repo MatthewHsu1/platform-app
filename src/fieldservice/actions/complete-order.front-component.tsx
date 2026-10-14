@@ -12,6 +12,7 @@ export const FIELDSERVICE_RULE_TEXTS = [
   msg('{date} is a holiday: {name}.'),
   msg('Create a field service team first.'),
   msg('You cannot delete this order: only an order in the New stage can be deleted.'),
+  msg('Cannot move to stage {stage} until the {field} field is set.'),
   msg('A location cannot be its own parent.'),
   msg('Equipment cannot be its own parent.'),
   msg('The warranty end must not be before the warranty start.'),

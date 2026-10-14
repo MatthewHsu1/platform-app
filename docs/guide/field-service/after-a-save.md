@@ -24,6 +24,14 @@ seconds after an order is made. A refused change is undone with a note on the re
 - Only the Complete button moves an order to Completed; a manual move is undone, and an order made straight
   into Completed (a card added to the Completed column of the board) is removed again. Cancelling and moving
   back to an open stage are allowed.
+- Stage rules: a rule row names a stage and the order fields that stage needs (team, location, description,
+  assigned to, scheduled start, resolution, signed by and so on). A staff move of an order into a stage while a
+  listed field is empty is undone with a note: "Cannot move to stage Completed until the Resolution field is
+  set." Several rows of one stage add up. The Complete and Cancel buttons check first and answer with the same
+  text. A new order, a save that leaves the stage as it was and a save that clears a field of an order already in
+  the stage are not checked. Zero, empty text, an empty rich text and no link all count as empty. The stage list
+  of a rule is a copy of the order's: when staff add a stage to the order they add it to the rules too. Only the
+  fields of the list can be required: not tags, categories, equipment, extra workers or fields staff add.
 - A new location brings its team and directions, unless the same save sets them. A new template brings its
   instructions.
 - Every save keeps the closed status (Completed and Cancelled close an order), the actual duration (hours from
