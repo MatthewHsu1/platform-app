@@ -189,16 +189,26 @@ export const twentyInstallApi: InstallApi = {
     return viewId;
   },
 
-  showViewField: async ({ viewId, fieldMetadataId, position }) => {
+  showViewField: async ({ viewId, fieldMetadataId, position, isVisible = true }) => {
     requireData(
       await twentyMetadata(
         'application',
         `mutation ShowColumn($input: CreateViewFieldInput!) { createViewField(input: $input) { id } }`,
-        { input: { viewId, fieldMetadataId, position, isVisible: true } },
+        { input: { viewId, fieldMetadataId, position, isVisible } },
       ),
       'Show a column',
     );
   },
+
+  listViewFields: async (viewId) =>
+    requireData(
+      await twentyMetadata<{ getViewFields: { fieldMetadataId: string; position: number }[] }>(
+        'application',
+        `query ViewColumns($viewId: String!) { getViewFields(viewId: $viewId) { fieldMetadataId position } }`,
+        { viewId },
+      ),
+      'List the columns of a view',
+    ).getViewFields,
 
   deleteView: async (viewId) => {
     requireData(

@@ -30,9 +30,9 @@ team and to territories; regions, districts, branches and territories make the s
 A work case has a Service location, a Resolution and a Service orders tab (number, location, closed status,
 worker and planned window of each order). A contact or company has a Primary service location that new cases
 start with. A service location shows its work cases and their count. Create service order on a case makes an
-order for it. After the last order of an open case is completed or cancelled, Close work case on that order asks
-for the stage and resolution of the case. The completed order does not ask by itself: Complete stays a one-click
-button. See [after a save](field-service/after-a-save.md) and [buttons](field-service/buttons-settings-access.md).
+order for it. When Complete finishes the last open order of an open case, a panel opens beside the order and asks
+for the stage and resolution of the case (the Close work case button on a closed order opens the same panel, for a
+cancelled order or a later try). The Cases list has the view With open service orders. See [after a save](field-service/after-a-save.md) and [buttons](field-service/buttons-settings-access.md).
 
 ## Screens
 

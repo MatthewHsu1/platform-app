@@ -40,7 +40,8 @@ All notable changes to this application are documented in this file.
   location of its contact or company, new fields on contacts and companies), a resolution and a Service orders
   tab; a service location shows its work cases and their count. A case cannot reach a closed stage while one of
   its orders is open (undone with a note). Buttons: Create service order on a case, and Close work case on a
-  closed order, which asks for the stage and resolution of the case.
+  closed order, which asks for the stage and resolution of the case (Complete opens it by itself when it
+  finishes the last open order of an open case). The Cases list has the view With open service orders.
 - Field service checklist: activities (name, reference, sequence, required, state, completed on and by) on service
   orders and templates, with an Activities tab on both. An order made with a template, or saved with another one,
   takes a copy of the template's activities. Buttons Complete activity and Cancel activity; the Complete button of

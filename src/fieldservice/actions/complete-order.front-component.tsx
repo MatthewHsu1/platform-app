@@ -1,5 +1,5 @@
 import { defineFrontComponent } from 'twenty-sdk/define';
-import { msg } from 'twenty-sdk/front-component';
+import { msg, openSidePanelPage, SidePanelPages, t } from 'twenty-sdk/front-component';
 
 import { makeRecordActionCommand } from 'src/fieldservice/actions/record-action-command';
 import { COMPLETE_ORDER_ROUTE_PATH, FIELDSERVICE_ACTION_UNIVERSAL_IDENTIFIERS } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
@@ -53,5 +53,19 @@ export default defineFrontComponent({
     routePath: COMPLETE_ORDER_ROUTE_PATH,
     successMessage: msg('Order completed.'),
     fallbackError: msg('Could not complete the order.'),
+    // The last open order of an open work case: the panel that closes the case opens next to the order.
+    afterSuccess: async (result, recordIds) => {
+      const panelId = (result as { closeCasePanelId?: string | null } | null)?.closeCasePanelId;
+
+      if (typeof panelId === 'string' && recordIds.length === 1) {
+        await openSidePanelPage({
+          page: SidePanelPages.ViewFrontComponent,
+          frontComponentId: panelId,
+          recordId: recordIds[0],
+          objectNameSingular: 'fsmOrder',
+          pageTitle: t('Close work case'),
+        });
+      }
+    },
   }),
 });
