@@ -14,6 +14,7 @@ team and to territories; regions, districts, branches and territories make the s
 | `src/fieldservice-stock/` | Parts on a job: the warehouse, transfers, moves, stock references and delivery counts of an order; the stock location and shipping address of a location; the default warehouse of a worker and the warehouse of a territory |
 | `src/fieldservice-equipment-stock/` | Equipment as a serial-numbered product: its product, serial and current inventory location, the equipment a done move makes, and the warranty length and unit of a product |
 | `src/fieldservice-stage-validation/` | Stage rules (`fsmStageRule`): the fields an order needs before it moves into a stage, and the check that undoes a move while one is empty |
+| `src/helpdesk-fieldservice/` | The work case link: the orders and the service location of a case, the resolution, the cases and count of a location, the primary service location of a contact or company, and the buttons Create service order (on a case) and Close work case (on an order) |
 
 ## Detail files
 
@@ -21,6 +22,15 @@ team and to territories; regions, districts, branches and territories make the s
 - [Parts on a job](field-service/parts-on-a-job.md): warehouse, transfers, moves, stock locations
 - [Equipment stock and warranty](field-service/equipment-stock.md): product, serial, inventory location, equipment made by a move, warranty from the product
 - [Buttons, settings and access](field-service/buttons-settings-access.md)
+
+## Work case link
+
+A work case has a Service location, a Resolution and a Service orders tab (number, location, closed status,
+worker and planned window of each order). A contact or company has a Primary service location that new cases
+start with. A service location shows its work cases and their count. Create service order on a case makes an
+order for it. After the last order of an open case is completed or cancelled, Close work case on that order asks
+for the stage and resolution of the case. The completed order does not ask by itself: Complete stays a one-click
+button. See [after a save](field-service/after-a-save.md) and [buttons](field-service/buttons-settings-access.md).
 
 ## Screens
 

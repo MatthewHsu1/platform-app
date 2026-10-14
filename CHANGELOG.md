@@ -33,6 +33,11 @@ All notable changes to this application are documented in this file.
   window, instructions, resolution, actual window, signature, template, type). A move into the stage while one is
   empty is undone with a note, and the Complete and Cancel buttons refuse with the same text. Manager edits the
   rules; the stage list on a rule is made on install and staff keep it in line with the order's.
+- Work case link: a work case has its service orders, a service location (a new case takes the primary service
+  location of its contact or company, new fields on contacts and companies), a resolution and a Service orders
+  tab; a service location shows its work cases and their count. A case cannot reach a closed stage while one of
+  its orders is open (undone with a note). Buttons: Create service order on a case, and Close work case on a
+  closed order, which asks for the stage and resolution of the case.
 
 ## 2.5.0 (unreleased)
 

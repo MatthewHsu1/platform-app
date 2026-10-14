@@ -29,6 +29,8 @@ describe('planCaseCopy', () => {
       active: true,
       ticketTypeId: 'type1',
       productId: 'prod1',
+      fsmLocationId: 'site1',
+      resolution: { markdown: 'Replaced the belt', blocknote: null },
     });
 
     expect(planCaseCopy(original)).toEqual({
@@ -48,6 +50,8 @@ describe('planCaseCopy', () => {
       active: true,
       ticketTypeId: 'type1',
       productId: 'prod1',
+      fsmLocationId: 'site1',
+      resolution: { markdown: 'Replaced the belt', blocknote: null },
     });
   });
 

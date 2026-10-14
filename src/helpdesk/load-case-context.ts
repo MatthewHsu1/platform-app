@@ -8,7 +8,7 @@ import { textOrNull } from 'src/shared/utils/text-or-null.util';
 export const CASE_SELECTION = `id createdAt deletedAt number name description { markdown blocknote }
   assignedUserId stageId personId companyId partnerName partnerEmail { primaryEmail additionalEmails }
   teamId categoryId channel priority kanbanState duplicateId lastStageUpdate assignedDate closedDate
-  unattended active ticketTypeId productId slaDeadline slaStateExpired updatedBy { source workspaceMemberId }`;
+  unattended active ticketTypeId productId fsmLocationId resolution { markdown blocknote } slaDeadline slaStateExpired updatedBy { source workspaceMemberId }`;
 
 const text = (value: unknown) => (typeof value === 'string' ? textOrNull(value) : null);
 const flag = (value: unknown) => (typeof value === 'boolean' ? value : null);
@@ -41,6 +41,8 @@ export const readCaseRow = (node: Record<string, unknown>): CaseRow => ({
   active: flag(node.active),
   ticketTypeId: text(node.ticketTypeId),
   productId: text(node.productId),
+  fsmLocationId: text(node.fsmLocationId),
+  resolution: objectOrNull(node.resolution),
   slaDeadline: text(node.slaDeadline),
   slaStateExpired: flag(node.slaStateExpired),
   updatedBy: objectOrNull(node.updatedBy),

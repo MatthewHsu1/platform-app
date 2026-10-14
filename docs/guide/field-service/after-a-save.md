@@ -52,6 +52,20 @@ seconds after an order is made. A refused change is undone with a note on the re
 - The warranty end follows the warranty start, length and unit (no length: today); the length and unit are the
   product's, see [Equipment stock and warranty](equipment-stock.md). An end before the start is refused.
 
+## Work cases
+
+Part of the work case link (`src/helpdesk-fieldservice/`).
+
+- A new work case, and a case whose contact changes, takes the primary service location of its contact, else
+  the one of the contact's company. A case that already sits at a location of the same customer keeps it, and
+  a location set in the same save stays. A case without a contact keeps its location.
+- A staff save that moves a case to a closed stage while one of its orders is open (not Completed or Cancelled)
+  is undone with a note: "Please complete all service orders related to this work case to close it." A case
+  without orders closes freely.
+- A location counts its active work cases (the Work cases count). An archived case is not counted.
+- A deleted case leaves its orders without the link; a deleted location leaves the cases, contacts and
+  companies that named it.
+
 ## Deletes
 
 - An order can be deleted only in the New stage. A location or team that orders use cannot be deleted. Such a

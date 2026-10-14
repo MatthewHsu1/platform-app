@@ -1,5 +1,5 @@
 // A case as triggers, planners and routes read it. The service level fields are read by the
-// service level module only.
+// service level module only, the service location and the resolution by the field service link only.
 export type CaseRow = {
   id: string;
   createdAt: string;
@@ -26,6 +26,8 @@ export type CaseRow = {
   active: boolean | null;
   ticketTypeId?: string | null;
   productId?: string | null;
+  fsmLocationId?: string | null;
+  resolution?: { markdown: string | null; blocknote: string | null } | null;
   slaDeadline?: string | null;
   slaStateExpired?: boolean | null;
   updatedBy: { source: string | null; workspaceMemberId: string | null } | null;
