@@ -10,4 +10,8 @@ export const BLOCK_KEYS = {
   workCasesOwn: 'workCases.own',
   workCasesAll: 'workCases.all',
   workCasesAdministrator: 'workCases.administrator',
+  fieldServiceUserOwn: 'fieldService.userOwn',
+  fieldServiceUser: 'fieldService.user',
+  fieldServiceDispatcher: 'fieldService.dispatcher',
+  fieldServiceManager: 'fieldService.manager',
 } as const;

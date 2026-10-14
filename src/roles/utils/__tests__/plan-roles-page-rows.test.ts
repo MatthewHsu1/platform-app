@@ -29,7 +29,7 @@ const SNAPSHOT = {
 } as unknown as RoleSyncSnapshot;
 
 const TABLE = { version: 1 as const, roles: { 'role-mix': closeBlocks([BLOCK_KEYS.salesAll], BUILDING_BLOCKS) } };
-const NONE = { inventory: 'none', products: 'none', sales: 'none', workCases: 'none' };
+const NONE = { inventory: 'none', products: 'none', sales: 'none', workCases: 'none', fieldService: 'none' };
 
 describe('planRolesPageRows', () => {
   it('shows each person, sorted by name, with their real role and the levels it was made from', () => {

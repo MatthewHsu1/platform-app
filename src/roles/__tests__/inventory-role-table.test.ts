@@ -24,7 +24,7 @@ beforeAll(async () => {
   );
 });
 
-// Objects of the CRM, sales team, UTM and work case modules: their own blocks open them.
+// Objects of the CRM, sales team, UTM, work case and field service modules: their own blocks open them.
 const OUTSIDE_INVENTORY = [
   'crmLead',
   'crmLostReason',
@@ -61,6 +61,21 @@ const OUTSIDE_INVENTORY = [
   'helpdeskSlaCategory',
   'helpdeskSlaTag',
   'helpdeskSlaIgnoreStage',
+  'fsmOrder',
+  'fsmLocation',
+  'fsmEquipment',
+  'fsmPerson',
+  'fsmTeam',
+  'fsmOrderType',
+  'fsmTemplate',
+  'fsmLocationPerson',
+  'fsmEquipmentFsmOrderRel',
+  'fsmOrderFsmPersonRel',
+  'fsmPersonResTerritoryRel',
+  'resRegion',
+  'resDistrict',
+  'resBranch',
+  'resTerritory',
 ];
 
 const rowOf = (nameSingular: string) => {

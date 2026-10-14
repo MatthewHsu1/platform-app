@@ -22,6 +22,7 @@ import {
   SHOW_EXPECTED_QUANTITY_COUNT_VARIABLE_UNIVERSAL_IDENTIFIER,
 } from 'src/constants/universal-identifiers';
 import { DEFAULT_PLUG_POINTS } from 'src/crm/assignment/plug/assignment-plug.constant';
+import { FIELDSERVICE_VARIABLE_UNIVERSAL_IDENTIFIERS } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
 import { PLS_FIELD_KEYS } from 'src/crm/scoring/scoring-variables.constant';
 import { EMPTY_ROW_ACCESS_CONFIG } from 'src/roles/constants/empty-row-access-config.constant';
 import { ROW_ACCESS_CONFIG_VARIABLE_KEY } from 'src/roles/constants/row-access-config-variable-key.constant';
@@ -211,6 +212,46 @@ export default defineApplication({
       description: 'Id of the work case stage a case moves to when it is marked as a duplicate. Empty: the stage stays.',
       type: FieldType.TEXT,
       value: '',
+      isSecret: false,
+    },
+    FSM_ORDER_REQUEST_LATE_LOWEST: {
+      universalIdentifier: FIELDSERVICE_VARIABLE_UNIVERSAL_IDENTIFIERS.requestLateLowest,
+      label: 'Field service: hours to serve a normal order',
+      description: 'A new service order of normal priority is due this many hours after its earliest request date.',
+      type: FieldType.NUMBER,
+      value: 72,
+      isSecret: false,
+    },
+    FSM_ORDER_REQUEST_LATE_LOW: {
+      universalIdentifier: FIELDSERVICE_VARIABLE_UNIVERSAL_IDENTIFIERS.requestLateLow,
+      label: 'Field service: hours to serve a low priority order',
+      description: 'A new service order of low priority is due this many hours after its earliest request date.',
+      type: FieldType.NUMBER,
+      value: 48,
+      isSecret: false,
+    },
+    FSM_ORDER_REQUEST_LATE_MEDIUM: {
+      universalIdentifier: FIELDSERVICE_VARIABLE_UNIVERSAL_IDENTIFIERS.requestLateMedium,
+      label: 'Field service: hours to serve a high priority order',
+      description: 'A new service order of high priority is due this many hours after its earliest request date.',
+      type: FieldType.NUMBER,
+      value: 24,
+      isSecret: false,
+    },
+    FSM_ORDER_REQUEST_LATE_HIGH: {
+      universalIdentifier: FIELDSERVICE_VARIABLE_UNIVERSAL_IDENTIFIERS.requestLateHigh,
+      label: 'Field service: hours to serve an urgent order',
+      description: 'A new urgent service order is due this many hours after its earliest request date.',
+      type: FieldType.NUMBER,
+      value: 8,
+      isSecret: false,
+    },
+    FSM_AUTO_POPULATE_EQUIPMENTS_ON_ORDER: {
+      universalIdentifier: FIELDSERVICE_VARIABLE_UNIVERSAL_IDENTIFIERS.autoPopulateEquipmentsOnOrder,
+      label: 'Field service: fill equipment on new orders',
+      description: 'A new service order at a location gets the equipment that is now at that location.',
+      type: FieldType.BOOLEAN,
+      value: false,
       isSecret: false,
     },
     [PLUG_POINTS_VARIABLE_KEY]: {

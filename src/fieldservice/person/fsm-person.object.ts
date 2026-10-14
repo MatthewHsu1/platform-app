@@ -1,0 +1,117 @@
+import { defineObject, FieldType, OnDeleteAction, STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from 'twenty-sdk/define';
+
+import { RES_TERRITORY_FIELD_UNIVERSAL_IDENTIFIERS as TERRITORY_IDS, RES_TERRITORY_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/base-territory/base-territory-universal-identifiers.constant';
+import {
+  FIELDSERVICE_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS as INVERSE_IDS,
+  FSM_EQUIPMENT_FIELD_UNIVERSAL_IDENTIFIERS as EQUIPMENT_IDS,
+  FSM_EQUIPMENT_OBJECT_UNIVERSAL_IDENTIFIER,
+  FSM_LOCATION_PERSON_FIELD_UNIVERSAL_IDENTIFIERS as LOCATION_WORKER_IDS,
+  FSM_LOCATION_PERSON_OBJECT_UNIVERSAL_IDENTIFIER,
+  FSM_ORDER_FIELD_UNIVERSAL_IDENTIFIERS as ORDER_IDS,
+  FSM_ORDER_FSM_PERSON_REL_FIELD_UNIVERSAL_IDENTIFIERS as ORDER_WORKER_IDS,
+  FSM_ORDER_FSM_PERSON_REL_OBJECT_UNIVERSAL_IDENTIFIER,
+  FSM_ORDER_OBJECT_UNIVERSAL_IDENTIFIER,
+  FSM_PERSON_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
+  FSM_PERSON_OBJECT_UNIVERSAL_IDENTIFIER,
+  FSM_PERSON_RES_TERRITORY_REL_FIELD_UNIVERSAL_IDENTIFIERS as WORKER_TERRITORY_IDS,
+  FSM_PERSON_RES_TERRITORY_REL_OBJECT_UNIVERSAL_IDENTIFIER,
+  FSM_TEAM_FIELD_UNIVERSAL_IDENTIFIERS as TEAM_IDS,
+  FSM_TEAM_OBJECT_UNIVERSAL_IDENTIFIER,
+} from 'src/fieldservice/fieldservice-universal-identifiers.constant';
+import { RESOURCE_CALENDAR_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/resource/resource-universal-identifiers.constant';
+import { activeField, manyToOneField, oneToManyField, textField } from 'src/shared/fields';
+
+// A technician. The partner is the contact the worker was made from; phone and email are the contact's. The
+// worker categories are a staff list the install hook makes.
+export default defineObject({
+  universalIdentifier: FSM_PERSON_OBJECT_UNIVERSAL_IDENTIFIER,
+  nameSingular: 'fsmPerson',
+  namePlural: 'fsmPersons',
+  labelSingular: 'Field service worker',
+  labelPlural: 'Field service workers',
+  description: 'A technician who does field service work, with a team, a working schedule and territories',
+  icon: 'IconUserCog',
+  labelIdentifierFieldMetadataUniversalIdentifier: FIELD_IDS.name,
+  fields: [
+    textField(FIELD_IDS.name, 'name', 'Name', 'IconAbc'),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.partner,
+      name: 'partner',
+      label: 'Related contact',
+      icon: 'IconUser',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.person.universalIdentifier,
+      targetFieldUniversalIdentifier: INVERSE_IDS.personFsmPersons,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.calendar,
+      name: 'calendar',
+      label: 'Working schedule',
+      icon: 'IconCalendarClock',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: RESOURCE_CALENDAR_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: INVERSE_IDS.resourceCalendarFsmPersons,
+    }),
+    { universalIdentifier: FIELD_IDS.mobile, name: 'mobile', label: 'Mobile', icon: 'IconDeviceMobile', type: FieldType.PHONES },
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.territories,
+      name: 'territories',
+      label: 'Territories',
+      icon: 'IconMapPin',
+      targetObjectUniversalIdentifier: FSM_PERSON_RES_TERRITORY_REL_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: WORKER_TERRITORY_IDS.person,
+      junctionTargetFieldUniversalIdentifier: WORKER_TERRITORY_IDS.territory,
+    }),
+    activeField(FIELD_IDS.active),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.team,
+      name: 'team',
+      label: 'Team',
+      icon: 'IconUsersGroup',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: FSM_TEAM_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: TEAM_IDS.persons,
+    }),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.locations,
+      name: 'locations',
+      label: 'Linked locations',
+      icon: 'IconMapPin',
+      targetObjectUniversalIdentifier: FSM_LOCATION_PERSON_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: LOCATION_WORKER_IDS.person,
+    }),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.orders,
+      name: 'orders',
+      label: 'Assigned orders',
+      icon: 'IconTruck',
+      targetObjectUniversalIdentifier: FSM_ORDER_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: ORDER_IDS.person,
+    }),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.orderLinks,
+      name: 'orderLinks',
+      label: 'Orders worked on',
+      icon: 'IconTruck',
+      targetObjectUniversalIdentifier: FSM_ORDER_FSM_PERSON_REL_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: ORDER_WORKER_IDS.person,
+      junctionTargetFieldUniversalIdentifier: ORDER_WORKER_IDS.order,
+    }),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.equipments,
+      name: 'equipments',
+      label: 'Operated equipment',
+      icon: 'IconTool',
+      targetObjectUniversalIdentifier: FSM_EQUIPMENT_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: EQUIPMENT_IDS.person,
+    }),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.primaryTerritories,
+      name: 'primaryTerritories',
+      label: 'Primary for territories',
+      icon: 'IconMapPin',
+      targetObjectUniversalIdentifier: RES_TERRITORY_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: TERRITORY_IDS.person,
+    }),
+  ],
+});

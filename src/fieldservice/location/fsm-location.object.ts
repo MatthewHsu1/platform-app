@@ -1,0 +1,177 @@
+import { defineObject, FieldType, OnDeleteAction, STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from 'twenty-sdk/define';
+
+import {
+  RES_BRANCH_FIELD_UNIVERSAL_IDENTIFIERS as BRANCH_IDS,
+  RES_BRANCH_OBJECT_UNIVERSAL_IDENTIFIER,
+  RES_DISTRICT_FIELD_UNIVERSAL_IDENTIFIERS as DISTRICT_IDS,
+  RES_DISTRICT_OBJECT_UNIVERSAL_IDENTIFIER,
+  RES_REGION_FIELD_UNIVERSAL_IDENTIFIERS as REGION_IDS,
+  RES_REGION_OBJECT_UNIVERSAL_IDENTIFIER,
+  RES_TERRITORY_FIELD_UNIVERSAL_IDENTIFIERS as TERRITORY_IDS,
+  RES_TERRITORY_OBJECT_UNIVERSAL_IDENTIFIER,
+} from 'src/base-territory/base-territory-universal-identifiers.constant';
+import { areaField, richTextField } from 'src/fieldservice/fieldservice-fields';
+import {
+  FIELDSERVICE_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS as INVERSE_IDS,
+  FSM_EQUIPMENT_FIELD_UNIVERSAL_IDENTIFIERS as EQUIPMENT_IDS,
+  FSM_EQUIPMENT_OBJECT_UNIVERSAL_IDENTIFIER,
+  FSM_LOCATION_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
+  FSM_LOCATION_OBJECT_UNIVERSAL_IDENTIFIER,
+  FSM_LOCATION_PERSON_FIELD_UNIVERSAL_IDENTIFIERS as LOCATION_WORKER_IDS,
+  FSM_LOCATION_PERSON_OBJECT_UNIVERSAL_IDENTIFIER,
+  FSM_ORDER_FIELD_UNIVERSAL_IDENTIFIERS as ORDER_IDS,
+  FSM_ORDER_OBJECT_UNIVERSAL_IDENTIFIER,
+  FSM_TEAM_FIELD_UNIVERSAL_IDENTIFIERS as TEAM_IDS,
+  FSM_TEAM_OBJECT_UNIVERSAL_IDENTIFIER,
+} from 'src/fieldservice/fieldservice-universal-identifiers.constant';
+import { RESOURCE_CALENDAR_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/resource/resource-universal-identifiers.constant';
+import { appTextField, appWritten, manyToOneField, numberField, oneToManyField, textField } from 'src/shared/fields';
+
+const countField = (universalIdentifier: string, name: string, label: string) =>
+  appWritten(numberField(universalIdentifier, name, label, 'IconListNumbers', { decimals: 0, int: true, defaultValue: 0 }));
+
+// A place where work happens, in a tree of locations. It keeps its own name, address and phone: Twenty has no
+// shared parent of Person and Company to extend. `locationAddress` stands in for the address field, whose name
+// Twenty reserves. The partner is the contact or company it was made from; the
+// owner is a person or a company, one of the two. Full name, full directions and the two counts are written by
+// the location trigger; a new location without an owner takes its parent's.
+export default defineObject({
+  universalIdentifier: FSM_LOCATION_OBJECT_UNIVERSAL_IDENTIFIER,
+  nameSingular: 'fsmLocation',
+  namePlural: 'fsmLocations',
+  labelSingular: 'Service location',
+  labelPlural: 'Service locations',
+  description: 'A place where field service work happens, such as a customer home or a site',
+  icon: 'IconMapPin',
+  labelIdentifierFieldMetadataUniversalIdentifier: FIELD_IDS.name,
+  fields: [
+    textField(FIELD_IDS.name, 'name', 'Name', 'IconAbc'),
+    textField(FIELD_IDS.ref, 'ref', 'Reference', 'IconHash'),
+    { universalIdentifier: FIELD_IDS.locationAddress, name: 'locationAddress', label: 'Address', icon: 'IconMap', type: FieldType.ADDRESS },
+    { universalIdentifier: FIELD_IDS.phone, name: 'phone', label: 'Phone', icon: 'IconPhone', type: FieldType.PHONES },
+    { universalIdentifier: FIELD_IDS.email, name: 'email', label: 'Email', icon: 'IconMail', type: FieldType.EMAILS },
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.partnerPerson,
+      name: 'partnerPerson',
+      label: 'Related contact',
+      icon: 'IconUser',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.person.universalIdentifier,
+      targetFieldUniversalIdentifier: INVERSE_IDS.personPartnerFsmLocations,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.partnerCompany,
+      name: 'partnerCompany',
+      label: 'Related company',
+      icon: 'IconBuildingSkyscraper',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.company.universalIdentifier,
+      targetFieldUniversalIdentifier: INVERSE_IDS.companyPartnerFsmLocations,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.ownerPerson,
+      name: 'ownerPerson',
+      label: 'Owner (contact)',
+      icon: 'IconUser',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.person.universalIdentifier,
+      targetFieldUniversalIdentifier: INVERSE_IDS.personOwnedFsmLocations,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.ownerCompany,
+      name: 'ownerCompany',
+      label: 'Owner (company)',
+      icon: 'IconBuildingSkyscraper',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.company.universalIdentifier,
+      targetFieldUniversalIdentifier: INVERSE_IDS.companyOwnedFsmLocations,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.contact,
+      name: 'contact',
+      label: 'Primary contact',
+      icon: 'IconUser',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.person.universalIdentifier,
+      targetFieldUniversalIdentifier: INVERSE_IDS.personContactFsmLocations,
+    }),
+    textField(FIELD_IDS.direction, 'direction', 'Directions', 'IconDirections'),
+    textField(FIELD_IDS.description, 'description', 'Description', 'IconFileText'),
+    richTextField(FIELD_IDS.notes, 'notes', 'Location notes', 'IconNotes'),
+    areaField(FIELD_IDS.territory, 'territory', 'Territory', 'IconMapPin', RES_TERRITORY_OBJECT_UNIVERSAL_IDENTIFIER, TERRITORY_IDS.fsmLocations),
+    areaField(FIELD_IDS.branch, 'branch', 'Branch', 'IconMapPins', RES_BRANCH_OBJECT_UNIVERSAL_IDENTIFIER, BRANCH_IDS.fsmLocations),
+    areaField(FIELD_IDS.district, 'district', 'District', 'IconMap', RES_DISTRICT_OBJECT_UNIVERSAL_IDENTIFIER, DISTRICT_IDS.fsmLocations),
+    areaField(FIELD_IDS.region, 'region', 'Region', 'IconWorld', RES_REGION_OBJECT_UNIVERSAL_IDENTIFIER, REGION_IDS.fsmLocations),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.calendar,
+      name: 'calendar',
+      label: 'Office hours',
+      icon: 'IconCalendarClock',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: RESOURCE_CALENDAR_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: INVERSE_IDS.resourceCalendarFsmLocations,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.parent,
+      name: 'parent',
+      label: 'Parent',
+      icon: 'IconHierarchy',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: FSM_LOCATION_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: FIELD_IDS.children,
+    }),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.children,
+      name: 'children',
+      label: 'Sub-locations',
+      icon: 'IconHierarchy',
+      targetObjectUniversalIdentifier: FSM_LOCATION_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: FIELD_IDS.parent,
+    }),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.persons,
+      name: 'persons',
+      label: 'Workers',
+      icon: 'IconUsers',
+      targetObjectUniversalIdentifier: FSM_LOCATION_PERSON_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: LOCATION_WORKER_IDS.location,
+    }),
+    manyToOneField({
+      universalIdentifier: FIELD_IDS.team,
+      name: 'team',
+      label: 'Team',
+      icon: 'IconUsersGroup',
+      onDelete: OnDeleteAction.SET_NULL,
+      targetObjectUniversalIdentifier: FSM_TEAM_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: TEAM_IDS.locations,
+    }),
+    countField(FIELD_IDS.equipmentCount, 'equipmentCount', 'Equipment'),
+    countField(FIELD_IDS.sublocationCount, 'sublocationCount', 'Sub-locations count'),
+    appTextField(FIELD_IDS.completeName, 'completeName', 'Full name', 'IconAbc'),
+    appTextField(FIELD_IDS.completeDirection, 'completeDirection', 'Full directions', 'IconDirections'),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.orders,
+      name: 'orders',
+      label: 'Service orders',
+      icon: 'IconTruck',
+      targetObjectUniversalIdentifier: FSM_ORDER_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: ORDER_IDS.location,
+    }),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.equipments,
+      name: 'equipments',
+      label: 'Assigned equipment',
+      icon: 'IconTool',
+      targetObjectUniversalIdentifier: FSM_EQUIPMENT_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: EQUIPMENT_IDS.location,
+    }),
+    oneToManyField({
+      universalIdentifier: FIELD_IDS.currentEquipments,
+      name: 'currentEquipments',
+      label: 'Equipment here now',
+      icon: 'IconTool',
+      targetObjectUniversalIdentifier: FSM_EQUIPMENT_OBJECT_UNIVERSAL_IDENTIFIER,
+      targetFieldUniversalIdentifier: EQUIPMENT_IDS.currentLocation,
+    }),
+  ],
+});

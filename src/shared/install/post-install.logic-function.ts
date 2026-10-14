@@ -2,10 +2,13 @@ import { definePostInstallLogicFunction, type InstallPayload } from 'twenty-sdk/
 
 import { POST_INSTALL_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER } from 'src/constants/universal-identifiers';
 import { BASE_INSTALL } from 'src/base/base-install';
+import { BASE_TERRITORY_INSTALL } from 'src/base-territory/base-territory-install';
 import { CRM_INSTALL } from 'src/crm/crm-install';
 import { finishCrmInstall } from 'src/crm/finish-crm-install';
 import { CRM_SCREENS_INSTALL } from 'src/crm/crm-screens-install';
 import { CRM_STAGE_INSTALL } from 'src/crm/stage/crm-stage-install';
+import { FIELDSERVICE_INSTALL } from 'src/fieldservice/fieldservice-install';
+import { FIELDSERVICE_SCREENS_INSTALL } from 'src/fieldservice/fieldservice-screens-install';
 import { syncStageBoardGroups } from 'src/crm/stage/stage-board-groups';
 import { ensureCasesBoardNavigationItem } from 'src/helpdesk/ensure-cases-board-navigation-item';
 import { HELPDESK_INSTALL } from 'src/helpdesk/helpdesk-install';
@@ -37,7 +40,7 @@ const handler = async ({ previousVersion }: InstallPayload) => {
   const startedAt = Date.now();
   const { skippedBoards, validationRulesSkipped, skippedViewSorts } = await runInstall({
     api: twentyInstallApi,
-    specs: [UTM_INSTALL, UTM_STAGE_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, SALES_TEAM_INSTALL, CRM_SCREENS_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL, RESOURCE_INSTALL, HELPDESK_INSTALL, HELPDESK_SLA_INSTALL, HELPDESK_SCREENS_INSTALL],
+    specs: [UTM_INSTALL, UTM_STAGE_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, SALES_TEAM_INSTALL, CRM_SCREENS_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL, RESOURCE_INSTALL, HELPDESK_INSTALL, HELPDESK_SLA_INSTALL, HELPDESK_SCREENS_INSTALL, BASE_TERRITORY_INSTALL, FIELDSERVICE_INSTALL, FIELDSERVICE_SCREENS_INSTALL],
     previousVersion,
   });
   await finishStockInstall(previousVersion);

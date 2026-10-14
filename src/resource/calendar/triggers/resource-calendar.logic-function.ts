@@ -1,6 +1,7 @@
 import { type DatabaseEventBatchPayload, defineLogicFunction, type ObjectRecordEvent } from 'twenty-sdk/define';
 
 import { applyDeleteRules } from 'src/helpdesk/delete-rules/apply-delete-rules';
+import 'src/fieldservice/calendar-delete-entries';
 import 'src/helpdesk-sla/calendar-team-delete-entries';
 import { CALENDAR_DELETE_RULES } from 'src/resource/calendar/calendar-delete-rules';
 import { defaultTimeZone } from 'src/resource/default-time-zone';
