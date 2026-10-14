@@ -4,9 +4,12 @@ import { FieldserviceActionError } from 'src/fieldservice/actions/fieldservice-a
 import { FIELDSERVICE_ACTION_MESSAGES } from 'src/fieldservice/actions/fieldservice-action-messages.constant';
 import { fieldserviceRouteHandler, findAsUser, readRecordId, requireFieldServiceLevel, updateAsUser } from 'src/fieldservice/actions/fieldservice-action-route';
 import { planCancelOrder } from 'src/fieldservice/actions/utils/plan-cancel-order.util';
+import { ORDER_STAGE } from 'src/fieldservice/fieldservice-options.constant';
 import { CANCEL_ORDER_ROUTE_PATH, FIELDSERVICE_ACTION_UNIVERSAL_IDENTIFIERS } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
+import { requireStageFields } from 'src/fieldservice-stage-validation/require-stage-fields';
 
 // Cancelling is an ordinary stage change, so it goes in as the clicking user and the order rules treat it as theirs.
+// The fields the Cancelled stage needs are checked first, so the answer of the click carries the reason.
 const handler = fieldserviceRouteHandler(async (body) => {
   const orderId = readRecordId(body);
 
@@ -21,6 +24,7 @@ const handler = fieldserviceRouteHandler(async (body) => {
   if (plan.kind === 'refuse') {
     throw new FieldserviceActionError(plan.reason);
   }
+  await requireStageFields(orderId, ORDER_STAGE.CANCELLED, plan.data);
   await updateAsUser('fsmOrder', orderId, plan.data);
 
   return { orderId };

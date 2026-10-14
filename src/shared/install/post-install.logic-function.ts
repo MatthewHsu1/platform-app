@@ -9,7 +9,10 @@ import { CRM_SCREENS_INSTALL } from 'src/crm/crm-screens-install';
 import { CRM_STAGE_INSTALL } from 'src/crm/stage/crm-stage-install';
 import { FIELDSERVICE_STOCK_INSTALL } from 'src/fieldservice-stock/fieldservice-stock-install';
 import { FIELDSERVICE_INSTALL } from 'src/fieldservice/fieldservice-install';
+import { syncStageValidationRules } from 'src/fieldservice-stage-validation/sync-stage-validation-rules';
+import { FIELDSERVICE_STAGE_VALIDATION_INSTALL } from 'src/fieldservice-stage-validation/fieldservice-stage-validation-install';
 import { FIELDSERVICE_SCREENS_INSTALL } from 'src/fieldservice/fieldservice-screens-install';
+import { HELPDESK_FIELDSERVICE_INSTALL } from 'src/helpdesk-fieldservice/helpdesk-fieldservice-install';
 import { syncStageBoardGroups } from 'src/crm/stage/stage-board-groups';
 import { ensureCasesBoardNavigationItem } from 'src/helpdesk/ensure-cases-board-navigation-item';
 import { HELPDESK_INSTALL } from 'src/helpdesk/helpdesk-install';
@@ -39,9 +42,9 @@ const TRIM_STOP_AFTER_MS = 180_000;
 
 const handler = async ({ previousVersion }: InstallPayload) => {
   const startedAt = Date.now();
-  const { skippedBoards, validationRulesSkipped, skippedViewSorts } = await runInstall({
+  const { skippedBoards, validationRulesSkipped, skippedViewSorts, skippedColumns } = await runInstall({
     api: twentyInstallApi,
-    specs: [UTM_INSTALL, UTM_STAGE_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, SALES_TEAM_INSTALL, CRM_SCREENS_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL, RESOURCE_INSTALL, HELPDESK_INSTALL, HELPDESK_SLA_INSTALL, HELPDESK_SCREENS_INSTALL, BASE_TERRITORY_INSTALL, FIELDSERVICE_INSTALL, FIELDSERVICE_SCREENS_INSTALL, FIELDSERVICE_STOCK_INSTALL],
+    specs: [UTM_INSTALL, UTM_STAGE_INSTALL, CRM_INSTALL, CRM_STAGE_INSTALL, SALES_TEAM_INSTALL, CRM_SCREENS_INSTALL, UOM_INSTALL, PRODUCT_INSTALL, BASE_INSTALL, ROUTING_INSTALL, STOCK_INSTALL, STOCK_PICKING_BATCH_INSTALL, RESOURCE_INSTALL, HELPDESK_INSTALL, HELPDESK_SLA_INSTALL, HELPDESK_SCREENS_INSTALL, BASE_TERRITORY_INSTALL, FIELDSERVICE_INSTALL, FIELDSERVICE_STAGE_VALIDATION_INSTALL, FIELDSERVICE_SCREENS_INSTALL, FIELDSERVICE_STOCK_INSTALL, HELPDESK_FIELDSERVICE_INSTALL],
     previousVersion,
   });
   await finishStockInstall(previousVersion);
@@ -63,6 +66,7 @@ const handler = async ({ previousVersion }: InstallPayload) => {
     ['filling the full names of operation types', () => recomputePickingTypeNames({})],
     ['drawing the stage columns of the lead boards', syncStageBoardGroups],
     ['drawing the stage columns of the work case boards', syncCaseBoardGroups],
+    ['keeping the validation rules of the stage rules', syncStageValidationRules],
     ['adding the cases board to the Work cases folder', ensureCasesBoardNavigationItem],
     [
       'finishing the CRM',
@@ -106,6 +110,10 @@ const handler = async ({ previousVersion }: InstallPayload) => {
     warnings.push(`Install: the main list of ${objectUniversalIdentifier} was not sorted (${reason}).`);
   }
 
+  for (const { viewName, reason } of skippedColumns) {
+    warnings.push(`Install: columns of the list "${viewName}" were not added (${reason}). Staff add them by hand.`);
+  }
+
   if (validationRulesSkipped) {
     warnings.push(
       'Install: validation rules were not made; turn on IS_VALIDATION_RULES_ENABLED for this workspace and reinstall.',
@@ -116,7 +124,7 @@ const handler = async ({ previousVersion }: InstallPayload) => {
     console.warn(warning);
   }
 
-  return { skippedBoards, validationRulesSkipped, skippedViewSorts, warnings };
+  return { skippedBoards, validationRulesSkipped, skippedViewSorts, skippedColumns, warnings };
 };
 
 export default definePostInstallLogicFunction({

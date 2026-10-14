@@ -48,6 +48,10 @@ describe('field service role table', () => {
     expect(rowOf('fsmEquipment')).toMatchObject({ userOwn: 'R', dispatcher: 'R', manager: 'RUD' });
     expect(rowOf('resTerritory')).toMatchObject({ userOwn: 'RUD', manager: 'RUD' });
   });
+
+  it('keeps the checklist from the own-documents level, lets the User level work it, and lets only the manager delete items', () => {
+    expect(rowOf('fsmActivity')).toMatchObject({ userOwn: '-', user: 'RU', dispatcher: 'RU', manager: 'RUD' });
+  });
 });
 
 describe('field service blocks', () => {

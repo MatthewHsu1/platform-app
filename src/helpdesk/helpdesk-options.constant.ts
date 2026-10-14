@@ -33,6 +33,7 @@ export const CASE_RELATION_JOIN_COLUMNS: Record<string, string> = {
   duplicateId: 'duplicate',
   ticketTypeId: 'ticketType',
   productId: 'product',
+  fsmLocationId: 'fsmLocation',
 };
 
 // Rows the install step makes once; code finds them by key after staff rename them.

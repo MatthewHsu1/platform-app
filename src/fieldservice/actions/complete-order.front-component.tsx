@@ -1,5 +1,5 @@
 import { defineFrontComponent } from 'twenty-sdk/define';
-import { msg } from 'twenty-sdk/front-component';
+import { msg, openSidePanelPage, SidePanelPages, t } from 'twenty-sdk/front-component';
 
 import { makeRecordActionCommand } from 'src/fieldservice/actions/record-action-command';
 import { COMPLETE_ORDER_ROUTE_PATH, FIELDSERVICE_ACTION_UNIVERSAL_IDENTIFIERS } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
@@ -7,12 +7,15 @@ import { COMPLETE_ORDER_ROUTE_PATH, FIELDSERVICE_ACTION_UNIVERSAL_IDENTIFIERS } 
 // The answers of the field service buttons and the notes the field service rules write. The translation extractor
 // reads only front-component files, so they are listed here to reach the catalog; each must match its source text
 // exactly (src/fieldservice/fieldservice-messages.constant.ts, actions/fieldservice-action-messages.constant.ts,
-// src/fieldservice-stock/fieldservice-stock-messages.constant.ts).
+// src/fieldservice-stock/fieldservice-stock-messages.constant.ts,
+// src/fieldservice-equipment-stock/fieldservice-equipment-stock-messages.constant.ts).
 export const FIELDSERVICE_RULE_TEXTS = [
   msg('Only the Complete button moves a service order to Completed.'),
   msg('{date} is a holiday: {name}.'),
   msg('Create a field service team first.'),
   msg('You cannot delete this order: only an order in the New stage can be deleted.'),
+  msg('Cannot move to stage {stage} until the {field} field is set.'),
+  msg('These fields cannot be checked and were left out: {fields}.'),
   msg('A location cannot be its own parent.'),
   msg('Equipment cannot be its own parent.'),
   msg('The warranty end must not be before the warranty start.'),
@@ -37,6 +40,8 @@ export const FIELDSERVICE_RULE_TEXTS = [
   msg('Set the service location of the opportunity first.'),
   msg('Create a warehouse first.'),
   msg('A service order needs a warehouse.'),
+  msg('This serial belongs to another product.'),
+  msg('Other equipment already has this serial.'),
 ];
 
 export default defineFrontComponent({
@@ -48,5 +53,19 @@ export default defineFrontComponent({
     routePath: COMPLETE_ORDER_ROUTE_PATH,
     successMessage: msg('Order completed.'),
     fallbackError: msg('Could not complete the order.'),
+    // The last open order of an open work case: the panel that closes the case opens next to the order.
+    afterSuccess: async (result, recordIds) => {
+      const panelId = (result as { closeCasePanelId?: string | null } | null)?.closeCasePanelId;
+
+      if (typeof panelId === 'string' && recordIds.length === 1) {
+        await openSidePanelPage({
+          page: SidePanelPages.ViewFrontComponent,
+          frontComponentId: panelId,
+          recordId: recordIds[0],
+          objectNameSingular: 'fsmOrder',
+          pageTitle: t('Close work case'),
+        });
+      }
+    },
   }),
 });

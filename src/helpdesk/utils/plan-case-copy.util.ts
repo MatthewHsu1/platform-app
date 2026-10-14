@@ -21,4 +21,6 @@ export const planCaseCopy = (original: CaseRow): Record<string, unknown> => ({
   active: original.active,
   ...(original.ticketTypeId === undefined ? {} : { ticketTypeId: original.ticketTypeId }),
   ...(original.productId === undefined ? {} : { productId: original.productId }),
+  ...(original.fsmLocationId === undefined ? {} : { fsmLocationId: original.fsmLocationId }),
+  ...(original.resolution === undefined ? {} : { resolution: original.resolution }),
 });

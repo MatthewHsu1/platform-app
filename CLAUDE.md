@@ -14,7 +14,7 @@ overview and links to its detail files:
 - One folder per module under `src/` (`src/crm/`, `src/utm/`, `src/uom/`,
   `src/product/`, `src/stock/`, `src/stock-picking-batch/`, `src/product-expiry/`, `src/base/`, `src/sales-team/`, `src/helpdesk/`, `src/helpdesk-type/`, `src/helpdesk-product/`,
   `src/helpdesk-crm/`, `src/helpdesk-ticket-related/`, `src/helpdesk-sla/`, `src/resource/`, `src/fieldservice/`,
-  `src/base-territory/`, `src/fieldservice-crm/`).
+  `src/base-territory/`, `src/fieldservice-crm/`, `src/helpdesk-fieldservice/`, `src/fieldservice-activity/`).
   Each module keeps its universal ids in `*-universal-identifiers.constant.ts`. New ids are random UUID v4, never changed after
   release. Shared plug points live in `src/shared/plug/`.
 - Names: object = the module's reference model name in camelCase (`crm.lead` → `crmLead`); field = the

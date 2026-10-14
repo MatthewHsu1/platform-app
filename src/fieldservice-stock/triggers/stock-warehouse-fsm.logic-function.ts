@@ -16,7 +16,9 @@ const WAREHOUSE_DELETE_RULES = {
 };
 
 // A deleted warehouse leaves the workers and territories that name it. One that orders use is kept (the warehouse
-// rules put it back), so it keeps them too.
+// rules put it back), so it keeps them too. The warehouse rules also put back a warehouse that has routes or whose
+// operation types are in use, a moment after the delete: such a warehouse is read again before anything is cleared.
+const WAIT_FOR_PUT_BACK_MS = 6000;
 const handler = async (payload: DatabaseEventBatchPayload<ObjectRecordEvent<object>>) => {
   const { operation, events } = readEvents(payload);
 
@@ -25,10 +27,13 @@ const handler = async (payload: DatabaseEventBatchPayload<ObjectRecordEvent<obje
     const using = await fsmOrders.find<{ warehouseId: string }>({ warehouseId: { in: ids } }, 'warehouseId');
     const used = new Set(using.map((order) => order.warehouseId));
 
+    await new Promise((resolve) => setTimeout(resolve, WAIT_FOR_PUT_BACK_MS));
+    const stillDeleted = await stockWarehouses.findIncludingDeleted<{ id: string }>({ id: { in: ids }, deletedAt: { is: 'NOT_NULL' } }, 'id');
+
     await applyDeleteRules(
       stockWarehouses,
       WAREHOUSE_DELETE_RULES,
-      ids.filter((id) => !used.has(id)),
+      stillDeleted.map((row) => row.id).filter((id) => !used.has(id)),
     );
   }
   return {};

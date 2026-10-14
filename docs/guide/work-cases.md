@@ -11,6 +11,7 @@ Customer problems staff work on: a numbered case with a team, an assignee, a sta
 | `src/helpdesk-product/` | The product of a case; "Available for work cases" on a product |
 | `src/helpdesk-crm/` | The opportunity of a case, and the Create opportunity button |
 | `src/helpdesk-ticket-related/` | Related cases, linked both ways |
+| `src/helpdesk-fieldservice/` | The service orders and service location of a case, its resolution, and the Create service order button (see [Field service](field-service.md)) |
 | `src/helpdesk-sla/` | SLA policies, the SLA row of a case and policy, the engine that makes and recomputes them, the Refresh SLA button, the filter tab of a policy |
 | `src/resource/` | Working hours (`resourceCalendar`), working times and time off, and the functions that count in them |
 

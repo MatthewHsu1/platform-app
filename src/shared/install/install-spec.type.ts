@@ -50,6 +50,17 @@ export type ListViewSpec = {
   anyOf?: (ViewFilterSpec | { allOf: ViewFilterSpec[] })[];
 };
 
+// Columns put on a view that exists already, the hook's own or one the app ships: a staff list cannot be named by a
+// shipped view (its field id differs per workspace), and a list the hook made once does not learn of a field a
+// later version adds. They go in once, when the module first arrives, so a column staff hide does not come back;
+// a column the view has already is left alone.
+export type ViewColumnsSpec = {
+  objectUniversalIdentifier: string;
+  viewName: string;
+  fieldNames: string[];
+  isVisible: boolean;
+};
+
 // 'All' is the object's main list, the view Twenty keys INDEX.
 export type ViewSortSpec = {
   objectUniversalIdentifier: string;
@@ -91,6 +102,7 @@ export type ModuleInstallSpec = {
   lists?: ListViewSpec[];
   validationRules: ValidationRuleSpec[];
   viewSorts?: ViewSortSpec[];
+  viewColumns?: ViewColumnsSpec[];
   seedKeyBackfills?: SeedKeyBackfillSpec[];
 };
 

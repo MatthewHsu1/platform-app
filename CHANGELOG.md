@@ -25,6 +25,29 @@ All notable changes to this application are documented in this file.
   Customers) and a shipping address; a worker has a default warehouse and a territory has a warehouse. A move
   takes the order of its transfer. The order page has an Inventory tab with the moves of its deliveries and
   returns and its location's card. The virtual location Field is made on install.
+- Equipment as a serial-numbered product: equipment has a product, a serial and its current inventory location
+  (where the newest stock of the serial is); the serial lists its equipment, and a serial of another product, or one another equipment holds, is undone with a note. A product and an operation type can
+  both be set to create equipment: a done move then makes one equipment for each serial it moved, at the
+  location of its service order. A product has a warranty length and unit; its equipment shows them, and the
+  warranty end follows them.
+- Stage rules: a rule row lists the order fields a stage needs (team, location, description, assigned to, scheduled
+  window, instructions, resolution, actual window, signature, template, type, equipment, workers, and any field
+  staff added by name). Twenty refuses a move into the stage while one is empty, in the save itself; the Complete
+  and Cancel buttons refuse with the same text. Where validation rules are off, and for the equipment and worker
+  lists, a trigger puts the move back with a note. Manager edits the rules; the stage list on a rule is made on
+  install and staff keep it in line with the order's.
+- Work case link: a work case has its service orders, a service location (a new case takes the primary service
+  location of its contact or company, new fields on contacts and companies), a resolution and a Service orders
+  tab; a service location shows its work cases and their count. A case cannot reach a closed stage while one of
+  its orders is open (undone with a note). Buttons: Create service order on a case, and Close work case on a
+  closed order, which asks for the stage and resolution of the case (Complete opens it by itself when it
+  finishes the last open order of an open case). The Cases list has the view With open service orders.
+- Field service checklist: activities (name, reference, sequence, required, state, completed on and by) on service
+  orders and templates, with an Activities tab on both. An order made with a template, or saved with another one,
+  takes a copy of the template's activities. Complete and Cancel on each activity of an order; a completed or
+  cancelled activity keeps its name, Required flag and reference. The Complete button of an order refuses while a
+  required activity is still to do, and marks the order's open tasks done. The checklist is open to the User level
+  and up.
 
 ## 2.5.0 (unreleased)
 

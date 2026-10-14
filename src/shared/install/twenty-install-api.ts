@@ -5,7 +5,7 @@ import { requireData, twentyGraphql, twentyMetadata } from 'src/shared/twenty-gr
 import { textOrNull } from 'src/shared/utils/text-or-null.util';
 import { capitalize } from 'src/shared/utils/capitalize.util';
 
-const FLAG_OFF_MESSAGE = 'Feature flag "IS_VALIDATION_RULES_ENABLED" is not enabled';
+export const FLAG_OFF_MESSAGE = 'Feature flag "IS_VALIDATION_RULES_ENABLED" is not enabled';
 
 // No person runs an install, so every call uses the app role alone.
 export const twentyInstallApi: InstallApi = {
@@ -189,16 +189,26 @@ export const twentyInstallApi: InstallApi = {
     return viewId;
   },
 
-  showViewField: async ({ viewId, fieldMetadataId, position }) => {
+  showViewField: async ({ viewId, fieldMetadataId, position, isVisible = true }) => {
     requireData(
       await twentyMetadata(
         'application',
         `mutation ShowColumn($input: CreateViewFieldInput!) { createViewField(input: $input) { id } }`,
-        { input: { viewId, fieldMetadataId, position, isVisible: true } },
+        { input: { viewId, fieldMetadataId, position, isVisible } },
       ),
       'Show a column',
     );
   },
+
+  listViewFields: async (viewId) =>
+    requireData(
+      await twentyMetadata<{ getViewFields: { fieldMetadataId: string; position: number }[] }>(
+        'application',
+        `query ViewColumns($viewId: String!) { getViewFields(viewId: $viewId) { fieldMetadataId position } }`,
+        { viewId },
+      ),
+      'List the columns of a view',
+    ).getViewFields,
 
   deleteView: async (viewId) => {
     requireData(
