@@ -22,7 +22,8 @@ team and to territories; regions, districts, branches and territories make the s
 Field service folder in the sidebar: Service orders, Locations, Equipment, Workers, Teams, Order types,
 Templates, Territories, Branches, Districts, Regions. The Service orders list also has the Orders board (by
 stage) and the views To assign (open orders without a worker) and To schedule (open orders without a scheduled
-start). Lists show at most 10 columns; staff can switch more on.
+start). Lists show at most 10 columns; staff can switch more on. The two views show the closed status but not
+the stage: Twenty refuses a staff list as a column of a list the app makes, so staff add the Stage column by hand.
 
 ## Install
 

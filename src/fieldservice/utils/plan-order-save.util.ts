@@ -81,9 +81,11 @@ export const planOrderSave = ({
     putBack: before === null ? {} : pick(before, written),
   });
 
-  if (before !== null && staffSave && written.has('stage')) {
+  // A new order starts open, so one made straight into Completed (a card added to the Completed column of the
+  // board) is a manual move too.
+  if (staffSave && (before === null || written.has('stage'))) {
     const guard = planStageGuard(
-      closedStatusOf(before.stage),
+      before === null ? 'OPEN' : closedStatusOf(before.stage),
       closedStatusOf(after.stage),
       false,
     );

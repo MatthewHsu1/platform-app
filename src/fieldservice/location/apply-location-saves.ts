@@ -6,6 +6,7 @@ import { fsmLocations, fsmOrders } from 'src/fieldservice/fieldservice-records';
 import { type AreaChain } from 'src/fieldservice/types/area-chain.type';
 import { type LocationTreeRow } from 'src/fieldservice/types/location-tree-row.type';
 import { ancestorIds } from 'src/fieldservice/utils/ancestor-ids.util';
+import { areaLevelsWritten } from 'src/fieldservice/utils/area-levels-written.util';
 import { planAreaCascade } from 'src/fieldservice/utils/plan-area-cascade.util';
 import { planLocationNames } from 'src/fieldservice/utils/plan-location-names.util';
 import { planOwnerInherit } from 'src/fieldservice/utils/plan-owner-inherit.util';
@@ -86,15 +87,10 @@ export const applyLocationSaves = async (operation: RecordOperation, events: Raw
         }
       }
       if (staffSave && operation !== 'restored') {
+        const levels = areaLevelsWritten(operation === 'created', current, written);
         const area = planAreaCascade({
           current,
-          written: {
-            location: false,
-            territory: written.has('territoryId'),
-            branch: written.has('branchId'),
-            district: written.has('districtId'),
-            region: written.has('regionId'),
-          },
+          written: { location: false, ...levels },
           locationTerritoryId: null,
           lookups,
         });

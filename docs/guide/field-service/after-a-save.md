@@ -21,8 +21,9 @@ seconds after an order is made. A refused change is undone with a note on the re
   that moves pushes the end by the duration; clearing the start clears the end. A duration change alone moves
   nothing. Seconds are dropped.
 - A scheduled window that holds a whole time off (any working hours) is refused: "<date> is a holiday: <name>."
-- Only the Complete button moves an order to Completed; a manual move is undone. Cancelling and moving back
-  to an open stage are allowed.
+- Only the Complete button moves an order to Completed; a manual move is undone, and an order made straight
+  into Completed (a card added to the Completed column of the board) is removed again. Cancelling and moving
+  back to an open stage are allowed.
 - A new location brings its team and directions, unless the same save sets them. A new template brings its
   instructions.
 - Every save keeps the closed status (Completed and Cancelled close an order), the actual duration (hours from
