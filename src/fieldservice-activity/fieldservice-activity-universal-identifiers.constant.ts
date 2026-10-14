@@ -25,6 +25,7 @@ export const FIELDSERVICE_ACTIVITY_INVERSE_FIELD_UNIVERSAL_IDENTIFIERS = {
 export const FIELDSERVICE_ACTIVITY_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS = {
   fsmOrder: 'ebb4f361-19a3-43a0-bcec-872fdef2c1cb',
   fsmTemplate: 'a7993e59-1b84-4039-bb31-de0a40bc4bca',
+  fsmActivity: 'c5388533-06fb-4548-8973-66cfb9a423fe',
 } as const;
 
 export const FIELDSERVICE_ACTIVITY_ACTION_UNIVERSAL_IDENTIFIERS = {
@@ -39,7 +40,7 @@ export const FIELDSERVICE_ACTIVITY_ACTION_UNIVERSAL_IDENTIFIERS = {
 export const FIELDSERVICE_ACTIVITY_PAGE_UNIVERSAL_IDENTIFIERS = {
   orderTab: '161ab962-8f1e-4c90-a31d-5d4c7b5c4a25',
   orderWidget: '85defa5e-4ecb-454a-a54e-bd72df9f81b9',
-  orderView: '32ff3012-7784-40ec-8bea-9de01a3536ba',
+  orderFrontComponent: '32ff3012-7784-40ec-8bea-9de01a3536ba',
   templateTab: '6f35d833-3508-4f50-b9e2-e26a440a98d0',
   templateWidget: '7a7d9605-4bda-4474-8b6b-23551ed75550',
   templateView: '73aed863-0adf-483b-8c9e-b0991b08acf7',

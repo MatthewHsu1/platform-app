@@ -35,6 +35,7 @@ import {
   FSM_TEMPLATE_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
 import { FSM_STAGE_RULE_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/fieldservice-stage-validation/fieldservice-stage-validation-universal-identifiers.constant';
+import { FSM_ACTIVITY_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/fieldservice-activity/fieldservice-activity-universal-identifiers.constant';
 import {
   HELPDESK_TICKET_CATEGORY_OBJECT_UNIVERSAL_IDENTIFIER,
   HELPDESK_TICKET_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -245,6 +246,7 @@ export default defineApplicationRole({
     readWriteAndDestroy(FSM_EQUIPMENT_FSM_ORDER_REL_OBJECT_UNIVERSAL_IDENTIFIER),
     readWriteAndDestroy(FSM_ORDER_FSM_PERSON_REL_OBJECT_UNIVERSAL_IDENTIFIER),
     readWriteAndDestroy(FSM_PERSON_RES_TERRITORY_REL_OBJECT_UNIVERSAL_IDENTIFIER),
+    readWriteAndDestroy(FSM_ACTIVITY_OBJECT_UNIVERSAL_IDENTIFIER),
     readAndWrite(RES_REGION_OBJECT_UNIVERSAL_IDENTIFIER),
     readAndWrite(RES_DISTRICT_OBJECT_UNIVERSAL_IDENTIFIER),
     readAndWrite(RES_BRANCH_OBJECT_UNIVERSAL_IDENTIFIER),

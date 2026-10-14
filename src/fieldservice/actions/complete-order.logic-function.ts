@@ -7,13 +7,15 @@ import { planCompleteOrder } from 'src/fieldservice/actions/utils/plan-complete-
 import { ORDER_STAGE } from 'src/fieldservice/fieldservice-options.constant';
 import { fsmOrders } from 'src/fieldservice/fieldservice-records';
 import { COMPLETE_ORDER_ROUTE_PATH, FIELDSERVICE_ACTION_UNIVERSAL_IDENTIFIERS } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
+import { markOrderTasksDone } from 'src/fieldservice-activity/mark-order-tasks-done';
 import { requireActivitiesDone } from 'src/fieldservice-activity/require-activities-done';
 import { requireStageFields } from 'src/fieldservice-stage-validation/require-stage-fields';
 import { readCloseCasePanel } from 'src/helpdesk-fieldservice/read-close-case-panel';
 
 // The only way to Completed: the order is read as the clicking user (their rights and level checked), checked
-// against the fields the Completed stage needs, its required activities must be done, then the app writes it,
-// whose writes the stage guard lets through. When that was the last open order of an open work case, the answer
+// against the fields the Completed stage needs, its required activities must be done, its open tasks are closed,
+// then the app writes it, whose writes the stage guard lets through. The tasks go first: a rerun after a stop finds
+// the order still open and finishes the job. When that was the last open order of an open work case, the answer
 // names the panel that closes the case; the button opens it. The panel is only an offer: a failure to find it
 // must not undo a completion that is done.
 const handler = fieldserviceRouteHandler(async (body) => {
@@ -37,6 +39,7 @@ const handler = fieldserviceRouteHandler(async (body) => {
   }
   await requireStageFields(orderId, ORDER_STAGE.COMPLETED, plan.data);
   await requireActivitiesDone(orderId);
+  await markOrderTasksDone(orderId);
   await fsmOrders.update(orderId, plan.data);
   const closeCasePanelId = await readCloseCasePanel(orderId).catch(() => null);
 
