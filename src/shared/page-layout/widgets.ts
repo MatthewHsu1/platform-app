@@ -29,6 +29,18 @@ export const tableWidget = (
   },
 });
 
+// A relation shown as a card that expands into the related record's own fields.
+export const cardWidget = (universalIdentifier: string, title: string, fieldMetadataId: string) => ({
+  universalIdentifier,
+  title,
+  type: 'FIELD' as const,
+  configuration: {
+    configurationType: 'FIELD' as const,
+    fieldMetadataId,
+    fieldDisplayMode: 'CARD' as const,
+  },
+});
+
 // A table of a relation two hops away (batch, then its transfers, then their move lines).
 export const nestedTableWidget = (
   universalIdentifier: string,

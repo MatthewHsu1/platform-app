@@ -23,7 +23,8 @@ All notable changes to this application are documented in this file.
   transfers and moves made for it, stock references, and counts of its deliveries and returns; a service
   location has a stock location (its parent's, else the customer location of its contact or company, else
   Customers) and a shipping address; a worker has a default warehouse and a territory has a warehouse. A move
-  takes the order of its transfer. The virtual location Field is made on install.
+  takes the order of its transfer. The order page has an Inventory tab with the moves of its deliveries and
+  returns and its location's card. The virtual location Field is made on install.
 
 ## 2.5.0 (unreleased)
 
