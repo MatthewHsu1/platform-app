@@ -13,6 +13,7 @@ team and to territories; regions, districts, branches and territories make the s
 | `src/fieldservice-crm/` | The service location of an opportunity, the opportunity of an order, and the Create service order button |
 | `src/fieldservice-stock/` | Parts on a job: the warehouse, transfers, moves, stock references and delivery counts of an order; the stock location and shipping address of a location; the default warehouse of a worker and the warehouse of a territory |
 | `src/fieldservice-equipment-stock/` | Equipment as a serial-numbered product: its product, serial and current inventory location, the equipment a done move makes, and the warranty length and unit of a product |
+| `src/fieldservice-stage-validation/` | Stage rules (`fsmStageRule`): the fields an order needs before it moves into a stage, and the check that undoes a move while one is empty |
 
 ## Detail files
 
@@ -24,13 +25,13 @@ team and to territories; regions, districts, branches and territories make the s
 ## Screens
 
 Field service folder in the sidebar: Service orders, Locations, Equipment, Workers, Teams, Order types,
-Templates, Territories, Branches, Districts, Regions. The Service orders list also has the Orders board (by
+Templates, Stage rules, Territories, Branches, Districts, Regions. The Service orders list also has the Orders board (by
 stage) and the views To assign (open orders without a worker) and To schedule (open orders without a scheduled
 start). Lists show at most 10 columns; staff can switch more on. The two views show the closed status but not
 the stage: Twenty refuses a staff list as a column of a list the app makes, so staff add the Stage column by hand.
 
 ## Install
 
-The install makes the order stage list (New, Completed, Cancelled), the tag and category lists, the territory
-type list, the number series (`FO001`), the Default Team, the stock location Field, the board and the lists. It adds only what is
+The install makes the order stage list (New, Completed, Cancelled), the same stage list on the stage rules, the
+tag and category lists, the territory type list, the number series (`FO001`), the Default Team, the stock location Field, the board and the lists. It adds only what is
 missing. No service areas are made: staff build their own.

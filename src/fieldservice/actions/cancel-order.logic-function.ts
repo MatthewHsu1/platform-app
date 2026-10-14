@@ -4,14 +4,23 @@ import { FieldserviceActionError } from 'src/fieldservice/actions/fieldservice-a
 import { FIELDSERVICE_ACTION_MESSAGES } from 'src/fieldservice/actions/fieldservice-action-messages.constant';
 import { fieldserviceRouteHandler, findAsUser, readRecordId, requireFieldServiceLevel, updateAsUser } from 'src/fieldservice/actions/fieldservice-action-route';
 import { planCancelOrder } from 'src/fieldservice/actions/utils/plan-cancel-order.util';
+import { ORDER_STAGE } from 'src/fieldservice/fieldservice-options.constant';
 import { CANCEL_ORDER_ROUTE_PATH, FIELDSERVICE_ACTION_UNIVERSAL_IDENTIFIERS } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
+import { STAGE_RULE_VALUES_SELECTION } from 'src/fieldservice-stage-validation/fieldservice-stage-validation-options.constant';
+import { requireStageFields } from 'src/fieldservice-stage-validation/require-stage-fields';
 
 // Cancelling is an ordinary stage change, so it goes in as the clicking user and the order rules treat it as theirs.
+// The fields the Cancelled stage needs are checked first, so the answer of the click carries the reason.
 const handler = fieldserviceRouteHandler(async (body) => {
   const orderId = readRecordId(body);
 
   await requireFieldServiceLevel('fieldService.dispatcher');
-  const order = await findAsUser<{ id: string; closedStatus: string | null }>('fsmOrder', 'fsmOrders', orderId, 'id closedStatus');
+  const order = await findAsUser<Record<string, unknown> & { id: string; closedStatus: string | null }>(
+    'fsmOrder',
+    'fsmOrders',
+    orderId,
+    `id closedStatus ${STAGE_RULE_VALUES_SELECTION}`,
+  );
 
   if (order === null) {
     throw new FieldserviceActionError(FIELDSERVICE_ACTION_MESSAGES.orderNotFound, {}, 404);
@@ -21,6 +30,7 @@ const handler = fieldserviceRouteHandler(async (body) => {
   if (plan.kind === 'refuse') {
     throw new FieldserviceActionError(plan.reason);
   }
+  await requireStageFields(ORDER_STAGE.CANCELLED, { ...order, ...plan.data });
   await updateAsUser('fsmOrder', orderId, plan.data);
 
   return { orderId };

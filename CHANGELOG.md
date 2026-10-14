@@ -29,6 +29,10 @@ All notable changes to this application are documented in this file.
   both be set to create equipment: a done move then makes one equipment for each serial it moved, at the
   location of its service order. A product has a warranty length and unit; its equipment shows them, and the
   warranty end follows them.
+- Stage rules: a rule row lists the order fields a stage needs (team, location, description, assigned to, scheduled
+  window, instructions, resolution, actual window, signature, template, type). A move into the stage while one is
+  empty is undone with a note, and the Complete and Cancel buttons refuse with the same text. Manager edits the
+  rules; the stage list on a rule is made on install and staff keep it in line with the order's.
 
 ## 2.5.0 (unreleased)
 
