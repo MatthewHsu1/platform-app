@@ -53,4 +53,16 @@ export const ROLE_MODULES: RoleModule[] = [
       },
     ],
   },
+  {
+    key: 'fieldService',
+    label: 'Field service',
+    levels: [
+      NONE,
+      { key: 'userOwn', label: 'User (own documents)', blockKey: BLOCK_KEYS.fieldServiceUserOwn },
+      { key: 'user', label: 'User', blockKey: BLOCK_KEYS.fieldServiceUser },
+      { key: 'dispatcher', label: 'Dispatcher', blockKey: BLOCK_KEYS.fieldServiceDispatcher },
+      { key: 'manager', label: 'Manager', blockKey: BLOCK_KEYS.fieldServiceManager },
+    ],
+    ownerFields: [],
+  },
 ];

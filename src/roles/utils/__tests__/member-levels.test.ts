@@ -27,6 +27,7 @@ describe('blockKeysToLevels', () => {
       products: 'none',
       sales: 'all',
       workCases: 'none',
+      fieldService: 'none',
     });
   });
 });
