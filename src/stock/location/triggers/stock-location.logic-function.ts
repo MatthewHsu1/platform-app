@@ -1,5 +1,6 @@
 import { type DatabaseEventBatchPayload, defineLogicFunction, type ObjectRecordEvent } from 'twenty-sdk/define';
 
+import 'src/fieldservice-stock/location-references-entries';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
 import { handleLocationDeletes } from 'src/stock/location/rules/location-delete';

@@ -1,0 +1,25 @@
+import { defineIndex } from 'twenty-sdk/define';
+
+import {
+  STOCK_REFERENCE_FSM_ORDER_REL_FIELD_UNIVERSAL_IDENTIFIERS as FIELD_IDS,
+  STOCK_REFERENCE_FSM_ORDER_REL_INDEX_FIRST_FIELD_UNIVERSAL_IDENTIFIER,
+  STOCK_REFERENCE_FSM_ORDER_REL_INDEX_SECOND_FIELD_UNIVERSAL_IDENTIFIER,
+  STOCK_REFERENCE_FSM_ORDER_REL_INDEX_UNIVERSAL_IDENTIFIER,
+  STOCK_REFERENCE_FSM_ORDER_REL_OBJECT_UNIVERSAL_IDENTIFIER,
+} from 'src/fieldservice-stock/fieldservice-stock-universal-identifiers.constant';
+
+export default defineIndex({
+  universalIdentifier: STOCK_REFERENCE_FSM_ORDER_REL_INDEX_UNIVERSAL_IDENTIFIER,
+  objectUniversalIdentifier: STOCK_REFERENCE_FSM_ORDER_REL_OBJECT_UNIVERSAL_IDENTIFIER,
+  isUnique: true,
+  fields: [
+    {
+      universalIdentifier: STOCK_REFERENCE_FSM_ORDER_REL_INDEX_FIRST_FIELD_UNIVERSAL_IDENTIFIER,
+      fieldUniversalIdentifier: FIELD_IDS.reference,
+    },
+    {
+      universalIdentifier: STOCK_REFERENCE_FSM_ORDER_REL_INDEX_SECOND_FIELD_UNIVERSAL_IDENTIFIER,
+      fieldUniversalIdentifier: FIELD_IDS.order,
+    },
+  ],
+});

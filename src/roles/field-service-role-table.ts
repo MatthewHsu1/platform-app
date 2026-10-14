@@ -4,6 +4,7 @@ import {
   RES_REGION_OBJECT_UNIVERSAL_IDENTIFIER,
   RES_TERRITORY_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/base-territory/base-territory-universal-identifiers.constant';
+import { STOCK_REFERENCE_FSM_ORDER_REL_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/fieldservice-stock/fieldservice-stock-universal-identifiers.constant';
 import {
   FSM_EQUIPMENT_FSM_ORDER_REL_OBJECT_UNIVERSAL_IDENTIFIER,
   FSM_EQUIPMENT_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -35,9 +36,11 @@ const row = (objectUniversalIdentifier: string, userOwn: Rights, user: Rights, d
 // teams, templates and equipment. Every level keeps the service area tables.
 export const FIELD_SERVICE_ROLE_TABLE: FieldServiceRoleRow[] = [
   row(FSM_ORDER_OBJECT_UNIVERSAL_IDENTIFIER, 'RU', 'RU', 'RUD', 'RUD'),
-  // Adding equipment or extra workers to an order adds and removes link rows: whoever edits an order needs it.
+  // Adding equipment, extra workers or stock references to an order adds and removes link rows: whoever edits an
+  // order needs it.
   row(FSM_EQUIPMENT_FSM_ORDER_REL_OBJECT_UNIVERSAL_IDENTIFIER, linkRights('RU'), linkRights('RU'), 'RUD', 'RUD'),
   row(FSM_ORDER_FSM_PERSON_REL_OBJECT_UNIVERSAL_IDENTIFIER, linkRights('RU'), linkRights('RU'), 'RUD', 'RUD'),
+  row(STOCK_REFERENCE_FSM_ORDER_REL_OBJECT_UNIVERSAL_IDENTIFIER, linkRights('RU'), linkRights('RU'), 'RUD', 'RUD'),
   row(FSM_LOCATION_OBJECT_UNIVERSAL_IDENTIFIER, 'RU', 'RU', 'RU', 'RU'),
   row(FSM_PERSON_OBJECT_UNIVERSAL_IDENTIFIER, 'RU', 'RU', 'RU', 'RUD'),
   row(FSM_PERSON_RES_TERRITORY_REL_OBJECT_UNIVERSAL_IDENTIFIER, linkRights('RU'), linkRights('RU'), linkRights('RU'), 'RUD'),

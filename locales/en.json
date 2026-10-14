@@ -6,6 +6,8 @@
   "\"{field}\" needs a value.": "\"{field}\" needs a value.",
   "\"{field}\" needs two dates.": "\"{field}\" needs two dates.",
   "\"{field}\" needs two numbers.": "\"{field}\" needs two numbers.",
+  "A service order needs a warehouse.": "A service order needs a warehouse.",
+  "Create a warehouse first.": "Create a warehouse first.",
   "{count} duplicate leads were merged.": "{count} duplicate leads were merged.",
   "{count} leads marked lost.": "{count} leads marked lost.",
   "{count} leads were allocated among {teams} teams.": "{count} leads were allocated among {teams} teams.",
