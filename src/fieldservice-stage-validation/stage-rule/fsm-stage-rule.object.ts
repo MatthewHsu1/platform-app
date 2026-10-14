@@ -9,7 +9,8 @@ import { multiSelectField, textField } from 'src/shared/fields';
 
 // The fields a service order must have set before it may move into a stage. The stage list on this object is a
 // staff list the install hook makes, a copy of the order's stage list: a stage staff add to the order is added
-// here too. Several rows for one stage add up.
+// here too. Several rows for one stage add up. "Other fields" holds the names of fields staff added to the order.
+// A trigger keeps one validation rule of the order for each field of each row.
 export default defineObject({
   universalIdentifier: FSM_STAGE_RULE_OBJECT_UNIVERSAL_IDENTIFIER,
   nameSingular: 'fsmStageRule',
@@ -22,5 +23,6 @@ export default defineObject({
   fields: [
     textField(FIELD_IDS.name, 'name', 'Name', 'IconAbc'),
     multiSelectField(FIELD_IDS.requiredFields, 'requiredFields', 'Required fields', 'IconListCheck', STAGE_RULE_FIELD_OPTIONS),
+    textField(FIELD_IDS.otherFields, 'otherFields', 'Other fields', 'IconPlus'),
   ],
 });

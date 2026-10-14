@@ -20,9 +20,11 @@ All notable changes to this application are documented in this file.
   schedule lists. Settings: the hours an order may wait by priority, and equipment fill on new orders.
 - The building blocks Field service: User (own documents), User, Dispatcher and Manager on the Roles page.
 - Stage rules: a rule row lists the order fields a stage needs (team, location, description, assigned to, scheduled
-  window, instructions, resolution, actual window, signature, template, type). A move into the stage while one is
-  empty is undone with a note, and the Complete and Cancel buttons refuse with the same text. Manager edits the
-  rules; the stage list on a rule is made on install and staff keep it in line with the order's.
+  window, instructions, resolution, actual window, signature, template, type, equipment, workers, and any field
+  staff added by name). Twenty refuses a move into the stage while one is empty, in the save itself; the Complete
+  and Cancel buttons refuse with the same text. Where validation rules are off, and for the equipment and worker
+  lists, a trigger puts the move back with a note. Manager edits the rules; the stage list on a rule is made on
+  install and staff keep it in line with the order's.
 
 ## 2.5.0 (unreleased)
 

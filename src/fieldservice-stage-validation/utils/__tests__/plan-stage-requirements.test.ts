@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { planStageRequirements } from 'src/fieldservice-stage-validation/utils/plan-stage-requirements.util';
 
-const rule = (stage: string | null, requiredFields: string[] | null) => ({ stage, requiredFields });
+let next = 0;
+const rule = (stage: string | null, requiredFields: string[] | null, otherFields: string | null = null) => ({ id: `row-${(next += 1)}`, stage, requiredFields, otherFields });
 
 describe('planStageRequirements', () => {
   it('stops a move into a stage whose required description is empty', () => {
@@ -56,6 +57,30 @@ describe('planStageRequirements', () => {
     expect(planStageRequirements({ stage: 'SCHEDULED', rules, values: { personId: 'p1', scheduledDuration: 2, scheduledDateStart: '2026-10-14T08:00:00.000Z' } })).toEqual({
       kind: 'ok',
     });
+  });
+
+  it('counts the equipment and worker lists, and checks only them when asked', () => {
+    const rules = [rule('COMPLETED', ['EQUIPMENTS', 'PERSONS', 'TEAM'])];
+
+    expect(planStageRequirements({ stage: 'COMPLETED', rules, values: { teamId: null, equipments: 0, persons: 2 } })).toMatchObject({ kind: 'missing', fieldLabel: 'Team' });
+    expect(planStageRequirements({ stage: 'COMPLETED', rules, values: { teamId: 't1', equipments: 0, persons: 2 } })).toMatchObject({ kind: 'missing', fieldLabel: 'Equipment' });
+    expect(planStageRequirements({ stage: 'COMPLETED', rules, values: { teamId: null, equipments: 1, persons: 0 }, linksOnly: true })).toMatchObject({
+      kind: 'missing',
+      fieldLabel: 'Field service workers',
+    });
+    expect(planStageRequirements({ stage: 'COMPLETED', rules, values: { teamId: null, equipments: 1, persons: 3 }, linksOnly: true })).toEqual({ kind: 'ok' });
+  });
+
+  it('checks a field staff added, found in the order metadata at the time of the check', () => {
+    const rules = [rule('COMPLETED', null, 'serialNote, warrantyOn')];
+    const fieldInfo = [
+      { name: 'serialNote', label: 'Serial note', type: 'TEXT', isActive: true, settings: null },
+      { name: 'warrantyOn', label: 'Warranty on', type: 'BOOLEAN', isActive: true, settings: null },
+    ];
+
+    expect(planStageRequirements({ stage: 'COMPLETED', rules, fieldInfo, values: { serialNote: null, warrantyOn: true } })).toMatchObject({ fieldLabel: 'Serial note' });
+    expect(planStageRequirements({ stage: 'COMPLETED', rules, fieldInfo, values: { serialNote: 'SN-1', warrantyOn: false } })).toMatchObject({ fieldLabel: 'Warranty on' });
+    expect(planStageRequirements({ stage: 'COMPLETED', rules, fieldInfo, values: { serialNote: 'SN-1', warrantyOn: true } })).toEqual({ kind: 'ok' });
   });
 
   it('ignores a rule row without a stage, a row without fields and an option that is no longer listed', () => {

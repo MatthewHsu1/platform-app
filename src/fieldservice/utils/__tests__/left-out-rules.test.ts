@@ -6,9 +6,9 @@ describe('service locations', () => {
 });
 
 // A stage rule lists fields an order needs before it moves into a stage. Locations, equipment and workers have
-// no stage in this app, and Twenty saves a new row before its fields are typed, so a new order is not checked.
+// no stage in this app. A validation rule cannot read a list of link rows, so those two lists are checked after
+// the save and the move is put back.
 describe('stage rules', () => {
   it.todo('refuses a location, equipment or worker moving into a stage while a listed field is empty');
-  it.todo('refuses a new order made straight into a stage while a listed field is empty');
-  it.todo('lets staff list a field they added themselves, and the equipment and worker links of an order');
+  it.todo('refuses, in the save itself, a move into a stage while the equipment or worker list is empty');
 });

@@ -11,7 +11,7 @@ team and to territories; regions, districts, branches and territories make the s
 | `src/fieldservice/` | Service order (`fsmOrder`), location, equipment, worker, team, order type, template and the links between them; the save rules and triggers; the install data, board and lists; the buttons Complete, Cancel order, Sign, Make a service location and Make a field service worker |
 | `src/base-territory/` | Regions, districts, branches and territories |
 | `src/fieldservice-crm/` | The service location of an opportunity, the opportunity of an order, and the Create service order button |
-| `src/fieldservice-stage-validation/` | Stage rules (`fsmStageRule`): the fields an order needs before it moves into a stage, and the check that undoes a move while one is empty |
+| `src/fieldservice-stage-validation/` | Stage rules (`fsmStageRule`): the fields an order needs before it moves into a stage, the validation rules kept from them, and the check that undoes a move where a rule cannot |
 
 ## Detail files
 

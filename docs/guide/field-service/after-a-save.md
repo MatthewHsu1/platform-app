@@ -25,13 +25,17 @@ seconds after an order is made. A refused change is undone with a note on the re
   into Completed (a card added to the Completed column of the board) is removed again. Cancelling and moving
   back to an open stage are allowed.
 - Stage rules: a rule row names a stage and the order fields that stage needs (team, location, description,
-  assigned to, scheduled start, resolution, signed by and so on). A staff move of an order into a stage while a
-  listed field is empty is undone with a note: "Cannot move to stage Completed until the Resolution field is
-  set." Several rows of one stage add up. The Complete and Cancel buttons check first and answer with the same
-  text. A new order, a save that leaves the stage as it was and a save that clears a field of an order already in
-  the stage are not checked. Zero, empty text, an empty rich text and no link all count as empty. The stage list
-  of a rule is a copy of the order's: when staff add a stage to the order they add it to the rules too. Only the
-  fields of the list can be required: not tags, categories, equipment, extra workers or fields staff add.
+  assigned to, scheduled start, resolution, signed by, equipment, workers and so on; "Other fields" takes the
+  names of fields staff added to the order). A trigger keeps one validation rule of the order for each field of
+  each row, so Twenty refuses the save itself: "Cannot move to stage Completed until the Resolution field is
+  set." That covers a card dropped straight into the stage and the app's own writes too. Several rows of one stage
+  add up. The Complete and Cancel buttons check first and answer with the same text. The rules fire on every
+  save of the order, so an order already in the stage cannot be saved with a listed field emptied (the
+  Resolution of a completed order, say); zero hours, empty text, an empty rich text and no link count as empty. A
+  validation rule cannot read the equipment and worker lists, and the workspace flag `IS_VALIDATION_RULES_ENABLED`
+  may be off: then a trigger checks after the save and puts the order back in the stage it left (a new order
+  in New) with a note. The stage list of a rule is a copy of the order's: when staff add a stage to the order they
+  add it to the rules too. Do not list fields for the first stage (New): a blank new order would be refused.
 - A new location brings its team and directions, unless the same save sets them. A new template brings its
   instructions.
 - Every save keeps the closed status (Completed and Cancelled close an order), the actual duration (hours from
