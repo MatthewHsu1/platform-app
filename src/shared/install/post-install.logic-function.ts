@@ -9,6 +9,7 @@ import { CRM_SCREENS_INSTALL } from 'src/crm/crm-screens-install';
 import { CRM_STAGE_INSTALL } from 'src/crm/stage/crm-stage-install';
 import { FIELDSERVICE_STOCK_INSTALL } from 'src/fieldservice-stock/fieldservice-stock-install';
 import { FIELDSERVICE_INSTALL } from 'src/fieldservice/fieldservice-install';
+import { syncStageValidationRules } from 'src/fieldservice-stage-validation/sync-stage-validation-rules';
 import { FIELDSERVICE_STAGE_VALIDATION_INSTALL } from 'src/fieldservice-stage-validation/fieldservice-stage-validation-install';
 import { FIELDSERVICE_SCREENS_INSTALL } from 'src/fieldservice/fieldservice-screens-install';
 import { syncStageBoardGroups } from 'src/crm/stage/stage-board-groups';
@@ -64,6 +65,7 @@ const handler = async ({ previousVersion }: InstallPayload) => {
     ['filling the full names of operation types', () => recomputePickingTypeNames({})],
     ['drawing the stage columns of the lead boards', syncStageBoardGroups],
     ['drawing the stage columns of the work case boards', syncCaseBoardGroups],
+    ['keeping the validation rules of the stage rules', syncStageValidationRules],
     ['adding the cases board to the Work cases folder', ensureCasesBoardNavigationItem],
     [
       'finishing the CRM',

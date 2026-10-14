@@ -5,7 +5,7 @@ import { requireData, twentyGraphql, twentyMetadata } from 'src/shared/twenty-gr
 import { textOrNull } from 'src/shared/utils/text-or-null.util';
 import { capitalize } from 'src/shared/utils/capitalize.util';
 
-const FLAG_OFF_MESSAGE = 'Feature flag "IS_VALIDATION_RULES_ENABLED" is not enabled';
+export const FLAG_OFF_MESSAGE = 'Feature flag "IS_VALIDATION_RULES_ENABLED" is not enabled';
 
 // No person runs an install, so every call uses the app role alone.
 export const twentyInstallApi: InstallApi = {
