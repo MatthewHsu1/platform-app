@@ -6,9 +6,12 @@ import { fieldserviceRouteHandler, findAsUser, readRecordId, requireFieldService
 import { planCompleteOrder } from 'src/fieldservice/actions/utils/plan-complete-order.util';
 import { fsmOrders } from 'src/fieldservice/fieldservice-records';
 import { COMPLETE_ORDER_ROUTE_PATH, FIELDSERVICE_ACTION_UNIVERSAL_IDENTIFIERS } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
+import { readCloseCasePanel } from 'src/helpdesk-fieldservice/read-close-case-panel';
 
 // The only way to Completed: the order is read as the clicking user (their rights and level checked), then
-// written by the app, whose writes the stage guard lets through.
+// written by the app, whose writes the stage guard lets through. When that was the last open order of an open work
+// case, the answer names the panel that closes the case; the button opens it. The panel is only an offer: a failure
+// to find it must not undo a completion that is done.
 const handler = fieldserviceRouteHandler(async (body) => {
   const orderId = readRecordId(body);
 
@@ -29,8 +32,9 @@ const handler = fieldserviceRouteHandler(async (body) => {
     throw new FieldserviceActionError(plan.reason);
   }
   await fsmOrders.update(orderId, plan.data);
+  const closeCasePanelId = await readCloseCasePanel(orderId).catch(() => null);
 
-  return { orderId };
+  return { orderId, closeCasePanelId };
 });
 
 export default defineLogicFunction({

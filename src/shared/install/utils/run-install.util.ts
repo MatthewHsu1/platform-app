@@ -31,7 +31,8 @@ export type InstallApi = {
     cardFieldMetadataIds?: string[];
   }) => Promise<void>;
   createListView: (input: { objectMetadataId: string; name: string; icon: string }) => Promise<string>;
-  showViewField: (input: { viewId: string; fieldMetadataId: string; position: number }) => Promise<void>;
+  showViewField: (input: { viewId: string; fieldMetadataId: string; position: number; isVisible?: boolean }) => Promise<void>;
+  listViewFields: (viewId: string) => Promise<{ fieldMetadataId: string; position: number }[]>;
   deleteView: (viewId: string) => Promise<void>;
   createViewFilterGroup: (input: { viewId: string; logicalOperator: 'AND' | 'OR'; parentViewFilterGroupId?: string }) => Promise<string>;
   createViewFilter: (input: {
@@ -393,5 +394,34 @@ export const runInstall = async ({
     }
   }
 
-  return { skippedBoards, validationRulesSkipped, skippedViewSorts };
+  // Columns added to existing views, once per module, in the order of the specs.
+  const skippedColumns: { viewName: string; reason: string }[] = [];
+
+  for (const columns of specs.filter((spec) => isNewModule(previousVersion, spec.firstVersion)).flatMap((spec) => spec.viewColumns ?? [])) {
+    try {
+      const object = findObject(objects, columns.objectUniversalIdentifier);
+      const view = (await api.listViews(object.id)).find((candidate) => candidate.name === columns.viewName);
+
+      if (view === undefined) {
+        skippedColumns.push({ viewName: columns.viewName, reason: 'no such view' });
+        continue;
+      }
+      const held = await api.listViewFields(view.id);
+      const taken = new Set(held.map((field) => field.fieldMetadataId));
+      let position = held.reduce((highest, field) => Math.max(highest, field.position + 1), 0);
+
+      for (const fieldName of columns.fieldNames) {
+        const fieldMetadataId = findFieldId(object, fieldName);
+
+        if (!taken.has(fieldMetadataId)) {
+          await api.showViewField({ viewId: view.id, fieldMetadataId, position, isVisible: columns.isVisible });
+          position += 1;
+        }
+      }
+    } catch (error) {
+      skippedColumns.push({ viewName: columns.viewName, reason: error instanceof Error ? error.message : String(error) });
+    }
+  }
+
+  return { skippedBoards, validationRulesSkipped, skippedViewSorts, skippedColumns };
 };

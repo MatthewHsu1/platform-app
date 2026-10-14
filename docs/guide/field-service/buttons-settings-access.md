@@ -15,7 +15,7 @@ Buttons run as the clicking person; each logic function checks its condition and
 | Make a field service worker | one contact | Dispatcher | One worker per contact |
 | Create service order | one opportunity with a service location | User | An order there with the opportunity's description and priority, linked to it |
 | Create service order | one work case | User | An order for the case, with its service location (when it has one), priority and description as plain text, linked to it |
-| Close work case | one completed or cancelled order | User | Asks for a stage and a resolution and moves the order's work case there, once the case is open and all its orders are closed |
+| Close work case | one completed or cancelled order | User | Asks for a stage and a resolution and moves the order's work case there, once the case is open and all its orders are closed. Complete opens the same panel by itself when it finishes the last open order of an open case |
 
 ## Settings
 
@@ -37,11 +37,9 @@ create and edit, so a level that edits a table may also add to it.
   without an owner stays without one.
 - An order may be saved without a location, and stages carry no flags of their own: only Completed and
   Cancelled close an order.
-- Work case link: completing the last order of a case does not open the Close work case dialog by itself; use the
-  button on the order. The Service orders tab of a case shows the closed status of each order, not the stage
-  (Twenty refuses a staff list as a column of a list the app makes). There is no case list filter for "has an
-  open order": Twenty filters cannot test a condition inside a related list. The primary service location of a
-  contact or company is set by hand; Make a service location does not set it. The new case fields are hidden
-  columns of the case lists: staff switch them on.
+- Work case link: the primary service location of a contact or company is set by hand; Make a service location
+  does not set it. The service location and the resolution are hidden columns of the case lists that show ten
+  columns already (My cases, Unassigned, SLA expired); staff switch them on. The stage column of the orders tab
+  and these columns are added by the install, once, when the module first arrives.
 - Not included: signature drawing, repair orders, serial number (lot) link, maps and route
   planning, per-worker row rule, stages for locations, equipment and workers, territory countries.

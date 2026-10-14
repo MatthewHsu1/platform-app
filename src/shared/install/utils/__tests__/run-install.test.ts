@@ -73,6 +73,7 @@ const makeFakeApi = ({
   validationRuleNames = [],
   validationRulesEnabled = true,
   indexSorts = [],
+  viewFields = [],
 }: {
   leadFields?: { id: string; name: string }[];
   reasonNames?: string[];
@@ -81,6 +82,7 @@ const makeFakeApi = ({
   validationRuleNames?: string[];
   validationRulesEnabled?: boolean;
   indexSorts?: string[];
+  viewFields?: { fieldMetadataId: string; position: number }[];
 } = {}) => {
   const state = {
     leadFields: [...leadFields],
@@ -167,6 +169,7 @@ const makeFakeApi = ({
     showViewField: async (input) => {
       state.listCalls.push({ name: 'showViewField', input });
     },
+    listViewFields: async () => [...viewFields],
     deleteView: async (viewId) => {
       state.listCalls.push({ name: 'deleteView', input: viewId });
     },
@@ -719,5 +722,42 @@ describe('runInstall seed key backfill', () => {
     await runInstall({ api, specs: [BACKFILL_SPEC], previousVersion: '2.3.0' });
 
     expect(keysSet).toEqual([]);
+  });
+});
+
+describe('columns added to an existing view', () => {
+  const COLUMNS_SPEC: ModuleInstallSpec = {
+    ...EMPTY_SPEC,
+    viewColumns: [{ objectUniversalIdentifier: LEAD, viewName: 'Open leads', fieldNames: ['stage', 'wonStatus'], isVisible: false }],
+  };
+  const shown = (state: ReturnType<typeof makeFakeApi>['state']) => state.listCalls.filter((call) => call.name === 'showViewField').map((call) => call.input);
+
+  it('adds the columns the view lacks after its last one, as the spec says', async () => {
+    const { api, state } = makeFakeApi({
+      leadFields: [{ id: 'f-won', name: 'wonStatus' }, { id: 'f-stage', name: 'stage' }],
+      viewNames: ['Open leads'],
+      viewFields: [{ fieldMetadataId: 'f-won', position: 2 }],
+    });
+
+    const result = await runInstall({ api, specs: [COLUMNS_SPEC], previousVersion: undefined });
+
+    expect(shown(state)).toEqual([{ viewId: 'v-Open leads', fieldMetadataId: 'f-stage', position: 3, isVisible: false }]);
+    expect(result.skippedColumns).toEqual([]);
+  });
+
+  it('adds nothing on an upgrade after the module first arrived, so a column staff hid stays hidden', async () => {
+    const { api, state } = makeFakeApi({ leadFields: [{ id: 'f-stage', name: 'stage' }, { id: 'f-won', name: 'wonStatus' }], viewNames: ['Open leads'] });
+
+    await runInstall({ api, specs: [COLUMNS_SPEC], previousVersion: '2.0.0' });
+
+    expect(shown(state)).toEqual([]);
+  });
+
+  it('reports a view that does not exist and carries on', async () => {
+    const { api } = makeFakeApi({ leadFields: [{ id: 'f-stage', name: 'stage' }, { id: 'f-won', name: 'wonStatus' }] });
+
+    const result = await runInstall({ api, specs: [COLUMNS_SPEC], previousVersion: undefined });
+
+    expect(result.skippedColumns).toEqual([{ viewName: 'Open leads', reason: 'no such view' }]);
   });
 });

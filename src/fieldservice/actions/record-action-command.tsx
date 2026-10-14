@@ -12,11 +12,14 @@ export const makeRecordActionCommand = ({
   successMessage,
   fallbackError,
   body = {},
+  afterSuccess,
 }: {
   routePath: string;
   successMessage: MessageDescriptor;
   fallbackError: MessageDescriptor;
   body?: Record<string, unknown>;
+  // What a button does with the route's answer once the route has succeeded, e.g. open a panel.
+  afterSuccess?: (result: unknown, recordIds: string[]) => Promise<void>;
 }) => {
   const RecordActionCommand = () => {
     const recordIds = useSelectedRecordIds();
@@ -28,12 +31,17 @@ export const makeRecordActionCommand = ({
         await enqueueSnackbar({ message: t(selectionMessage), variant: 'error' });
         return;
       }
+      let result: unknown;
+
       try {
-        await postAppRoute(routePath, { ...body, recordIds });
+        result = await postAppRoute<unknown>(routePath, { ...body, recordIds });
         await enqueueSnackbar({ message: t(successMessage), variant: 'success' });
       } catch (error) {
         await enqueueSnackbar({ message: describeRouteError(error, t(fallbackError)), variant: 'error' });
+        return;
       }
+      // The route has succeeded and the success shown; a follow-up that fails changes none of that.
+      await afterSuccess?.(result, recordIds).catch(() => undefined);
     };
 
     return <Command execute={execute} />;

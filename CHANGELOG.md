@@ -23,7 +23,8 @@ All notable changes to this application are documented in this file.
   location of its contact or company, new fields on contacts and companies), a resolution and a Service orders
   tab; a service location shows its work cases and their count. A case cannot reach a closed stage while one of
   its orders is open (undone with a note). Buttons: Create service order on a case, and Close work case on a
-  closed order, which asks for the stage and resolution of the case.
+  closed order, which asks for the stage and resolution of the case (Complete opens it by itself when it
+  finishes the last open order of an open case). The Cases list has the view With open service orders.
 
 ## 2.5.0 (unreleased)
 

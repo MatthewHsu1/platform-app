@@ -27,6 +27,7 @@ export const HELPDESK_FIELDSERVICE_PAGE_UNIVERSAL_IDENTIFIERS = {
   caseServiceOrdersView: '3800f429-ac1a-49d8-a712-b48e75632b9d',
   caseServiceOrdersTab: '71a0515f-7133-4f78-8d4b-aa2da7d1ac03',
   caseServiceOrdersWidget: '1a70d6c7-c0d1-42ed-8989-2eaddca4bf32',
+  casesWithOpenOrdersView: 'fb3f97db-8e23-4041-82b7-a118877b4977',
 } as const;
 
 export const CREATE_ORDER_FROM_CASE_ROUTE_PATH = '/helpdesk/ticket/create-service-order';

@@ -10,7 +10,7 @@ import { allFields } from 'src/stock/views/list-columns';
 import { tableWidgetView } from 'src/stock/views/table-widget-view';
 
 // The orders of the work case a page shows: number, location, closed status, worker and planned window. The stage
-// is a staff list, which Twenty refuses as a column of a list the app makes, so the closed status stands in.
+// is a staff list a shipped view cannot name, so the install hook adds that column once the list exists.
 export default defineView(
   tableWidgetView({
     universalIdentifier: PAGE_IDS.caseServiceOrdersView,
