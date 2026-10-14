@@ -46,9 +46,8 @@ create and edit, so a level that edits a table may also add to it.
   open order": Twenty filters cannot test a condition inside a related list. The primary service location of a
   contact or company is set by hand; Make a service location does not set it. The new case fields are hidden
   columns of the case lists: staff switch them on.
-- Not included: signature drawing, repair orders, serial number (lot) link, maps and route
 - On an order the Complete and Cancel buttons of an activity sit on the activity (open it from the Activities tab),
   not on each row. A completed or cancelled activity can still be renamed. Scheduled to-dos of the order are not
   marked done when it completes.
-- Not included: signature drawing, repair orders, serial number (lot) link, ticket link, maps and route
+- Not included: signature drawing, repair orders, maps and route
   planning, per-worker row rule, stages for locations, equipment and workers, territory countries.

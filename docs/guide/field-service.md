@@ -36,10 +36,8 @@ button. See [after a save](field-service/after-a-save.md) and [buttons](field-se
 
 ## Screens
 
-Field service folder in the sidebar: Service orders, Locations, Equipment, Workers, Teams, Order types,
-Templates, Stage rules, Territories, Branches, Districts, Regions. The Service orders list also has the Orders board (by
 Orders and templates have an Activities tab. Field service folder in the sidebar: Service orders, Locations, Equipment, Workers, Teams, Order types,
-Templates, Territories, Branches, Districts, Regions. The Service orders list also has the Orders board (by
+Templates, Stage rules, Territories, Branches, Districts, Regions. The Service orders list also has the Orders board (by
 stage) and the views To assign (open orders without a worker) and To schedule (open orders without a scheduled
 start). Lists show at most 10 columns; staff can switch more on. The two views show the closed status but not
 the stage: Twenty refuses a staff list as a column of a list the app makes, so staff add the Stage column by hand.
