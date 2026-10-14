@@ -17,7 +17,7 @@ export const planMakeLocation = ({
     return { kind: 'refuse', reason: FIELDSERVICE_ACTION_MESSAGES.locationExists };
   }
   if (partner.kind === 'company') {
-    return { kind: 'write', data: { name: partner.name, partnerCompanyId: partner.id, ownerCompanyId: partner.id, address: partner.address } };
+    return { kind: 'write', data: { name: partner.name, partnerCompanyId: partner.id, ownerCompanyId: partner.id, locationAddress: partner.address } };
   }
   return {
     kind: 'write',

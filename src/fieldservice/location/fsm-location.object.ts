@@ -31,7 +31,8 @@ const countField = (universalIdentifier: string, name: string, label: string) =>
   appWritten(numberField(universalIdentifier, name, label, 'IconListNumbers', { decimals: 0, int: true, defaultValue: 0 }));
 
 // A place where work happens, in a tree of locations. It keeps its own name, address and phone: Twenty has no
-// shared parent of Person and Company to extend. The partner is the contact or company it was made from; the
+// shared parent of Person and Company to extend. `locationAddress` stands in for the address field, whose name
+// Twenty reserves. The partner is the contact or company it was made from; the
 // owner is a person or a company, one of the two. Full name, full directions and the two counts are written by
 // the location trigger; a new location without an owner takes its parent's.
 export default defineObject({
@@ -46,7 +47,7 @@ export default defineObject({
   fields: [
     textField(FIELD_IDS.name, 'name', 'Name', 'IconAbc'),
     textField(FIELD_IDS.ref, 'ref', 'Reference', 'IconHash'),
-    { universalIdentifier: FIELD_IDS.address, name: 'address', label: 'Address', icon: 'IconMap', type: FieldType.ADDRESS },
+    { universalIdentifier: FIELD_IDS.locationAddress, name: 'locationAddress', label: 'Address', icon: 'IconMap', type: FieldType.ADDRESS },
     { universalIdentifier: FIELD_IDS.phone, name: 'phone', label: 'Phone', icon: 'IconPhone', type: FieldType.PHONES },
     { universalIdentifier: FIELD_IDS.email, name: 'email', label: 'Email', icon: 'IconMail', type: FieldType.EMAILS },
     manyToOneField({

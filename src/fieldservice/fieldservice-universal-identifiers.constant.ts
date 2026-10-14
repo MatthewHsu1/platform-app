@@ -39,7 +39,7 @@ export const FSM_LOCATION_OBJECT_UNIVERSAL_IDENTIFIER = '35a8d201-26ec-4f3f-98d1
 export const FSM_LOCATION_FIELD_UNIVERSAL_IDENTIFIERS = {
   name: 'bda1c923-71d1-43c0-b5eb-2aee086d040c',
   ref: '77b2c241-4beb-4a6f-9c3f-6a7b5a5be853',
-  address: '71b6b1eb-0f9e-45ab-98b0-47ea085be302',
+  locationAddress: '71b6b1eb-0f9e-45ab-98b0-47ea085be302',
   phone: '8d9f0afa-0aca-4c83-be6c-75f90a74dd43',
   email: 'e25dabae-0b2e-4fe3-83e7-98da74a26380',
   partnerPerson: '15766849-86a5-47eb-a475-c37fc0822beb',

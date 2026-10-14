@@ -2,6 +2,24 @@
 
 All notable changes to this application are documented in this file.
 
+## 2.6.0 (unreleased)
+
+- Field service: numbered service orders (`FO001`) at a service location, with a stage (New, Completed,
+  Cancelled; staff add their own), a team, an assigned worker and extra workers, a planned window and an
+  actual window, a request window by priority, equipment, a template, a type, tags and categories. After each
+  save the schedule, team, directions, instructions, closed status, actual duration and service area are kept
+  right; a manual move to Completed, a start on a holiday (time off of the working hours) and a delete outside
+  New are undone with a note.
+- Service locations in a tree with full names and directions, owners, workers, office hours and counts of
+  sub-locations and equipment; equipment with a service area and a warranty end; workers with a team, a working
+  schedule and territories; teams with open, to-assign and to-schedule counts; regions, districts, branches and
+  territories.
+- Buttons: Complete, Cancel order and Sign on an order; Make a service location on a contact or company; Make a
+  field service worker on a contact; Create service order on an opportunity.
+- Install: the order stages, the `FO` number series, the Default Team, the Orders board and the To assign and To
+  schedule lists. Settings: the hours an order may wait by priority, and equipment fill on new orders.
+- The building blocks Field service: User (own documents), User, Dispatcher and Manager on the Roles page.
+
 ## 2.5.0 (unreleased)
 
 - Work cases: numbered customer cases (`HT00001`) with a team, assignee, stage, priority, category, tags,

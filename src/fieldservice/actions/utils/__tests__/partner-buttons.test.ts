@@ -23,7 +23,7 @@ describe('planMakeLocation', () => {
   it('lets a company own its own location', () => {
     expect(planMakeLocation({ partner: { kind: 'company', id: 'gym', name: 'City Gym', address: null }, hasLocation: false, companyLocationId: null })).toEqual({
       kind: 'write',
-      data: { name: 'City Gym', partnerCompanyId: 'gym', ownerCompanyId: 'gym', address: null },
+      data: { name: 'City Gym', partnerCompanyId: 'gym', ownerCompanyId: 'gym', locationAddress: null },
     });
   });
 
