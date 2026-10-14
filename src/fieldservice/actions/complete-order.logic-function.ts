@@ -7,11 +7,13 @@ import { planCompleteOrder } from 'src/fieldservice/actions/utils/plan-complete-
 import { ORDER_STAGE } from 'src/fieldservice/fieldservice-options.constant';
 import { fsmOrders } from 'src/fieldservice/fieldservice-records';
 import { COMPLETE_ORDER_ROUTE_PATH, FIELDSERVICE_ACTION_UNIVERSAL_IDENTIFIERS } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
+import { requireActivitiesDone } from 'src/fieldservice-activity/require-activities-done';
 import { STAGE_RULE_VALUES_SELECTION } from 'src/fieldservice-stage-validation/fieldservice-stage-validation-options.constant';
 import { requireStageFields } from 'src/fieldservice-stage-validation/require-stage-fields';
 
 // The only way to Completed: the order is read as the clicking user (their rights and level checked), checked
-// against the fields the Completed stage needs, then written by the app, whose writes the stage guard lets through.
+// against the fields the Completed stage needs, its required activities must be done, then the app writes it,
+// whose writes the stage guard lets through.
 const handler = fieldserviceRouteHandler(async (body) => {
   const orderId = readRecordId(body);
 
@@ -32,6 +34,7 @@ const handler = fieldserviceRouteHandler(async (body) => {
     throw new FieldserviceActionError(plan.reason);
   }
   await requireStageFields(ORDER_STAGE.COMPLETED, { ...order, ...plan.data });
+  await requireActivitiesDone(orderId);
   await fsmOrders.update(orderId, plan.data);
 
   return { orderId };

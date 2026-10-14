@@ -38,6 +38,10 @@ All notable changes to this application are documented in this file.
   tab; a service location shows its work cases and their count. A case cannot reach a closed stage while one of
   its orders is open (undone with a note). Buttons: Create service order on a case, and Close work case on a
   closed order, which asks for the stage and resolution of the case.
+- Field service checklist: activities (name, reference, sequence, required, state, completed on and by) on service
+  orders and templates, with an Activities tab on both. An order made with a template, or saved with another one,
+  takes a copy of the template's activities. Buttons Complete activity and Cancel activity; the Complete button of
+  an order refuses while a required activity is still to do. The checklist is open to the User level and up.
 
 ## 2.5.0 (unreleased)
 

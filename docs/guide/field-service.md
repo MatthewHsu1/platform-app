@@ -15,6 +15,7 @@ team and to territories; regions, districts, branches and territories make the s
 | `src/fieldservice-equipment-stock/` | Equipment as a serial-numbered product: its product, serial and current inventory location, the equipment a done move makes, and the warranty length and unit of a product |
 | `src/fieldservice-stage-validation/` | Stage rules (`fsmStageRule`): the fields an order needs before it moves into a stage, and the check that undoes a move while one is empty |
 | `src/helpdesk-fieldservice/` | The work case link: the orders and the service location of a case, the resolution, the cases and count of a location, the primary service location of a contact or company, and the buttons Create service order (on a case) and Close work case (on an order) |
+| `src/fieldservice-activity/` | The checklist of an order and of a template: activities, the Complete and Cancel buttons on an activity, and the guard on Complete |
 
 ## Detail files
 
@@ -22,6 +23,7 @@ team and to territories; regions, districts, branches and territories make the s
 - [Parts on a job](field-service/parts-on-a-job.md): warehouse, transfers, moves, stock locations
 - [Equipment stock and warranty](field-service/equipment-stock.md): product, serial, inventory location, equipment made by a move, warranty from the product
 - [Buttons, settings and access](field-service/buttons-settings-access.md)
+- [The checklist](field-service/checklist.md): activities on an order and on a template
 
 ## Work case link
 
@@ -36,6 +38,8 @@ button. See [after a save](field-service/after-a-save.md) and [buttons](field-se
 
 Field service folder in the sidebar: Service orders, Locations, Equipment, Workers, Teams, Order types,
 Templates, Stage rules, Territories, Branches, Districts, Regions. The Service orders list also has the Orders board (by
+Orders and templates have an Activities tab. Field service folder in the sidebar: Service orders, Locations, Equipment, Workers, Teams, Order types,
+Templates, Territories, Branches, Districts, Regions. The Service orders list also has the Orders board (by
 stage) and the views To assign (open orders without a worker) and To schedule (open orders without a scheduled
 start). Lists show at most 10 columns; staff can switch more on. The two views show the closed status but not
 the stage: Twenty refuses a staff list as a column of a list the app makes, so staff add the Stage column by hand.

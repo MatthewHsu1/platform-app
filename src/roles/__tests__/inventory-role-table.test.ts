@@ -74,6 +74,7 @@ const OUTSIDE_INVENTORY = [
   'fsmOrderFsmPersonRel',
   'fsmPersonResTerritoryRel',
   'stockReferenceFsmOrderRel',
+  'fsmActivity',
   'resRegion',
   'resDistrict',
   'resBranch',

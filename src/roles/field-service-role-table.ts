@@ -19,6 +19,7 @@ import {
   FSM_TEMPLATE_OBJECT_UNIVERSAL_IDENTIFIER,
 } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
 import { FSM_STAGE_RULE_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/fieldservice-stage-validation/fieldservice-stage-validation-universal-identifiers.constant';
+import { FSM_ACTIVITY_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/fieldservice-activity/fieldservice-activity-universal-identifiers.constant';
 import { type FieldServiceRoleRow } from 'src/roles/types/field-service-role-row.type';
 import { type Rights } from 'src/roles/types/rights.type';
 import { linkRights } from 'src/roles/utils/role-rights.util';
@@ -47,6 +48,8 @@ export const FIELD_SERVICE_ROLE_TABLE: FieldServiceRoleRow[] = [
   row(FSM_PERSON_RES_TERRITORY_REL_OBJECT_UNIVERSAL_IDENTIFIER, linkRights('RU'), linkRights('RU'), linkRights('RU'), 'RUD'),
   row(FSM_LOCATION_PERSON_OBJECT_UNIVERSAL_IDENTIFIER, 'RU', 'RU', 'RU', 'RUD'),
   row(FSM_ORDER_TYPE_OBJECT_UNIVERSAL_IDENTIFIER, 'RU', 'RU', 'RU', 'RUD'),
+  // The checklist is for the User level and up; the manager alone deletes items.
+  row(FSM_ACTIVITY_OBJECT_UNIVERSAL_IDENTIFIER, '-', 'RU', 'RU', 'RUD'),
   row(FSM_EQUIPMENT_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'R', 'R', 'RUD'),
   row(FSM_TEMPLATE_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'R', 'R', 'RUD'),
   row(FSM_TEAM_OBJECT_UNIVERSAL_IDENTIFIER, 'R', 'R', 'R', 'RUD'),
