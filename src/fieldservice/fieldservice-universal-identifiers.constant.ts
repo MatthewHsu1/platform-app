@@ -227,7 +227,6 @@ export const FIELDSERVICE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS = {
 export const FIELDSERVICE_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
   folder: 'f7933d8d-a62b-4c4a-a62e-19555eb05cc3',
   orders: 'd98a0530-2140-4eae-ac56-6a663de7a1e7',
-  ordersBoard: '0a812a7f-a512-4046-9758-0a447c6c8c9d',
   locations: 'da965bb5-05a9-4947-92d6-d64f765e92d9',
   equipments: '0f6ff009-dc28-40d5-9240-aaf9e302f6cb',
   persons: '2bba7c72-e2e3-499a-a55b-7baf37877a6c',
@@ -258,6 +257,7 @@ export const FIELDSERVICE_ACTION_UNIVERSAL_IDENTIFIERS = {
   companyToLocationCommandMenuItem: 'a7d01eb4-a0e4-4cb0-9af8-3817e668035c',
   makeLocationLogicFunction: '7c810ac5-6944-4a6c-91b8-b8b2ca78f267',
   makeLocationFrontComponent: 'e0f86973-309f-41fe-9c3b-a8e1a0d15f62',
+  makeCompanyLocationFrontComponent: '2df98b74-3032-4e08-97a9-8e1c07b5ff1d',
   makeWorkerLogicFunction: '788eb0cb-522d-4789-8f9c-c77594c63f88',
   makeWorkerFrontComponent: '2651e140-0a84-46d5-b596-1d84d6503fc5',
   makeWorkerCommandMenuItem: 'd5d6ae8a-adac-424d-b628-34d5938b55ad',
