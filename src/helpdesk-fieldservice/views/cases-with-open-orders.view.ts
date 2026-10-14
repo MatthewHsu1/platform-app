@@ -12,7 +12,8 @@ import { relatedIs } from 'src/stock/views/view-helpers';
 const VIEW = PAGE_IDS.casesWithOpenOrdersView;
 
 // The cases that have a service order still open: a filter on the closed status of the case's orders, which
-// holds when at least one order matches. The service location is a column here.
+// holds when at least one order matches. The service location is a column here. The channel list is made by the
+// install, not by code, so it has no column of this view.
 export default defineView({
   universalIdentifier: VIEW,
   name: 'With open service orders',
@@ -24,7 +25,7 @@ export default defineView({
     VIEW,
     [TICKET_IDS.name, TICKET_IDS.number, TICKET_IDS.stage, TICKET_IDS.priority, TICKET_IDS.assignedUser, TICKET_IDS.person, FIELD_IDS.helpdeskTicketFsmLocation],
     allFields(HELPDESK_TICKET_OBJECT_UNIVERSAL_IDENTIFIER, [
-      ...Object.values(TICKET_IDS),
+      ...Object.values(TICKET_IDS).filter((id) => id !== TICKET_IDS.channel),
       FIELD_IDS.helpdeskTicketFsmLocation,
       FIELD_IDS.helpdeskTicketFsmOrders,
       FIELD_IDS.helpdeskTicketResolution,

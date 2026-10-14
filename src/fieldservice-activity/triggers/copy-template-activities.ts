@@ -5,7 +5,6 @@ import { fsmActivities } from 'src/fieldservice-activity/fieldservice-activity-r
 import { type ActivityRow } from 'src/fieldservice-activity/types/activity-row.type';
 import { planActivityCopy } from 'src/fieldservice-activity/utils/plan-activity-copy.util';
 import { updatedFieldsOf } from 'src/shared/triggers/event-values';
-import { findMany } from 'src/shared/triggers/records';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
 
 type RawEvent = ObjectRecordEvent<Record<string, unknown>>;
@@ -31,14 +30,12 @@ export const copyTemplateActivities = async (operation: 'created' | 'updated', e
   if (orders.length === 0) {
     return;
   }
-  const found = await findMany<{ templateItems: (ActivityRow & { fsmTemplateId: string })[]; orderItems: (ActivityRow & { fsmOrderId: string })[] }>({
-    templateItems: {
-      of: fsmActivities,
-      filter: { fsmTemplateId: { in: orders.map((order) => order.templateId) } },
-      selection: `${ACTIVITY_SELECTION} fsmTemplateId`,
-    },
-    orderItems: { of: fsmActivities, filter: { fsmOrderId: { in: orders.map((order) => order.id) } }, selection: `${ACTIVITY_SELECTION} fsmOrderId` },
-  });
+  // One read of the activity list: Twenty refuses the same list twice in one request.
+  const templateIds = orders.map((order) => order.templateId);
+  const items = await fsmActivities.find<ActivityRow & { fsmTemplateId: string | null; fsmOrderId: string | null }>(
+    { or: [{ fsmTemplateId: { in: templateIds } }, { fsmOrderId: { in: orders.map((order) => order.id) } }] },
+    `${ACTIVITY_SELECTION} fsmTemplateId fsmOrderId`,
+  );
   const errors = errorCollector();
 
   for (const order of orders) {
@@ -46,8 +43,8 @@ export const copyTemplateActivities = async (operation: 'created' | 'updated', e
       const plan = planActivityCopy({
         templateId: order.templateId,
         templateChanged: true,
-        templateActivities: found.templateItems.filter((item) => item.fsmTemplateId === order.templateId),
-        existing: found.orderItems.filter((item) => item.fsmOrderId === order.id),
+        templateActivities: items.filter((item) => item.fsmTemplateId === order.templateId),
+        existing: items.filter((item) => item.fsmOrderId === order.id),
       });
 
       if (plan.destroyIds.length > 0) {
