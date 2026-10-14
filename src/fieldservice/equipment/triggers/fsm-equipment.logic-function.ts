@@ -1,5 +1,6 @@
 import { type DatabaseEventBatchPayload, defineLogicFunction, type ObjectRecordEvent } from 'twenty-sdk/define';
 
+import { refuseEquipmentSerials } from 'src/fieldservice-equipment-stock/equipment/refuse-equipment-serials';
 import { applyEquipmentStock } from 'src/fieldservice-equipment-stock/equipment/apply-equipment-stock';
 import { applyEquipmentSaves } from 'src/fieldservice/equipment/apply-equipment-saves';
 import { EQUIPMENT_DELETE_RULES } from 'src/fieldservice/equipment/equipment-delete-rules';
@@ -22,6 +23,7 @@ const handler = async (payload: DatabaseEventBatchPayload<ObjectRecordEvent<Reco
     await errors.run('names', () =>
       refuseDuplicateNames({ records: fsmEquipments, operation, events, reason: FIELDSERVICE_MESSAGES.equipmentNameTaken }),
     );
+    await errors.run('serial', () => refuseEquipmentSerials(operation, events));
     await errors.run('product and serial', () => applyEquipmentStock(operation, events));
     warnings.push(...(await applyEquipmentSaves(operation, events, new Date().toISOString().slice(0, 10))));
   }
@@ -41,7 +43,7 @@ export default defineLogicFunction({
   universalIdentifier: FIELDSERVICE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS.fsmEquipment,
   name: 'platform-fsm-equipment',
   description:
-    'Keeps the service area, the warranty and the inventory location of equipment right, refuses a duplicate name, equipment under itself and a warranty ending before it starts, and keeps the location counts.',
+    'Keeps the service area, the warranty and the inventory location of equipment right, refuses a duplicate name, a serial of another product or one another equipment holds, equipment under itself and a warranty ending before it starts, and keeps the location counts.',
   timeoutSeconds: 300,
   handler,
   databaseEventTriggerSettings: { eventName: 'fsmEquipment.*', batchMode: true },

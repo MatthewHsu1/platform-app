@@ -25,7 +25,7 @@ All notable changes to this application are documented in this file.
   Customers) and a shipping address; a worker has a default warehouse and a territory has a warehouse. A move
   takes the order of its transfer. The virtual location Field is made on install.
 - Equipment as a serial-numbered product: equipment has a product, a serial and its current inventory location
-  (where the newest stock of the serial is); the serial lists its equipment. A product and an operation type can
+  (where the newest stock of the serial is); the serial lists its equipment, and a serial of another product, or one another equipment holds, is undone with a note. A product and an operation type can
   both be set to create equipment: a done move then makes one equipment for each serial it moved, at the
   location of its service order. A product has a warranty length and unit; its equipment shows them, and the
   warranty end follows them.
