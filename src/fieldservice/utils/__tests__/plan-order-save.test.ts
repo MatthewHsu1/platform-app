@@ -134,6 +134,26 @@ describe('planOrderSave', () => {
     });
   });
 
+  it('refuses a new order made straight into Completed, and lets one made in Cancelled stand', () => {
+    const completed = planOrderSave({
+      before: null,
+      after: order({ stage: 'COMPLETED' }),
+      written: new Set(),
+      staffSave: true,
+      context: context(),
+    });
+    const cancelled = planOrderSave({
+      before: null,
+      after: order({ stage: 'CANCELLED' }),
+      written: new Set(),
+      staffSave: true,
+      context: context(),
+    });
+
+    expect(completed).toMatchObject({ kind: 'refuse', reason: 'Only the Complete button moves a service order to Completed.', putBack: {} });
+    expect(cancelled).toMatchObject({ kind: 'write' });
+  });
+
   it('closes an order the Complete button moved to Completed', () => {
     const plan = planOrderSave({
       before: order(),

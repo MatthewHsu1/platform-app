@@ -6,10 +6,11 @@ import {
 } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
 import { type ModuleInstallSpec } from 'src/shared/install/install-spec.type';
 
-// The columns an order list shows, the label field first; every other field stays a hidden column.
+// The columns an order list shows, the label field first; every other field stays a hidden column. The stage is
+// not among them: it is a staff list owned by the workspace, and Twenty refuses such a field as a column of a
+// list the app makes. The closed status says whether the order is open.
 const ORDER_COLUMNS = [
   'name',
-  'stage',
   'priority',
   'location',
   'team',
