@@ -17,7 +17,7 @@ Design: `docs/superpowers/specs/2026-10-06-twenty-platform-crm-design.md`.
 | `src/product/` | Products, variants, attributes, pricelists, combos ([Products](docs/guide/products.md)) |
 | `src/stock/`, `src/stock-picking-batch/`, `src/product-expiry/`, `src/base/` | Inventory: warehouses, transfers, stock levels, counts, lots, reports ([Inventory](docs/guide/inventory.md)) |
 | `src/helpdesk/`, `src/helpdesk-type/`, `src/helpdesk-product/`, `src/helpdesk-crm/`, `src/helpdesk-ticket-related/`, `src/helpdesk-sla/`, `src/resource/` | Work cases: cases, teams, stages, service levels and working hours ([Work cases](docs/guide/work-cases.md)) |
-| `src/fieldservice/`, `src/base-territory/`, `src/fieldservice-crm/` | Field service: service orders, locations, equipment, workers, teams and service areas ([Field service](docs/guide/field-service.md)) |
+| `src/fieldservice/`, `src/base-territory/`, `src/fieldservice-crm/`, `src/fieldservice-activity/` | Field service: service orders, locations, equipment, workers, teams and service areas ([Field service](docs/guide/field-service.md)) |
 | `src/shared/install/` | The pre-install step and the post-install hook ([Install and upgrade](docs/guide/install-and-upgrade.md)) |
 | `src/roles/` | Staff access: building blocks and the Roles page ([Roles and row access](docs/guide/roles-and-access.md)) |
 

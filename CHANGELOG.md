@@ -19,6 +19,10 @@ All notable changes to this application are documented in this file.
 - Install: the order stages, the `FO` number series, the Default Team, the Orders board and the To assign and To
   schedule lists. Settings: the hours an order may wait by priority, and equipment fill on new orders.
 - The building blocks Field service: User (own documents), User, Dispatcher and Manager on the Roles page.
+- Field service checklist: activities (name, reference, sequence, required, state, completed on and by) on service
+  orders and templates, with an Activities tab on both. An order made with a template, or saved with another one,
+  takes a copy of the template's activities. Buttons Complete activity and Cancel activity; the Complete button of
+  an order refuses while a required activity is still to do. The checklist is open to the User level and up.
 
 ## 2.5.0 (unreleased)
 

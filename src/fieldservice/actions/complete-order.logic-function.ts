@@ -6,9 +6,10 @@ import { fieldserviceRouteHandler, findAsUser, readRecordId, requireFieldService
 import { planCompleteOrder } from 'src/fieldservice/actions/utils/plan-complete-order.util';
 import { fsmOrders } from 'src/fieldservice/fieldservice-records';
 import { COMPLETE_ORDER_ROUTE_PATH, FIELDSERVICE_ACTION_UNIVERSAL_IDENTIFIERS } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
+import { requireActivitiesDone } from 'src/fieldservice-activity/require-activities-done';
 
-// The only way to Completed: the order is read as the clicking user (their rights and level checked), then
-// written by the app, whose writes the stage guard lets through.
+// The only way to Completed: the order is read as the clicking user (their rights and level checked), its required
+// activities must be done, then the app writes it, whose writes the stage guard lets through.
 const handler = fieldserviceRouteHandler(async (body) => {
   const orderId = readRecordId(body);
 
@@ -28,6 +29,7 @@ const handler = fieldserviceRouteHandler(async (body) => {
   if (plan.kind === 'refuse') {
     throw new FieldserviceActionError(plan.reason);
   }
+  await requireActivitiesDone(orderId);
   await fsmOrders.update(orderId, plan.data);
 
   return { orderId };
