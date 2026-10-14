@@ -38,6 +38,8 @@ seconds after an order is made. A refused change is undone with a note on the re
 - A new territory fills the branch, district and region; a new branch the district and region; a new district
   the region, unless the same save sets them. Equipment takes the territory of its location.
 - A location counts its sub-locations and the equipment in it and below it.
+- Team names and equipment names are unique among the rows not in the trash: a taken name is undone with a
+  note (a new row loses it). A blank name is never taken.
 - The warranty end follows the warranty start, length and unit (no length: today). An end before the start is
   refused.
 

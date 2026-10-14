@@ -33,7 +33,7 @@ create and edit, so a level that edits a table may also add to it.
 - Rules run just after the save, not inside it.
 - A location keeps its own name, address and phone; it is not a contact. A location without a parent and
   without an owner stays without one.
-- Team and equipment names are not unique, an order may be saved without a location, and stages carry no
-  flags of their own: only Completed and Cancelled close an order.
+- An order may be saved without a location, and stages carry no flags of their own: only Completed and
+  Cancelled close an order.
 - Not included: signature drawing, repair orders, serial number (lot) link, ticket link, maps and route
   planning, per-worker row rule, stages for locations, equipment and workers, territory countries.

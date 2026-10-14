@@ -11,4 +11,6 @@ export const FIELDSERVICE_MESSAGES = {
   warrantyDates: 'The warranty end must not be before the warranty start.',
   locationInUse: 'This location is used by service orders.',
   teamInUse: 'This team is used by service orders.',
+  teamNameTaken: 'A field service team with this name already exists.',
+  equipmentNameTaken: 'Equipment with this name already exists.',
 } as const;

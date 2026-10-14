@@ -17,6 +17,8 @@ export const FIELDSERVICE_RULE_TEXTS = [
   msg('The warranty end must not be before the warranty start.'),
   msg('This location is used by service orders.'),
   msg('This team is used by service orders.'),
+  msg('A field service team with this name already exists.'),
+  msg('Equipment with this name already exists.'),
   msg('Select one record.'),
   msg('Service order not found.'),
   msg('This order is already closed.'),
