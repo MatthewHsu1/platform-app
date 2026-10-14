@@ -11,11 +11,21 @@ team and to territories; regions, districts, branches and territories make the s
 | `src/fieldservice/` | Service order (`fsmOrder`), location, equipment, worker, team, order type, template and the links between them; the save rules and triggers; the install data, board and lists; the buttons Complete, Cancel order, Sign, Make a service location and Make a field service worker |
 | `src/base-territory/` | Regions, districts, branches and territories |
 | `src/fieldservice-crm/` | The service location of an opportunity, the opportunity of an order, and the Create service order button |
+| `src/helpdesk-fieldservice/` | The work case link: the orders and the service location of a case, the resolution, the cases and count of a location, the primary service location of a contact or company, and the buttons Create service order (on a case) and Close work case (on an order) |
 
 ## Detail files
 
 - [After a save](field-service/after-a-save.md): numbering, team, schedule, holidays, stages, locations, equipment, deletes
 - [Buttons, settings and access](field-service/buttons-settings-access.md)
+
+## Work case link
+
+A work case has a Service location, a Resolution and a Service orders tab (number, location, closed status,
+worker and planned window of each order). A contact or company has a Primary service location that new cases
+start with. A service location shows its work cases and their count. Create service order on a case makes an
+order for it. After the last order of an open case is completed or cancelled, Close work case on that order asks
+for the stage and resolution of the case. The completed order does not ask by itself: Complete stays a one-click
+button. See [after a save](field-service/after-a-save.md) and [buttons](field-service/buttons-settings-access.md).
 
 ## Screens
 

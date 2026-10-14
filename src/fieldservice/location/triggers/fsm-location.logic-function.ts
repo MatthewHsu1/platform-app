@@ -9,6 +9,7 @@ import { recomputeLocationCounts } from 'src/fieldservice/location/recompute-loc
 import { refuseUsedDeletes } from 'src/fieldservice/refuse-used-deletes';
 import 'src/fieldservice-crm/location-delete-entries';
 import { applyDeleteRules } from 'src/helpdesk/delete-rules/apply-delete-rules';
+import 'src/helpdesk-fieldservice/location-delete-entries';
 import { readEvents } from 'src/shared/triggers/batch-events';
 import { errorCollector } from 'src/shared/triggers/retry-on-conflict';
 

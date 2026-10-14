@@ -19,6 +19,11 @@ All notable changes to this application are documented in this file.
 - Install: the order stages, the `FO` number series, the Default Team, the Orders board and the To assign and To
   schedule lists. Settings: the hours an order may wait by priority, and equipment fill on new orders.
 - The building blocks Field service: User (own documents), User, Dispatcher and Manager on the Roles page.
+- Work case link: a work case has its service orders, a service location (a new case takes the primary service
+  location of its contact or company, new fields on contacts and companies), a resolution and a Service orders
+  tab; a service location shows its work cases and their count. A case cannot reach a closed stage while one of
+  its orders is open (undone with a note). Buttons: Create service order on a case, and Close work case on a
+  closed order, which asks for the stage and resolution of the case.
 
 ## 2.5.0 (unreleased)
 

@@ -32,6 +32,9 @@ Triggers run after the save, so they do not block it: the number, the assignee a
   team that are active and not in a closed stage. A removed staff member leaves their cases without
   an assignee and every team counts again.
 
+- A case cannot reach a closed stage while one of its service orders is open: the change is undone with a note
+  (see [Field service](../field-service/after-a-save.md)).
+
 ## Deletes
 
 - Twenty trashes a record and cascades nothing, so the triggers do it.
