@@ -1,5 +1,6 @@
 import { type DatabaseEventBatchPayload, defineLogicFunction, type ObjectRecordEvent } from 'twenty-sdk/define';
 
+import 'src/fieldservice-stock/order-delete-entries';
 import { fsmOrders } from 'src/fieldservice/fieldservice-records';
 import { FIELDSERVICE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIERS } from 'src/fieldservice/fieldservice-universal-identifiers.constant';
 import { applyOrderSaves, refuseOrderDeletes } from 'src/fieldservice/order/apply-order-events';

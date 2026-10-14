@@ -19,6 +19,11 @@ All notable changes to this application are documented in this file.
 - Install: the order stages, the `FO` number series, the Default Team, the Orders board and the To assign and To
   schedule lists. Settings: the hours an order may wait by priority, and equipment fill on new orders.
 - The building blocks Field service: User (own documents), User, Dispatcher and Manager on the Roles page.
+- Parts on a job: a service order has a warehouse (the worker's default warehouse, else the first one), the
+  transfers and moves made for it, stock references, and counts of its deliveries and returns; a service
+  location has a stock location (its parent's, else the customer location of its contact or company, else
+  Customers) and a shipping address; a worker has a default warehouse and a territory has a warehouse. A move
+  takes the order of its transfer. The virtual location Field is made on install.
 
 ## 2.5.0 (unreleased)
 

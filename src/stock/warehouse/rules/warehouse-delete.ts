@@ -8,9 +8,22 @@ import { type WarehouseRule } from 'src/stock/warehouse/types/warehouse-rule.typ
 
 const OBJECT = { objectSingular: 'stockWarehouse', objectPlural: 'stockWarehouses' } as const;
 
+// Rows of other modules that name a warehouse and restrict its delete. Other modules add their own at load time.
+export const WAREHOUSE_REFERENCES: { objectSingular: string; objectPlural: string; field: string }[] = [];
+
+const usedByOtherModules = async (warehouseId: string) => {
+  for (const { objectSingular, objectPlural, field } of WAREHOUSE_REFERENCES) {
+    if (await anyRowWhere(objectSingular, objectPlural, { [field]: { eq: warehouseId } })) {
+      return true;
+    }
+  }
+  return false;
+};
+
 // The types go with the warehouse unless a transfer or a rule uses one. A
 // rule needs its type, so a warehouse with routes, its own ones included, is
-// kept: archive it instead. Its locations stay.
+// kept: archive it instead. A warehouse another module still names is kept
+// too. Its locations stay.
 export const handleWarehouseDeletes: WarehouseRule = async (events, operation, errors) => {
   if (operation !== 'deleted') {
     return;
@@ -22,9 +35,10 @@ export const handleWarehouseDeletes: WarehouseRule = async (events, operation, e
       const types = await stockPickingTypes.find<{ id: string }>({ warehouseId: { eq: event.recordId } }, 'id');
       const typeIds = types.map((type) => type.id);
       const used =
-        typeIds.length > 0 &&
-        ((await anyRowWhere('stockPicking', 'stockPickings', { pickingTypeId: { in: typeIds } })) ||
-          (await anyRowWhere('stockRule', 'stockRules', { pickingTypeId: { in: typeIds } })));
+        (typeIds.length > 0 &&
+          ((await anyRowWhere('stockPicking', 'stockPickings', { pickingTypeId: { in: typeIds } })) ||
+            (await anyRowWhere('stockRule', 'stockRules', { pickingTypeId: { in: typeIds } })))) ||
+        (await usedByOtherModules(event.recordId));
 
       if (used) {
         await restoreForEvent({ ...OBJECT, event, message: RESTRICT_DELETE_MESSAGE });

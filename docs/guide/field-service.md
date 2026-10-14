@@ -11,10 +11,12 @@ team and to territories; regions, districts, branches and territories make the s
 | `src/fieldservice/` | Service order (`fsmOrder`), location, equipment, worker, team, order type, template and the links between them; the save rules and triggers; the install data, board and lists; the buttons Complete, Cancel order, Sign, Make a service location and Make a field service worker |
 | `src/base-territory/` | Regions, districts, branches and territories |
 | `src/fieldservice-crm/` | The service location of an opportunity, the opportunity of an order, and the Create service order button |
+| `src/fieldservice-stock/` | Parts on a job: the warehouse, transfers, moves, stock references and delivery counts of an order; the stock location and shipping address of a location; the default warehouse of a worker and the warehouse of a territory |
 
 ## Detail files
 
 - [After a save](field-service/after-a-save.md): numbering, team, schedule, holidays, stages, locations, equipment, deletes
+- [Parts on a job](field-service/parts-on-a-job.md): warehouse, transfers, moves, stock locations
 - [Buttons, settings and access](field-service/buttons-settings-access.md)
 
 ## Screens
@@ -28,5 +30,5 @@ the stage: Twenty refuses a staff list as a column of a list the app makes, so s
 ## Install
 
 The install makes the order stage list (New, Completed, Cancelled), the tag and category lists, the territory
-type list, the number series (`FO001`), the Default Team, the board and the lists. It adds only what is
+type list, the number series (`FO001`), the Default Team, the stock location Field, the board and the lists. It adds only what is
 missing. No service areas are made: staff build their own.

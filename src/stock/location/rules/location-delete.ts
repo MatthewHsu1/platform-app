@@ -13,8 +13,8 @@ import { planLocationDelete, subtreeIds } from 'src/stock/utils/plan-location-ru
 
 const OBJECT = { objectSingular: 'stockLocation', objectPlural: 'stockLocations' } as const;
 
-// Every object whose location fields restrict a delete.
-const LOCATION_REFERENCES: { objectSingular: string; objectPlural: string; fields: string[] }[] = [
+// Every object whose location fields restrict a delete. Other modules add their own rows at load time.
+export const LOCATION_REFERENCES: { objectSingular: string; objectPlural: string; fields: string[] }[] = [
   { objectSingular: 'stockQuant', objectPlural: 'stockQuants', fields: ['locationId'] },
   { objectSingular: 'stockMove', objectPlural: 'stockMoves', fields: ['locationId', 'locationDestId'] },
   { objectSingular: 'stockMoveLine', objectPlural: 'stockMoveLines', fields: ['locationId', 'locationDestId'] },
