@@ -18,12 +18,18 @@ Cancelled), and, once completed, the time and the member who completed it.
 
 ## Working the checklist
 
+- The Activities tab of an order lists the checklist with Complete and Cancel on each activity that is still to do.
+  The same two buttons are in the menu of an activity's own page.
 - Complete activity: stamps the time and the member, state Completed. Cancel activity: state Cancelled. Both need
   the Field service level User or higher, and only an activity of an order that is still to do.
 - The state, the time and the member cannot be typed: only the buttons write them.
+- Once an activity is completed or cancelled, a change to its name, Required flag or reference is undone just after
+  the save, with a note.
 
 ## Completing the order
 
 The Complete button on the order refuses while a required activity is still to do: "You must complete activity
 '<name>' before completing this order." The first one in sequence is named. A cancelled required activity does not
 stop the order. Because only the Complete button can complete an order, nothing else gets round the check.
+
+Completing an order also marks its open tasks (the Tasks tab) as done.

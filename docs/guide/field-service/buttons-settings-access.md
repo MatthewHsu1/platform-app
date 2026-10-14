@@ -38,8 +38,8 @@ create and edit, so a level that edits a table may also add to it.
   without an owner stays without one.
 - An order may be saved without a location, and stages carry no flags of their own: only Completed and
   Cancelled close an order.
-- On an order the Complete and Cancel buttons of an activity sit on the activity (open it from the Activities tab),
-  not on each row. A completed or cancelled activity can still be renamed. Scheduled to-dos of the order are not
-  marked done when it completes.
+- A person with the User level may also add activities, because Twenty has one right for create and edit; only the
+  manager deletes them.
+- A change to a completed or cancelled activity is undone just after the save, with a note, not refused.
 - Not included: signature drawing, repair orders, serial number (lot) link, ticket link, maps and route
   planning, per-worker row rule, stages for locations, equipment and workers, territory countries.

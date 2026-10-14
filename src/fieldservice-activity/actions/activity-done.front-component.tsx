@@ -12,6 +12,7 @@ import {
 // (src/fieldservice-activity/fieldservice-activity-messages.constant.ts).
 export const FIELDSERVICE_ACTIVITY_RULE_TEXTS = [
   msg("You must complete activity '{name}' before completing this order."),
+  msg('A completed or cancelled activity cannot be changed.'),
   msg('Service activity not found.'),
   msg('This activity is already completed or cancelled.'),
   msg('Only an activity of a service order can be completed or cancelled.'),

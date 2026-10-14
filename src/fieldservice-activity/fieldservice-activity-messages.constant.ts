@@ -5,5 +5,6 @@ export const FIELDSERVICE_ACTIVITY_MESSAGES = {
   requiredActivity: "You must complete activity '{name}' before completing this order.",
   activityNotFound: 'Service activity not found.',
   alreadyHandled: 'This activity is already completed or cancelled.',
+  lockedActivity: 'A completed or cancelled activity cannot be changed.',
   notOrderActivity: 'Only an activity of a service order can be completed or cancelled.',
 } as const;

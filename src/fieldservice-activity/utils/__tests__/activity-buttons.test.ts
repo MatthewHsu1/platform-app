@@ -48,8 +48,3 @@ describe('planActivityCancel', () => {
     });
   });
 });
-
-describe('blocked by Twenty', () => {
-  it.todo('keeps the name, the required flag and the reference of an item read-only once it is completed or cancelled');
-  it.todo('marks the scheduled to-dos of an order done when the order completes');
-});
